@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local source and reference material; the site uses assets/media/ derivatives.
+/夜希-动画/
+/又Vibe coding 了一个作品集网页 - 小红书.mp4
