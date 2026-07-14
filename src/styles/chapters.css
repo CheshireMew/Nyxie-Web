@@ -4,10 +4,10 @@
 .works-chapter,
 .links-chapter { position: relative; }
 
-.character-chapter { min-height: 460vh; }
-.personality-chapter { min-height: 330vh; }
-.works-chapter { min-height: 340vh; }
-.links-chapter { min-height: 245vh; }
+.character-chapter { min-height: 250vh; }
+.personality-chapter { min-height: 170vh; }
+.works-chapter { min-height: 180vh; }
+.links-chapter { min-height: 140vh; }
 
 .character-stage,
 .personality-stage,
@@ -236,10 +236,10 @@
 }
 
 @media (max-width: 760px) {
-  .character-chapter { min-height: 390vh; }
-  .personality-chapter { min-height: 300vh; }
-  .works-chapter { min-height: 300vh; }
-  .links-chapter { min-height: 230vh; }
+  .character-chapter { min-height: 260vh; }
+  .personality-chapter { min-height: 180vh; }
+  .works-chapter { min-height: 190vh; }
+  .links-chapter { min-height: 150vh; }
   .character-stage,
   .personality-stage,
   .works-stage,

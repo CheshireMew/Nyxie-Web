@@ -10,22 +10,22 @@ export function LinksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
   useGSAP(() => {
     if (reducedMotion) return;
     const gates = gsap.utils.toArray<HTMLElement>(".link-gate");
-    const timeline = gsap.timeline({
+    const entrance = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top bottom",
-        end: "bottom top",
-        scrub: 0.8,
+        end: "top top",
+        scrub: 0.45,
       },
     });
 
-    timeline
+    entrance
       .fromTo(".links-portal", { scale: 0.25, rotate: -24, autoAlpha: 0 }, { scale: 1, rotate: 0, autoAlpha: 1, duration: 1.1, ease: "power3.out" })
       .fromTo(".links-character", { xPercent: -35, yPercent: 8, scale: 0.86, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 1, duration: 1.1, ease: "power3.out" }, 0)
       .fromTo(".links-copy", { xPercent: 16, autoAlpha: 0 }, { xPercent: 0, autoAlpha: 1, duration: 0.9, ease: "power3.out" }, 0.25);
 
     gates.forEach((gate, index) => {
-      timeline.fromTo(gate, { xPercent: 18 + index * 4, yPercent: 20, rotate: 2 + index, autoAlpha: 0 }, {
+      entrance.fromTo(gate, { xPercent: 18 + index * 4, yPercent: 20, rotate: 2 + index, autoAlpha: 0 }, {
         xPercent: 0,
         yPercent: 0,
         rotate: 0,
@@ -33,6 +33,15 @@ export function LinksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
         duration: 0.5,
         ease: "power3.out",
       }, 1.02 + index * 0.16);
+    });
+
+    const timeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.45,
+      },
     });
 
     timeline

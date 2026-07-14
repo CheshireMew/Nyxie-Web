@@ -26,20 +26,30 @@ export function CharacterSection({ reducedMotion }: { reducedMotion: boolean }) 
         ];
 
     gsap.set(scenes, { autoAlpha: 0, clipPath: "inset(100% 0 0 0)" });
-    const timeline = gsap.timeline({
+    const entrance = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top bottom",
-        end: "bottom top",
-        scrub: 0.8,
+        end: "top top",
+        scrub: 0.45,
       },
     });
 
-    timeline
+    entrance
       .fromTo(".character-stage-title", { yPercent: 28, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.7, ease: "power3.out" })
       .fromTo(".character-portrait", { yPercent: 12, scale: 0.9, autoAlpha: 0 }, { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.9, ease: "power3.out" }, 0)
-      .fromTo(".character-halo", { scale: 0.72, rotate: -12, autoAlpha: 0 }, { scale: 1, rotate: 0, autoAlpha: 1, duration: 1 }, 0)
-      .to(".character-stage-title", { yPercent: -36, autoAlpha: mobile ? 0.06 : 0.22, scale: 0.82, duration: 0.8 });
+      .fromTo(".character-halo", { scale: 0.72, rotate: -12, autoAlpha: 0 }, { scale: 1, rotate: 0, autoAlpha: 1, duration: 1 }, 0);
+
+    const timeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.45,
+      },
+    });
+
+    timeline.to(".character-stage-title", { yPercent: -36, autoAlpha: mobile ? 0.06 : 0.22, scale: 0.82, duration: 0.8 });
 
     scenes.forEach((scene, index) => {
       const pose = portraits[index];

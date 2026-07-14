@@ -18,19 +18,29 @@ export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }
     if (reducedMotion) return;
     const beats = gsap.utils.toArray<HTMLElement>(".personality-beat");
     gsap.set(beats, { autoAlpha: 0.2, xPercent: 8 });
-    const timeline = gsap.timeline({
+    gsap.set(beats[0], { autoAlpha: 1, xPercent: 0 });
+    const entrance = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top bottom",
-        end: "bottom top",
-        scrub: 0.8,
+        end: "top top",
+        scrub: 0.45,
       },
     });
 
-    timeline
+    entrance
       .fromTo(".personality-copy", { xPercent: -12, autoAlpha: 0 }, { xPercent: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out" })
       .fromTo(".personality-media", { xPercent: 14, scale: 0.86, autoAlpha: 0 }, { xPercent: 0, scale: 1, autoAlpha: 1, duration: 1, ease: "power3.out" }, 0)
       .fromTo(".personality-orbit", { scale: 0.6, rotate: -24 }, { scale: 1, rotate: 0, duration: 1.1, ease: "power2.out" }, 0);
+
+    const timeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.45,
+      },
+    });
 
     beats.forEach((beat, index) => {
       timeline
