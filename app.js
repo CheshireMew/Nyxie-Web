@@ -37,6 +37,7 @@ const clips = {
     counter: "ACTION / 03",
     cover: "portal",
     switchLead: 0.5,
+    releaseAt: 3.35,
     kind: "action",
   },
   tease: {
@@ -288,6 +289,28 @@ class PerformanceDirector {
     this.players.forEach((player) => { player.muted = muted; });
   }
 
+  waitUntil(key, targetTime, timeout = 6000) {
+    return new Promise((resolve) => {
+      const startedAt = performance.now();
+      const check = () => {
+        if (this.currentKey !== key) {
+          resolve(false);
+          return;
+        }
+        if (this.activePlayer?.currentTime >= targetTime) {
+          resolve(true);
+          return;
+        }
+        if (performance.now() - startedAt >= timeout) {
+          resolve(false);
+          return;
+        }
+        window.requestAnimationFrame(check);
+      };
+      check();
+    });
+  }
+
   async start() {
     if (this.started || reduceMotion) return;
     this.started = true;
@@ -465,11 +488,15 @@ function beginPortalScroll() {
 
   portalScrollUsed = true;
   portalScrollLocked = true;
-  director.request("portal", { reason: "first-scroll", playbackRate: 1.25 });
-  window.setTimeout(() => {
-    document.querySelector("#profile").scrollIntoView({ behavior: "smooth", block: "start" });
-    portalScrollLocked = false;
-  }, 1650);
+  (async () => {
+    try {
+      const started = await director.request("portal", { reason: "first-scroll", playbackRate: 1.25 });
+      if (started) await director.waitUntil("portal", clips.portal.releaseAt, 5200);
+      document.querySelector("#profile").scrollIntoView({ behavior: "smooth", block: "start" });
+    } finally {
+      portalScrollLocked = false;
+    }
+  })();
   return true;
 }
 
