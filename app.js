@@ -3,7 +3,6 @@ const clips = {
     src: "assets/media/idle-main.mp4",
     label: "IDLE PERFORMANCE",
     counter: "IDLE / 01",
-    cover: "tail",
     switchLead: 0.62,
     kind: "idle",
   },
@@ -11,7 +10,6 @@ const clips = {
     src: "assets/media/idle-key.mp4",
     label: "GOLDEN KEY",
     counter: "IDLE / 02",
-    cover: "flash",
     switchLead: 0.48,
     kind: "idle",
   },
@@ -19,7 +17,6 @@ const clips = {
     src: "assets/media/react-key.mp4",
     label: "KEY INCOMING",
     counter: "ACTION / 01",
-    cover: "flash",
     switchLead: 0.5,
     kind: "action",
   },
@@ -27,7 +24,6 @@ const clips = {
     src: "assets/media/vanish.mp4",
     label: "CHESHIRE VANISH",
     counter: "ACTION / 02",
-    cover: "smoke",
     switchLead: 0.5,
     kind: "action",
   },
@@ -35,7 +31,6 @@ const clips = {
     src: "assets/media/portal.mp4",
     label: "OPENING WRONG DOOR",
     counter: "ACTION / 03",
-    cover: "portal",
     switchLead: 0.5,
     releaseAt: 3.35,
     kind: "action",
@@ -44,15 +39,14 @@ const clips = {
     src: "assets/media/tease.mp4",
     label: "COME CLOSER",
     counter: "ACTION / 04",
-    cover: "tail",
     switchLead: 0.5,
     kind: "action",
   },
 };
 
 const hero = document.querySelector("#home");
+const heroMedia = document.querySelector(".hero-media");
 const videos = [document.querySelector("#heroVideoA"), document.querySelector("#heroVideoB")];
-const transition = document.querySelector("#transitionLayer");
 const clipStatus = document.querySelector("#clipStatus");
 const clipCounter = document.querySelector("#clipCounter");
 const clipProgress = document.querySelector("#clipProgress");
@@ -62,6 +56,9 @@ const indexDialog = document.querySelector("#indexDialog");
 const talkPanel = document.querySelector("#talkPanel");
 const talkScrim = document.querySelector("#talkScrim");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const videoTransitionDuration = Number.parseFloat(
+  getComputedStyle(heroMedia).getPropertyValue("--video-transition-duration")
+);
 
 let soundOn = false;
 let heroVisible = true;
@@ -84,19 +81,6 @@ function setClipProgress(value = 0) {
   clipProgress.style.transform = `scaleX(${Math.max(0, Math.min(1, value))})`;
 }
 
-function setTransition(mode, active) {
-  if (active) {
-    transition.classList.remove("is-active");
-    transition.removeAttribute("data-mode");
-    void transition.offsetWidth;
-    transition.dataset.mode = mode;
-    transition.classList.add("is-active");
-    return;
-  }
-  transition.classList.remove("is-active");
-  window.setTimeout(() => transition.removeAttribute("data-mode"), 190);
-}
-
 class PerformanceDirector {
   constructor(players) {
     this.players = players;
@@ -105,7 +89,6 @@ class PerformanceDirector {
     this.currentAfter = null;
     this.plannedKey = null;
     this.plannedPromise = null;
-    this.requestId = 0;
     this.transitioning = false;
     this.started = false;
     this.lastAmbientAction = null;
@@ -197,42 +180,67 @@ class PerformanceDirector {
     this.plannedPromise = this.loadPlayer(this.standbyPlayer, this.plannedKey);
   }
 
+  async transitionPlayers(previous, next) {
+    heroMedia.classList.remove("is-switching");
+    void heroMedia.offsetWidth;
+    heroMedia.classList.add("is-switching");
+    previous.classList.add("is-outgoing");
+    next.classList.add("is-visible", "is-incoming");
+
+    const timing = {
+      duration: videoTransitionDuration,
+      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+      fill: "both",
+    };
+    const outgoing = previous.animate(
+      [
+        { clipPath: "inset(0 0 0 0%)" },
+        { clipPath: "inset(0 0 0 100%)" },
+      ],
+      timing
+    );
+    const incoming = next.animate(
+      [
+        { transform: "scale(1.022)" },
+        { transform: "scale(1.015)" },
+      ],
+      timing
+    );
+
+    await Promise.allSettled([outgoing.finished, incoming.finished]);
+    previous.classList.remove("is-visible", "is-outgoing");
+    next.classList.remove("is-incoming");
+    outgoing.cancel();
+    incoming.cancel();
+    previous.pause();
+    previous.playbackRate = 1;
+    heroMedia.classList.remove("is-switching");
+  }
+
   async switchTo(key, options = {}) {
     const clip = clips[key];
-    if (!clip || reduceMotion) return false;
+    if (!clip || reduceMotion || this.transitioning) return false;
 
-    const requestId = ++this.requestId;
     this.transitioning = true;
     const previous = this.activePlayer;
     const nextIndex = this.activeIndex < 0 ? 0 : 1 - this.activeIndex;
     const next = this.players[nextIndex];
     const ready = await this.loadPlayer(next, key);
 
-    if (!ready || requestId !== this.requestId) {
-      if (requestId === this.requestId) this.transitioning = false;
+    if (!ready) {
+      this.transitioning = false;
       return false;
-    }
-
-    const cover = options.cover || (options.natural && this.currentKey ? clips[this.currentKey].cover : clip.cover);
-    if (previous && !options.initial) {
-      setTransition(cover, true);
-      await delay(175);
-      if (requestId !== this.requestId) return false;
     }
 
     const playing = await this.startPlayer(next, options.playbackRate || 1);
-    if (!playing || requestId !== this.requestId) {
+    if (!playing) {
       next.pause();
-      if (requestId === this.requestId) this.transitioning = false;
+      this.transitioning = false;
       return false;
     }
 
-    next.classList.add("is-visible");
-    if (previous && previous !== next) {
-      previous.classList.remove("is-visible");
-      previous.pause();
-      previous.playbackRate = 1;
-    }
+    if (previous && !options.initial) await this.transitionPlayers(previous, next);
+    else next.classList.add("is-visible");
 
     this.activeIndex = nextIndex;
     this.currentKey = key;
@@ -243,9 +251,6 @@ class PerformanceDirector {
     setClipProgress();
     updateStatus(clip.label, clip.counter);
 
-    await delay(options.initial ? 40 : 310);
-    if (requestId !== this.requestId) return false;
-    setTransition(cover, false);
     this.transitioning = false;
     this.prepareNext();
     return true;
@@ -261,6 +266,24 @@ class PerformanceDirector {
 
   request(key, options = {}) {
     return this.switchTo(key, { ...options, reason: options.reason || "manual" });
+  }
+
+  waitUntilReady(timeout = 9500) {
+    return new Promise((resolve) => {
+      const startedAt = performance.now();
+      const check = () => {
+        if (!this.transitioning) {
+          resolve(true);
+          return;
+        }
+        if (performance.now() - startedAt >= timeout) {
+          resolve(false);
+          return;
+        }
+        window.requestAnimationFrame(check);
+      };
+      check();
+    });
   }
 
   onTimeUpdate(player) {
@@ -490,6 +513,7 @@ function beginPortalScroll() {
   portalScrollLocked = true;
   (async () => {
     try {
+      await director.waitUntilReady();
       const started = await director.request("portal", { reason: "first-scroll", playbackRate: 1.25 });
       if (started) await director.waitUntil("portal", clips.portal.releaseAt, 5200);
       document.querySelector("#profile").scrollIntoView({ behavior: "smooth", block: "start" });

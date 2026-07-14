@@ -359,8 +359,7 @@ body.cursor-active .cursor-ring {
 .hero-video,
 .hero-shade,
 .glass-refraction,
-.hero-grid,
-.transition-layer {
+.hero-grid {
   position: absolute;
   inset: 0;
 }
@@ -368,6 +367,7 @@ body.cursor-active .cursor-ring {
 .hero-media {
   --media-focus-x: 50%;
   --media-focus-y: 35%;
+  --video-transition-duration: 560ms;
   z-index: 0;
   top: var(--header-height);
   bottom: calc(var(--header-height) * -1);
@@ -391,12 +391,46 @@ body.cursor-active .cursor-ring {
 .hero-video {
   z-index: 2;
   opacity: 0;
-  will-change: opacity, transform;
-  transition: opacity 0.3s ease;
+  will-change: opacity, transform, clip-path;
 }
 
 .hero-video.is-visible {
   opacity: 1;
+}
+
+.hero-video.is-outgoing { z-index: 4; }
+.hero-video.is-incoming { z-index: 3; }
+
+.hero-media::after {
+  position: absolute;
+  z-index: 7;
+  inset: -12% -40%;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 39%,
+    rgba(207, 232, 248, 0.08) 43%,
+    rgba(235, 247, 253, 0.5) 47%,
+    rgba(255, 255, 255, 0.92) 50%,
+    rgba(218, 238, 250, 0.42) 53%,
+    rgba(255, 255, 255, 0.08) 57%,
+    transparent 61%
+  );
+  mix-blend-mode: screen;
+  transform: translate3d(-45%, 0, 0) skewX(-7deg);
+}
+
+.hero-media.is-switching::after {
+  animation: glass-wipe var(--video-transition-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes glass-wipe {
+  0% { opacity: 0; transform: translate3d(-45%, 0, 0) skewX(-7deg); }
+  12% { opacity: 0.76; }
+  88% { opacity: 0.76; }
+  100% { opacity: 0; transform: translate3d(45%, 0, 0) skewX(-7deg); }
 }
 
 .hero-shade {
@@ -431,86 +465,6 @@ body.cursor-active .cursor-ring {
     linear-gradient(90deg, rgba(17, 21, 28, 0.23) 1px, transparent 1px);
   background-size: 72px 72px;
   mask-image: linear-gradient(90deg, #000, transparent 54%);
-}
-
-.transition-layer {
-  z-index: 8;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease;
-}
-
-.transition-layer.is-active {
-  opacity: 1;
-}
-
-.transition-layer span {
-  position: absolute;
-  display: block;
-  border-radius: 50%;
-}
-
-.transition-layer[data-mode="tail"] {
-  background: radial-gradient(ellipse at 80% 55%, rgba(18,22,29,0.55), transparent 52%);
-  backdrop-filter: blur(3px);
-}
-
-.transition-layer[data-mode="tail"] span {
-  right: -28%;
-  width: 78%;
-  height: 18%;
-  background: repeating-linear-gradient(90deg, rgba(16,19,25,0.96) 0 13%, rgba(245,249,252,0.94) 13% 25%);
-  filter: blur(8px);
-  animation: tail-sweep 0.58s var(--ease) both;
-}
-
-.transition-layer[data-mode="tail"] span:nth-child(1) { top: 15%; transform: rotate(-12deg); }
-.transition-layer[data-mode="tail"] span:nth-child(2) { top: 38%; animation-delay: 0.05s; }
-.transition-layer[data-mode="tail"] span:nth-child(3) { top: 62%; transform: rotate(10deg); animation-delay: 0.1s; }
-.transition-layer[data-mode="tail"] span:nth-child(4) { top: 82%; animation-delay: 0.15s; }
-
-@keyframes tail-sweep {
-  from { translate: 0 0; }
-  to { translate: -175% 0; }
-}
-
-.transition-layer[data-mode="flash"] {
-  background:
-    radial-gradient(circle at 55% 48%, rgba(255,255,255,0.98), rgba(225,194,126,0.72) 22%, transparent 60%),
-    linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.95) 48%, transparent 65%);
-  animation: flash-pulse 0.45s ease-out both;
-}
-
-.transition-layer[data-mode="smoke"] {
-  background:
-    radial-gradient(circle at 60% 70%, rgba(17,20,25,0.98), transparent 48%),
-    radial-gradient(circle at 72% 35%, rgba(244,248,251,0.94), transparent 42%),
-    repeating-radial-gradient(circle at 60% 55%, rgba(16,18,22,0.82) 0 8%, rgba(246,249,251,0.78) 9% 15%);
-  filter: blur(7px);
-  transform: scale(1.2);
-  animation: smoke-bloom 0.55s ease-out both;
-}
-
-.transition-layer[data-mode="portal"] {
-  background: radial-gradient(circle at 50% 50%, #fff 0 12%, rgba(213,235,249,0.96) 28%, rgba(129,175,208,0.48) 52%, transparent 72%);
-  animation: portal-open 0.55s var(--ease) both;
-}
-
-@keyframes flash-pulse {
-  from { opacity: 0; transform: scale(0.75); }
-  55% { opacity: 1; }
-  to { opacity: 1; transform: scale(1.15); }
-}
-
-@keyframes smoke-bloom {
-  from { opacity: 0; transform: scale(0.75) rotate(-5deg); }
-  to { opacity: 1; transform: scale(1.25) rotate(2deg); }
-}
-
-@keyframes portal-open {
-  from { opacity: 0; transform: scale(0.1); }
-  to { opacity: 1; transform: scale(1.5); }
 }
 
 .vertical-mantra {
