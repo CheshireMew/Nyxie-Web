@@ -56,9 +56,11 @@ const indexDialog = document.querySelector("#indexDialog");
 const talkPanel = document.querySelector("#talkPanel");
 const talkScrim = document.querySelector("#talkScrim");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const videoTransitionDuration = Number.parseFloat(
-  getComputedStyle(heroMedia).getPropertyValue("--video-transition-duration")
-);
+const transitionTiming = {
+  defocus: 180,
+  refocus: 260,
+  blur: 14,
+};
 
 let soundOn = false;
 let heroVisible = true;
@@ -180,41 +182,65 @@ class PerformanceDirector {
     this.plannedPromise = this.loadPlayer(this.standbyPlayer, this.plannedKey);
   }
 
-  async transitionPlayers(previous, next) {
-    heroMedia.classList.remove("is-switching");
-    void heroMedia.offsetWidth;
-    heroMedia.classList.add("is-switching");
-    previous.classList.add("is-outgoing");
-    next.classList.add("is-visible", "is-incoming");
-
-    const timing = {
-      duration: videoTransitionDuration,
-      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+  async transitionPlayers(previous, next, playbackRate) {
+    const defocusTiming = {
+      duration: transitionTiming.defocus,
+      easing: "cubic-bezier(0.4, 0, 1, 1)",
       fill: "both",
     };
-    const outgoing = previous.animate(
+    const defocus = heroMedia.animate(
       [
-        { clipPath: "inset(0 0 0 0%)" },
-        { clipPath: "inset(0 0 0 100%)" },
+        { filter: "blur(0px) brightness(1)" },
+        { filter: `blur(${transitionTiming.blur}px) brightness(1.025)` },
       ],
-      timing
-    );
-    const incoming = next.animate(
-      [
-        { transform: "scale(1.022)" },
-        { transform: "scale(1.015)" },
-      ],
-      timing
+      defocusTiming
     );
 
-    await Promise.allSettled([outgoing.finished, incoming.finished]);
-    previous.classList.remove("is-visible", "is-outgoing");
-    next.classList.remove("is-incoming");
-    outgoing.cancel();
-    incoming.cancel();
+    await Promise.allSettled([defocus.finished]);
+
     previous.pause();
+    previous.classList.remove("is-visible");
+    const playing = await this.startPlayer(next, playbackRate);
+    if (!playing) {
+      previous.classList.add("is-visible");
+      previous.play().catch(() => {});
+      const restore = heroMedia.animate(
+        [
+          { filter: `blur(${transitionTiming.blur}px) brightness(1.025)` },
+          { filter: "blur(0px) brightness(1)" },
+        ],
+        {
+          duration: transitionTiming.refocus,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "both",
+        }
+      );
+      defocus.cancel();
+      await Promise.allSettled([restore.finished]);
+      restore.cancel();
+      return false;
+    }
+
+    next.classList.add("is-visible");
     previous.playbackRate = 1;
-    heroMedia.classList.remove("is-switching");
+
+    const refocusTiming = {
+      duration: transitionTiming.refocus,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      fill: "both",
+    };
+    const refocus = heroMedia.animate(
+      [
+        { filter: `blur(${transitionTiming.blur}px) brightness(1.025)` },
+        { filter: "blur(0px) brightness(1)" },
+      ],
+      refocusTiming
+    );
+
+    defocus.cancel();
+    await Promise.allSettled([refocus.finished]);
+    refocus.cancel();
+    return true;
   }
 
   async switchTo(key, options = {}) {
@@ -232,15 +258,17 @@ class PerformanceDirector {
       return false;
     }
 
-    const playing = await this.startPlayer(next, options.playbackRate || 1);
+    const playbackRate = options.playbackRate || 1;
+    const playing = previous && !options.initial
+      ? await this.transitionPlayers(previous, next, playbackRate)
+      : await this.startPlayer(next, playbackRate);
     if (!playing) {
       next.pause();
       this.transitioning = false;
       return false;
     }
 
-    if (previous && !options.initial) await this.transitionPlayers(previous, next);
-    else next.classList.add("is-visible");
+    if (!previous || options.initial) next.classList.add("is-visible");
 
     this.activeIndex = nextIndex;
     this.currentKey = key;

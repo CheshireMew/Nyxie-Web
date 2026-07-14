@@ -367,12 +367,12 @@ body.cursor-active .cursor-ring {
 .hero-media {
   --media-focus-x: 50%;
   --media-focus-y: 35%;
-  --video-transition-duration: 560ms;
   z-index: 0;
   top: var(--header-height);
   bottom: calc(var(--header-height) * -1);
   overflow: hidden;
   background: #eaf1f7;
+  will-change: filter;
 }
 
 .hero-anchor,
@@ -385,52 +385,18 @@ body.cursor-active .cursor-ring {
 }
 
 .hero-anchor {
+  z-index: 1;
   filter: saturate(0.94) contrast(1.02);
 }
 
 .hero-video {
   z-index: 2;
   opacity: 0;
-  will-change: opacity, transform, clip-path;
+  will-change: opacity, transform;
 }
 
 .hero-video.is-visible {
   opacity: 1;
-}
-
-.hero-video.is-outgoing { z-index: 4; }
-.hero-video.is-incoming { z-index: 3; }
-
-.hero-media::after {
-  position: absolute;
-  z-index: 7;
-  inset: -12% -40%;
-  content: "";
-  opacity: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    transparent 39%,
-    rgba(207, 232, 248, 0.08) 43%,
-    rgba(235, 247, 253, 0.5) 47%,
-    rgba(255, 255, 255, 0.92) 50%,
-    rgba(218, 238, 250, 0.42) 53%,
-    rgba(255, 255, 255, 0.08) 57%,
-    transparent 61%
-  );
-  mix-blend-mode: screen;
-  transform: translate3d(-45%, 0, 0) skewX(-7deg);
-}
-
-.hero-media.is-switching::after {
-  animation: glass-wipe var(--video-transition-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-@keyframes glass-wipe {
-  0% { opacity: 0; transform: translate3d(-45%, 0, 0) skewX(-7deg); }
-  12% { opacity: 0.76; }
-  88% { opacity: 0.76; }
-  100% { opacity: 0; transform: translate3d(45%, 0, 0) skewX(-7deg); }
 }
 
 .hero-shade {
