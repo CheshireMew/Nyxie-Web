@@ -32,7 +32,6 @@ const clips = {
     label: "OPENING WRONG DOOR",
     counter: "ACTION / 03",
     switchLead: 0.5,
-    releaseAt: 3.35,
     kind: "action",
   },
   tease: {
@@ -89,6 +88,7 @@ class PerformanceDirector {
     this.activeIndex = -1;
     this.currentKey = null;
     this.currentAfter = null;
+    this.currentHoldAtEnd = false;
     this.plannedKey = null;
     this.plannedPromise = null;
     this.transitioning = false;
@@ -273,6 +273,7 @@ class PerformanceDirector {
     this.activeIndex = nextIndex;
     this.currentKey = key;
     this.currentAfter = options.after || null;
+    this.currentHoldAtEnd = Boolean(options.holdAtEnd);
     this.plannedKey = null;
     this.plannedPromise = null;
     setActiveAction(clip.kind === "action" ? key : null);
@@ -285,7 +286,15 @@ class PerformanceDirector {
   }
 
   async advance() {
-    if (this.transitioning || !this.currentKey || !heroVisible || document.hidden) return;
+    if (
+      this.transitioning ||
+      this.currentHoldAtEnd ||
+      !this.currentKey ||
+      !heroVisible ||
+      document.hidden
+    ) {
+      return;
+    }
     const completedAfter = this.currentAfter;
     const nextKey = this.plannedKey || this.chooseNextAfter(this.currentKey);
     const switched = await this.switchTo(nextKey, { natural: true, reason: "timeline" });
@@ -332,7 +341,15 @@ class PerformanceDirector {
   }
 
   resume() {
-    if (!this.started || !this.activePlayer || document.hidden || !heroVisible) return;
+    if (
+      !this.started ||
+      !this.activePlayer ||
+      (this.currentHoldAtEnd && this.activePlayer.ended) ||
+      document.hidden ||
+      !heroVisible
+    ) {
+      return;
+    }
     this.activePlayer.play().catch(() => {});
   }
 
@@ -340,24 +357,40 @@ class PerformanceDirector {
     this.players.forEach((player) => { player.muted = muted; });
   }
 
-  waitUntil(key, targetTime, timeout = 6000) {
+  waitUntilEnded(key, timeout = 7000) {
     return new Promise((resolve) => {
-      const startedAt = performance.now();
+      const player = this.activePlayer;
+      if (this.currentKey !== key || !player) {
+        resolve(false);
+        return;
+      }
+
+      let animationFrame = 0;
+      let settled = false;
+      let timeoutId = 0;
+      function finish(result) {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        window.cancelAnimationFrame(animationFrame);
+        player.removeEventListener("ended", onEnded);
+        resolve(result);
+      }
+      const onEnded = () => finish(this.currentKey === key);
       const check = () => {
         if (this.currentKey !== key) {
-          resolve(false);
+          finish(false);
           return;
         }
-        if (this.activePlayer?.currentTime >= targetTime) {
-          resolve(true);
+        if (player.ended) {
+          finish(true);
           return;
         }
-        if (performance.now() - startedAt >= timeout) {
-          resolve(false);
-          return;
-        }
-        window.requestAnimationFrame(check);
+        animationFrame = window.requestAnimationFrame(check);
       };
+
+      timeoutId = window.setTimeout(() => finish(false), timeout);
+      player.addEventListener("ended", onEnded, { once: true });
       check();
     });
   }
@@ -454,15 +487,30 @@ document.addEventListener("click", (event) => {
   }
 
   const playButton = event.target.closest("[data-play]");
-  if (!playButton) return;
+  if (playButton) {
+    const run = () => director.request(playButton.dataset.play, { after: playButton.dataset.after });
+    if (playButton.hasAttribute("data-return-home")) {
+      suppressHeroWelcome = !heroVisible;
+      scrollToTarget("#home");
+      window.setTimeout(run, reduceMotion ? 40 : 650);
+    } else {
+      run();
+    }
+    return;
+  }
 
-  const run = () => director.request(playButton.dataset.play, { after: playButton.dataset.after });
-  if (playButton.hasAttribute("data-return-home")) {
-    suppressHeroWelcome = !heroVisible;
-    scrollToTarget("#home");
-    window.setTimeout(run, reduceMotion ? 40 : 650);
-  } else {
-    run();
+  const blockedHeroTarget = event.target.closest(
+    "a, button, input, textarea, select, [contenteditable], .hero-copy, .hero-controls, .scroll-cue"
+  );
+  if (
+    !blockedHeroTarget &&
+    heroVisible &&
+    window.scrollY <= 4 &&
+    hero.contains(event.target) &&
+    !indexDialog.open &&
+    !talkPanel.classList.contains("is-open")
+  ) {
+    director.request("reactKey", { reason: "hero-ambient-click" });
   }
 });
 
@@ -542,8 +590,12 @@ function beginPortalScroll() {
   (async () => {
     try {
       await director.waitUntilReady();
-      const started = await director.request("portal", { reason: "first-scroll", playbackRate: 1.25 });
-      if (started) await director.waitUntil("portal", clips.portal.releaseAt, 5200);
+      const started = await director.request("portal", {
+        reason: "first-scroll",
+        playbackRate: 1.25,
+        holdAtEnd: true,
+      });
+      if (started) await director.waitUntilEnded("portal");
       document.querySelector("#profile").scrollIntoView({ behavior: "smooth", block: "start" });
     } finally {
       portalScrollLocked = false;
