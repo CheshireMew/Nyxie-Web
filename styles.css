@@ -704,78 +704,6 @@ body.cursor-active .cursor-ring {
 .status-light.gold { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
 .status-light.blue { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
 
-.character-hit-area {
-  position: absolute;
-  z-index: 12;
-  top: 10%;
-  right: 1%;
-  width: 55%;
-  height: 74%;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.character-hit-area::before {
-  position: absolute;
-  top: 19%;
-  left: 47%;
-  width: 94px;
-  height: 94px;
-  border: 1px solid rgba(201,31,60,0.72);
-  border-radius: 50%;
-  content: "";
-  opacity: 0;
-  box-shadow: 0 0 0 10px rgba(255,255,255,0.16), 0 0 32px rgba(201,31,60,0.22);
-  transform: translate(-50%, -50%) scale(0.72);
-  transition: opacity 0.25s, transform 0.35s var(--ease);
-}
-
-.character-hit-area::after {
-  position: absolute;
-  top: 19%;
-  left: 47%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--red);
-  content: "";
-  opacity: 0;
-  box-shadow: 0 0 14px var(--red);
-  transform: translate(-50%, -50%);
-  transition: opacity 0.25s;
-}
-
-.character-hit-area > span {
-  position: absolute;
-  top: 10%;
-  right: 6%;
-  padding: 9px 11px;
-  border: 1px solid rgba(17,21,28,0.2);
-  color: var(--ink);
-  background: rgba(245,249,252,0.62);
-  backdrop-filter: blur(9px);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 8px;
-  line-height: 1.45;
-  letter-spacing: 0.14em;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.25s, transform 0.35s var(--ease);
-}
-
-.character-hit-area > span small { color: var(--red); font-size: 8px; }
-.character-hit-area:hover::before,
-.character-hit-area:hover::after,
-.character-hit-area:focus-visible::before,
-.character-hit-area:focus-visible::after { opacity: 1; }
-.character-hit-area:hover::before,
-.character-hit-area:focus-visible::before { transform: translate(-50%, -50%) scale(1); }
-.character-hit-area:hover > span,
-.character-hit-area:focus-visible > span { opacity: 1; transform: none; }
-
 .hero-controls {
   position: absolute;
   z-index: 30;
@@ -1680,10 +1608,6 @@ noscript { position: fixed; z-index: 5000; right: 20px; bottom: 20px; padding: 1
   .hero-intro { margin-top: 14px; }
   .hero-cta { flex-wrap: wrap; gap: 16px; margin-top: 22px; }
   .system-status { display: none; }
-  .character-hit-area { top: 156px; right: 0; width: 100%; height: 350px; }
-  .character-hit-area::before { top: 32%; left: 69%; width: 78px; height: 78px; }
-  .character-hit-area::after { top: 32%; left: 69%; }
-  .character-hit-area > span { display: none; }
   .hero-controls {
     right: 12px;
     left: 12px;

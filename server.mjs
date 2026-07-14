@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
-import { readFile, stat } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 
 const root = process.cwd();
@@ -25,17 +26,43 @@ createServer(async (request, response) => {
     const safePath = normalize(requested).replace(/^(\.\.(\/|\\|$))+/, "");
     let filePath = join(root, safePath);
 
-    const info = await stat(filePath);
-    if (info.isDirectory()) filePath = join(filePath, "index.html");
+    let info = await stat(filePath);
+    if (info.isDirectory()) {
+      filePath = join(filePath, "index.html");
+      info = await stat(filePath);
+    }
 
-    const data = await readFile(filePath);
-    response.writeHead(200, {
-      "Content-Type": mime[extname(filePath).toLowerCase()] || "application/octet-stream",
-      "Cache-Control": [".html", ".css", ".js"].includes(extname(filePath).toLowerCase())
+    const extension = extname(filePath).toLowerCase();
+    const commonHeaders = {
+      "Accept-Ranges": "bytes",
+      "Content-Type": mime[extension] || "application/octet-stream",
+      "Cache-Control": [".html", ".css", ".js"].includes(extension)
         ? "no-cache"
         : "public, max-age=3600"
-    });
-    response.end(data);
+    };
+    const range = request.headers.range?.match(/^bytes=(\d*)-(\d*)$/);
+
+    if (range) {
+      const start = range[1] ? Number(range[1]) : 0;
+      const end = range[2] ? Math.min(Number(range[2]), info.size - 1) : info.size - 1;
+      if (start > end || start >= info.size) {
+        response.writeHead(416, { "Content-Range": `bytes */${info.size}` });
+        response.end();
+        return;
+      }
+      response.writeHead(206, {
+        ...commonHeaders,
+        "Content-Length": end - start + 1,
+        "Content-Range": `bytes ${start}-${end}/${info.size}`
+      });
+      if (request.method === "HEAD") response.end();
+      else createReadStream(filePath, { start, end }).pipe(response);
+      return;
+    }
+
+    response.writeHead(200, { ...commonHeaders, "Content-Length": info.size });
+    if (request.method === "HEAD") response.end();
+    else createReadStream(filePath).pipe(response);
   } catch {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     response.end("Not found");

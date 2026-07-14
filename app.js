@@ -4,47 +4,53 @@ const clips = {
     label: "IDLE PERFORMANCE",
     counter: "IDLE / 01",
     cover: "tail",
-    fade: 0.62,
+    switchLead: 0.62,
+    kind: "idle",
   },
   idleKey: {
     src: "assets/media/idle-key.mp4",
     label: "GOLDEN KEY",
     counter: "IDLE / 02",
-    cover: "tail",
-    fade: 0.4,
+    cover: "flash",
+    switchLead: 0.48,
+    kind: "idle",
   },
   reactKey: {
     src: "assets/media/react-key.mp4",
     label: "KEY INCOMING",
     counter: "ACTION / 01",
     cover: "flash",
-    fade: 0.5,
+    switchLead: 0.5,
+    kind: "action",
   },
   vanish: {
     src: "assets/media/vanish.mp4",
     label: "CHESHIRE VANISH",
     counter: "ACTION / 02",
     cover: "smoke",
-    fade: 0.46,
+    switchLead: 0.5,
+    kind: "action",
   },
   portal: {
     src: "assets/media/portal.mp4",
     label: "OPENING WRONG DOOR",
     counter: "ACTION / 03",
     cover: "portal",
-    fade: 0.45,
+    switchLead: 0.5,
+    kind: "action",
   },
   tease: {
     src: "assets/media/tease.mp4",
     label: "COME CLOSER",
     counter: "ACTION / 04",
     cover: "tail",
-    fade: 0.45,
+    switchLead: 0.5,
+    kind: "action",
   },
 };
 
 const hero = document.querySelector("#home");
-const video = document.querySelector("#heroVideo");
+const videos = [document.querySelector("#heroVideoA"), document.querySelector("#heroVideoB")];
 const transition = document.querySelector("#transitionLayer");
 const clipStatus = document.querySelector("#clipStatus");
 const clipCounter = document.querySelector("#clipCounter");
@@ -56,14 +62,9 @@ const talkPanel = document.querySelector("#talkPanel");
 const talkScrim = document.querySelector("#talkScrim");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-let currentClip = null;
-let currentAfter = null;
-let playToken = 0;
-let transitionStarted = false;
 let soundOn = false;
 let heroVisible = true;
-let nextIdle = "idleMain";
-let idleTimer = 0;
+let suppressHeroWelcome = false;
 
 const delay = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
@@ -83,167 +84,234 @@ function setClipProgress(value = 0) {
 }
 
 function setTransition(mode, active) {
-  transition.dataset.mode = mode;
-  transition.classList.toggle("is-active", active);
-  if (!active) {
+  if (active) {
+    transition.classList.remove("is-active");
     transition.removeAttribute("data-mode");
-  }
-}
-
-function clearIdleTimer() {
-  window.clearTimeout(idleTimer);
-  idleTimer = 0;
-}
-
-function canIdle() {
-  return heroVisible && !indexDialog.open && !talkPanel.classList.contains("is-open") && !document.hidden;
-}
-
-function scheduleIdle(wait = 3400) {
-  clearIdleTimer();
-  if (reduceMotion || !canIdle()) return;
-
-  idleTimer = window.setTimeout(() => {
-    const key = nextIdle;
-    nextIdle = key === "idleMain" ? "idleKey" : "idleMain";
-    playClip(key, { automatic: true });
-  }, wait);
-}
-
-function waitForVideo(token) {
-  return new Promise((resolve) => {
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      resolve(token === playToken);
-      return;
-    }
-
-    const onReady = () => finish(true);
-    const onError = () => finish(false);
-    const timeout = window.setTimeout(() => finish(false), 8000);
-
-    function finish(result) {
-      window.clearTimeout(timeout);
-      video.removeEventListener("loadeddata", onReady);
-      video.removeEventListener("error", onError);
-      resolve(result && token === playToken);
-    }
-
-    video.addEventListener("loadeddata", onReady, { once: true });
-    video.addEventListener("error", onError, { once: true });
-  });
-}
-
-async function resetToAnchor({ runAfter = true, schedule = true, token = playToken } = {}) {
-  if (token !== playToken) return;
-  const completedAfter = currentAfter;
-  currentAfter = null;
-  currentClip = null;
-  transitionStarted = false;
-  setActiveAction();
-  setClipProgress();
-  video.pause();
-  video.classList.remove("is-visible");
-  await delay(260);
-  if (token !== playToken) return;
-  video.removeAttribute("src");
-  video.removeAttribute("data-play-token");
-  video.load();
-  await delay(220);
-  if (token !== playToken) return;
-  setTransition("tail", false);
-  updateStatus();
-
-  if (runAfter && completedAfter === "talk") {
-    openTalk();
-  }
-  if (schedule) scheduleIdle(6000);
-}
-
-async function playClip(key, options = {}) {
-  const clip = clips[key];
-  if (!clip) return;
-
-  clearIdleTimer();
-  const token = ++playToken;
-
-  if (currentClip) {
-    setTransition(clip.cover, true);
-    video.classList.remove("is-visible");
-    video.pause();
-    await delay(220);
-    if (token !== playToken) return;
-  }
-
-  currentClip = key;
-  currentAfter = options.after || null;
-  transitionStarted = false;
-  setActiveAction(key);
-  setClipProgress();
-  updateStatus(clip.label, clip.counter);
-  video.classList.remove("is-visible");
-  video.muted = !soundOn;
-  video.dataset.playToken = String(token);
-  video.src = clip.src;
-  video.load();
-
-  const ready = await waitForVideo(token);
-  if (!ready) {
-    if (token === playToken) {
-      updateStatus("VIDEO COULD NOT OPEN", "RETRY / —");
-      await resetToAnchor({ runAfter: false });
-    }
+    void transition.offsetWidth;
+    transition.dataset.mode = mode;
+    transition.classList.add("is-active");
     return;
   }
+  transition.classList.remove("is-active");
+  window.setTimeout(() => transition.removeAttribute("data-mode"), 190);
+}
 
-  video.currentTime = 0;
-  try {
-    await video.play();
-  } catch {
-    video.muted = true;
-    soundOn = false;
-    syncSoundButton();
+class PerformanceDirector {
+  constructor(players) {
+    this.players = players;
+    this.activeIndex = -1;
+    this.currentKey = null;
+    this.currentAfter = null;
+    this.plannedKey = null;
+    this.plannedPromise = null;
+    this.requestId = 0;
+    this.transitioning = false;
+    this.started = false;
+    this.lastAmbientAction = null;
+
+    this.players.forEach((player) => {
+      player.addEventListener("timeupdate", () => this.onTimeUpdate(player));
+      player.addEventListener("ended", () => this.onEnded(player));
+    });
+  }
+
+  get activePlayer() {
+    return this.activeIndex < 0 ? null : this.players[this.activeIndex];
+  }
+
+  get standbyPlayer() {
+    if (this.activeIndex < 0) return this.players[0];
+    return this.players[1 - this.activeIndex];
+  }
+
+  async loadPlayer(player, key) {
+    if (player.dataset.clip === key && player.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      return true;
+    }
+
+    const loadId = Number(player.dataset.loadId || 0) + 1;
+    player.dataset.loadId = String(loadId);
+    player.pause();
+    player.playbackRate = 1;
+    player.muted = !soundOn;
+    player.dataset.clip = key;
+    player.src = clips[key].src;
+    player.load();
+
+    return new Promise((resolve) => {
+      const timeout = window.setTimeout(() => finish(false), 9000);
+      const onReady = () => finish(true);
+      const onError = () => finish(false);
+
+      const finish = (result) => {
+        window.clearTimeout(timeout);
+        player.removeEventListener("loadeddata", onReady);
+        player.removeEventListener("error", onError);
+        const currentLoad = Number(player.dataset.loadId) === loadId && player.dataset.clip === key;
+        if (result && currentLoad) player.currentTime = 0;
+        resolve(result && currentLoad);
+      };
+
+      player.addEventListener("loadeddata", onReady, { once: true });
+      player.addEventListener("error", onError, { once: true });
+    });
+  }
+
+  async startPlayer(player, playbackRate = 1) {
+    player.currentTime = 0;
+    player.playbackRate = playbackRate;
+    player.muted = !soundOn;
     try {
-      await video.play();
+      await player.play();
+      return true;
     } catch {
-      await resetToAnchor({ runAfter: false });
-      return;
+      soundOn = false;
+      this.players.forEach((item) => { item.muted = true; });
+      syncSoundButton();
+      try {
+        await player.play();
+        return true;
+      } catch {
+        return false;
+      }
     }
   }
 
-  if (token !== playToken) return;
-  window.requestAnimationFrame(() => {
-    setTransition(clip.cover, false);
-    video.classList.add("is-visible");
-  });
+  chooseAmbientAction() {
+    const actions = ["reactKey", "vanish", "tease"].filter((key) => key !== this.lastAmbientAction);
+    const key = actions[Math.floor(Math.random() * actions.length)];
+    this.lastAmbientAction = key;
+    return key;
+  }
+
+  chooseNextAfter(key) {
+    if (key === "idleMain") return "idleKey";
+    if (key === "idleKey") return this.chooseAmbientAction();
+    return "idleMain";
+  }
+
+  prepareNext() {
+    if (!this.currentKey || this.activeIndex < 0) return;
+    this.plannedKey = this.chooseNextAfter(this.currentKey);
+    this.plannedPromise = this.loadPlayer(this.standbyPlayer, this.plannedKey);
+  }
+
+  async switchTo(key, options = {}) {
+    const clip = clips[key];
+    if (!clip || reduceMotion) return false;
+
+    const requestId = ++this.requestId;
+    this.transitioning = true;
+    const previous = this.activePlayer;
+    const nextIndex = this.activeIndex < 0 ? 0 : 1 - this.activeIndex;
+    const next = this.players[nextIndex];
+    const ready = await this.loadPlayer(next, key);
+
+    if (!ready || requestId !== this.requestId) {
+      if (requestId === this.requestId) this.transitioning = false;
+      return false;
+    }
+
+    const cover = options.cover || (options.natural && this.currentKey ? clips[this.currentKey].cover : clip.cover);
+    if (previous && !options.initial) {
+      setTransition(cover, true);
+      await delay(175);
+      if (requestId !== this.requestId) return false;
+    }
+
+    const playing = await this.startPlayer(next, options.playbackRate || 1);
+    if (!playing || requestId !== this.requestId) {
+      next.pause();
+      if (requestId === this.requestId) this.transitioning = false;
+      return false;
+    }
+
+    next.classList.add("is-visible");
+    if (previous && previous !== next) {
+      previous.classList.remove("is-visible");
+      previous.pause();
+      previous.playbackRate = 1;
+    }
+
+    this.activeIndex = nextIndex;
+    this.currentKey = key;
+    this.currentAfter = options.after || null;
+    this.plannedKey = null;
+    this.plannedPromise = null;
+    setActiveAction(clip.kind === "action" ? key : null);
+    setClipProgress();
+    updateStatus(clip.label, clip.counter);
+
+    await delay(options.initial ? 40 : 310);
+    if (requestId !== this.requestId) return false;
+    setTransition(cover, false);
+    this.transitioning = false;
+    this.prepareNext();
+    return true;
+  }
+
+  async advance() {
+    if (this.transitioning || !this.currentKey || !heroVisible || document.hidden) return;
+    const completedAfter = this.currentAfter;
+    const nextKey = this.plannedKey || this.chooseNextAfter(this.currentKey);
+    const switched = await this.switchTo(nextKey, { natural: true, reason: "timeline" });
+    if (switched && completedAfter === "talk") openTalk();
+  }
+
+  request(key, options = {}) {
+    return this.switchTo(key, { ...options, reason: options.reason || "manual" });
+  }
+
+  onTimeUpdate(player) {
+    if (player !== this.activePlayer || this.transitioning || !this.currentKey) return;
+    if (!Number.isFinite(player.duration) || player.duration <= 0) return;
+    setClipProgress(player.currentTime / player.duration);
+    if (player.duration - player.currentTime <= clips[this.currentKey].switchLead) {
+      this.advance();
+    }
+  }
+
+  onEnded(player) {
+    if (player === this.activePlayer && !this.transitioning) this.advance();
+  }
+
+  pause() {
+    this.activePlayer?.pause();
+  }
+
+  resume() {
+    if (!this.started || !this.activePlayer || document.hidden || !heroVisible) return;
+    this.activePlayer.play().catch(() => {});
+  }
+
+  setMuted(muted) {
+    this.players.forEach((player) => { player.muted = muted; });
+  }
+
+  async start() {
+    if (this.started || reduceMotion) return;
+    this.started = true;
+    const started = await this.switchTo("idleMain", { initial: true, reason: "boot" });
+    if (!started) {
+      this.started = false;
+      updateStatus("VIDEO COULD NOT OPEN", "RETRY / —");
+    }
+  }
 }
 
-video.addEventListener("timeupdate", () => {
-  if (!currentClip || transitionStarted || !Number.isFinite(video.duration)) return;
-  const clip = clips[currentClip];
-  setClipProgress(video.currentTime / video.duration);
-  if (video.duration - video.currentTime <= clip.fade) {
-    transitionStarted = true;
-    setTransition(clip.cover, true);
-    video.classList.remove("is-visible");
-  }
-});
-
-video.addEventListener("ended", () => {
-  const token = Number(video.dataset.playToken);
-  if (token === playToken) resetToAnchor({ token });
-});
+const director = new PerformanceDirector(videos);
 
 function syncSoundButton() {
   soundToggle.setAttribute("aria-pressed", String(soundOn));
   soundToggle.lastElementChild.textContent = soundOn ? "SOUND ON" : "SOUND OFF";
-  video.muted = !soundOn;
+  director.setMuted(!soundOn);
 }
 
 soundToggle.addEventListener("click", () => {
   soundOn = !soundOn;
   syncSoundButton();
-  if (soundOn && currentClip && video.paused) {
-    video.play().catch(() => {});
+  if (soundOn && director.activePlayer?.paused) {
+    director.resume();
   }
 });
 
@@ -254,7 +322,6 @@ function openTalk() {
   talkScrim.classList.add("is-open");
   talkScrim.setAttribute("aria-hidden", "false");
   document.body.classList.add("no-scroll");
-  clearIdleTimer();
 }
 
 function closeTalk() {
@@ -263,20 +330,17 @@ function closeTalk() {
   talkScrim.classList.remove("is-open");
   talkScrim.setAttribute("aria-hidden", "true");
   if (!indexDialog.open) document.body.classList.remove("no-scroll");
-  scheduleIdle(1800);
 }
 
 function openIndex() {
   closeTalk();
   if (!indexDialog.open) indexDialog.showModal();
   document.body.classList.add("no-scroll");
-  clearIdleTimer();
 }
 
 function closeIndex() {
   if (indexDialog.open) indexDialog.close();
   if (!talkPanel.classList.contains("is-open")) document.body.classList.remove("no-scroll");
-  scheduleIdle(1800);
 }
 
 function scrollToTarget(selector) {
@@ -318,8 +382,9 @@ document.addEventListener("click", (event) => {
   const playButton = event.target.closest("[data-play]");
   if (!playButton) return;
 
-  const run = () => playClip(playButton.dataset.play, { after: playButton.dataset.after });
+  const run = () => director.request(playButton.dataset.play, { after: playButton.dataset.after });
   if (playButton.hasAttribute("data-return-home")) {
+    suppressHeroWelcome = !heroVisible;
     scrollToTarget("#home");
     window.setTimeout(run, reduceMotion ? 40 : 650);
   } else {
@@ -340,11 +405,10 @@ indexDialog.addEventListener("close", () => {
 function playRandomAction() {
   const options = ["reactKey", "vanish", "portal", "tease"];
   const key = options[Math.floor(Math.random() * options.length)];
-  playClip(key, { after: key === "tease" ? "talk" : null });
+  director.request(key, { reason: "play-mad" });
 }
 
 document.querySelector("#randomPlay").addEventListener("click", playRandomAction);
-document.querySelector("#characterHitArea").addEventListener("click", playRandomAction);
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
@@ -382,28 +446,99 @@ function updatePageState() {
 window.addEventListener("scroll", updatePageState, { passive: true });
 updatePageState();
 
+let portalScrollUsed = false;
+let portalScrollLocked = false;
+let touchStartY = 0;
+
+function beginPortalScroll() {
+  if (
+    portalScrollUsed ||
+    portalScrollLocked ||
+    reduceMotion ||
+    !director.started ||
+    window.scrollY > 4 ||
+    indexDialog.open ||
+    talkPanel.classList.contains("is-open")
+  ) {
+    return false;
+  }
+
+  portalScrollUsed = true;
+  portalScrollLocked = true;
+  director.request("portal", { reason: "first-scroll", playbackRate: 1.25 });
+  window.setTimeout(() => {
+    document.querySelector("#profile").scrollIntoView({ behavior: "smooth", block: "start" });
+    portalScrollLocked = false;
+  }, 1650);
+  return true;
+}
+
+window.addEventListener(
+  "wheel",
+  (event) => {
+    if (portalScrollLocked) {
+      event.preventDefault();
+      return;
+    }
+    if (event.deltaY > 28 && beginPortalScroll()) event.preventDefault();
+  },
+  { passive: false }
+);
+
+window.addEventListener(
+  "touchstart",
+  (event) => {
+    touchStartY = event.touches[0]?.clientY || 0;
+  },
+  { passive: true }
+);
+
+window.addEventListener(
+  "touchmove",
+  (event) => {
+    if (portalScrollLocked) {
+      event.preventDefault();
+      return;
+    }
+    const currentY = event.touches[0]?.clientY || touchStartY;
+    if (touchStartY - currentY > 46 && beginPortalScroll()) event.preventDefault();
+  },
+  { passive: false }
+);
+
+let hasLeftHero = false;
+
 const heroObserver = new IntersectionObserver(
   ([entry]) => {
+    const wasVisible = heroVisible;
     heroVisible = entry.isIntersecting;
-    if (!heroVisible && currentClip) {
-      ++playToken;
-      resetToAnchor({ runAfter: false, schedule: false });
-    } else if (heroVisible && !currentClip) {
-      scheduleIdle(1600);
+    if (!heroVisible) {
+      if (wasVisible) hasLeftHero = true;
+      director.pause();
+      return;
+    }
+
+    director.resume();
+    if (hasLeftHero) {
+      hasLeftHero = false;
+      if (suppressHeroWelcome) {
+        suppressHeroWelcome = false;
+        return;
+      }
+      window.setTimeout(() => {
+        if (heroVisible && !document.hidden) director.request("tease", { reason: "return-home" });
+      }, 320);
     }
   },
-  { threshold: 0.2 }
+  { threshold: 0.24 }
 );
 heroObserver.observe(hero);
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    clearIdleTimer();
-    video.pause();
-  } else if (currentClip) {
-    video.play().catch(() => resetToAnchor({ runAfter: false }));
+    director.pause();
   } else {
-    scheduleIdle(1000);
+    director.resume();
   }
 });
 
@@ -524,7 +659,7 @@ setupAmbientCanvas();
 syncSoundButton();
 
 window.addEventListener("load", async () => {
-  await delay(reduceMotion ? 150 : 1180);
+  const minimumBoot = delay(reduceMotion ? 150 : 900);
+  await Promise.all([minimumBoot, director.start()]);
   document.querySelector(".boot-screen").classList.add("is-done");
-  if (!reduceMotion) scheduleIdle(2600);
 });
