@@ -1,4 +1,4 @@
-import { characterMedia } from "./mediaCatalog";
+import { characterMedia, workMedia } from "./mediaCatalog";
 
 export type SectionId = "home" | "character" | "personality" | "works" | "links";
 
@@ -49,42 +49,35 @@ export const characterDetails = [
   },
 ];
 
-export type WorkItem = {
-  kind: "article" | "repository" | "profile";
+export type FeaturedWork = {
   index: string;
   title: string;
   description: string;
   meta: string;
-  href?: string;
+  href: string;
   cta: string;
+  desktopImage: string;
+  desktopImageAlt: string;
+  mobileImage: string;
+  mobileImageAlt: string;
+  tags: string[];
+  highlights: string[];
 };
 
-export const works: WorkItem[] = [
+export const featuredWorks: FeaturedWork[] = [
   {
-    kind: "repository",
     index: "01",
     title: "Nyxie Web",
     description: "夜希的互动式角色展示网站，也是这次视觉、动画与前端结构重做的完整项目。",
     meta: "GITHUB / FEATURED REPOSITORY",
     href: "https://github.com/CheshireMew/Nyxie-Web",
     cta: "查看仓库",
-  },
-  {
-    kind: "profile",
-    index: "02",
-    title: "CheshireMew",
-    description: "更多代码、实验项目与正在进行的创作会持续整理在 GitHub 主页。",
-    meta: "GITHUB / CREATOR PROFILE",
-    href: "https://github.com/CheshireMew",
-    cta: "进入主页",
-  },
-  {
-    kind: "article",
-    index: "03",
-    title: "Blog Archive",
-    description: "文章入口已经为真实内容预留。提供博客地址后，只需要更新内容数据，不需要修改页面组件。",
-    meta: "BLOG / WAITING FOR URL",
-    cta: "待接入",
+    desktopImage: workMedia.nyxieDesktop,
+    desktopImageAlt: "Nyxie Web 桌面端首页真实界面",
+    mobileImage: workMedia.nyxieMobile,
+    mobileImageAlt: "Nyxie Web 移动端首页真实界面",
+    tags: ["React", "GSAP", "Media Director", "Responsive"],
+    highlights: ["双视频预加载", "角色动作导演", "滚动章节", "移动端重排"],
   },
 ];
 
@@ -97,12 +90,6 @@ export const externalLinks = [
   },
   {
     index: "02",
-    label: "Nyxie Web Repo",
-    description: "查看这个网站的项目仓库",
-    href: "https://github.com/CheshireMew/Nyxie-Web",
-  },
-  {
-    index: "03",
     label: "Blog",
     description: "博客地址待接入",
   },

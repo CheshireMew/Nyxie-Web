@@ -37,11 +37,16 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([wait(reducedMotion ? 150 : 900), startDirector()]).then(() => {
+    void Promise.all([wait(reducedMotion ? 120 : 350), startDirector()]).then(() => {
       if (!cancelled) setReady(true);
     });
     return () => { cancelled = true; };
   }, [reducedMotion, startDirector]);
+
+  useEffect(() => {
+    document.body.classList.toggle("is-booting", !ready);
+    return () => document.body.classList.remove("is-booting");
+  }, [ready]);
 
   useEffect(() => {
     document.body.classList.toggle("no-scroll", site.indexOpen || site.talkOpen);
@@ -73,6 +78,11 @@ export default function App() {
     }, alreadyHome || reducedMotion ? 40 : 650);
   }, [reducedMotion, requestHeroClip, suppressNextWelcome]);
 
+  const openTalkWithTease = useCallback(() => {
+    openTalk();
+    void requestHeroClip("tease");
+  }, [openTalk, requestHeroClip]);
+
   return (
     <>
       <BootScreen ready={ready} />
@@ -87,8 +97,8 @@ export default function App() {
         reducedMotion={reducedMotion}
         onNavigate={navigate}
         onOpenIndex={() => dispatch({ type: "open-index" })}
+        onOpenTalk={openTalkWithTease}
         onToggleSound={() => dispatch({ type: "toggle-sound" })}
-        onPlay={playAtHero}
       />
 
       <main>
@@ -97,7 +107,6 @@ export default function App() {
           reducedMotion={reducedMotion}
           overlaysOpen={site.indexOpen || site.talkOpen}
           onNavigate={navigate}
-          onOpenTalk={openTalk}
         />
         <CharacterSection reducedMotion={reducedMotion} />
         <PersonalitySection reducedMotion={reducedMotion} />

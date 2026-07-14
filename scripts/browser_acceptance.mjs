@@ -21,6 +21,7 @@ let commandId = 0;
 const pending = new Map();
 const browserErrors = [];
 const failedResources = [];
+let bootState = null;
 
 socket.addEventListener("message", (event) => {
   const message = JSON.parse(event.data);
@@ -71,6 +72,18 @@ async function delay(milliseconds) {
   await new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
 }
 
+async function scrollChapterTo(selector, progress) {
+  await evaluate(`(() => {
+    const section = document.querySelector(${JSON.stringify(selector)});
+    if (!section) return false;
+    const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+    const travel = Math.max(0, section.offsetHeight - innerHeight);
+    window.scrollTo({ top: sectionTop + travel * ${progress}, behavior: 'instant' });
+    return true;
+  })()`);
+  await delay(1050);
+}
+
 async function waitFor(expression, timeout = 15000) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeout) {
@@ -96,6 +109,12 @@ async function navigate(url, captureBoot = false) {
   await waitFor("document.readyState === 'complete'");
   if (captureBoot) {
     await waitFor("Boolean(document.querySelector('.boot-screen:not(.is-done)'))");
+    bootState = await evaluate(`({
+      visible: getComputedStyle(document.querySelector('.boot-screen')).visibility === 'visible',
+      bodyLocked: document.body.classList.contains('is-booting'),
+      overflow: getComputedStyle(document.body).overflow,
+      progressAnimated: getComputedStyle(document.querySelector('.boot-line span')).animationName === 'boot-scan',
+    })`);
     await screenshot("desktop-boot.png");
   }
   await waitFor("document.querySelector('.boot-screen')?.classList.contains('is-done') === true", 20000);
@@ -159,26 +178,50 @@ const heroAction = await evaluate(`(() => {
   };
 })()`);
 
-await evaluate("document.querySelector('.menu-button')?.click()");
+await evaluate("document.querySelector('.main-nav button:last-child')?.click()");
 await waitFor("document.querySelector('.index-dialog')?.open === true");
-const indexOpen = await evaluate("document.querySelector('.index-dialog')?.open === true");
+await delay(350);
+const indexOpen = await evaluate(`(() => {
+  const dialog = document.querySelector('.index-dialog');
+  const panel = document.querySelector('.index-shell');
+  const rect = panel?.getBoundingClientRect();
+  return Boolean(dialog?.open && dialog?.dataset.state === 'open' && rect && Math.abs(rect.right - innerWidth) < 1 && panel?.contains(document.activeElement));
+})()`);
+await screenshot("desktop-directory.png");
 await evaluate("document.querySelector('.chapter-grid button')?.click()");
 await waitFor("document.querySelector('.main-nav .is-active')?.textContent === 'CHARACTER'");
+await delay(900);
 await screenshot("desktop-character.png");
 const directoryNavigation = await evaluate(`({
   dialogOpen: document.querySelector('.index-dialog')?.open ?? false,
   scrollY: Math.round(window.scrollY),
   activeNav: document.querySelector('.main-nav .is-active')?.textContent ?? null,
 })`);
+const characterStart = await evaluate(`({
+  titleTransform: getComputedStyle(document.querySelector('.character-stage-title')).transform,
+  portraitTransform: getComputedStyle(document.querySelector('.character-portrait')).transform,
+})`);
+await scrollChapterTo('#character', 0.38);
+await screenshot("desktop-character-scene.png");
 const character = await evaluate(`({
-  details: document.querySelectorAll('.character-detail').length,
-  imageLoaded: document.querySelector('.character-figure img')?.complete ?? false,
-  imageHeight: Math.round(document.querySelector('.character-figure img')?.getBoundingClientRect().height ?? 0),
+  scenes: document.querySelectorAll('.character-scene').length,
+  activeScenes: [...document.querySelectorAll('.character-scene')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+  portraitLoaded: document.querySelector('.character-portrait img')?.complete ?? false,
+  detailImagesLoaded: [...document.querySelectorAll('.character-scene img')].every((node) => node.complete),
+  titleTransform: getComputedStyle(document.querySelector('.character-stage-title')).transform,
+  portraitTransform: getComputedStyle(document.querySelector('.character-portrait')).transform,
+  progressTransform: getComputedStyle(document.querySelector('#character .chapter-progress-fill')).transform,
 })`);
 
-await evaluate("document.querySelector('#personality')?.scrollIntoView({behavior:'instant'})");
-await delay(1800);
+await scrollChapterTo('#personality', 0.08);
 await screenshot("desktop-personality.png");
+const personalityStart = await evaluate(`({
+  copyTransform: getComputedStyle(document.querySelector('.personality-copy')).transform,
+  mediaTransform: getComputedStyle(document.querySelector('.personality-media')).transform,
+  beatOpacities: [...document.querySelectorAll('.personality-beat')].map((node) => getComputedStyle(node).opacity),
+})`);
+await scrollChapterTo('#personality', 0.46);
+await screenshot("desktop-personality-reaction.png");
 const personality = await evaluate(`(() => {
   const video = document.querySelector('.personality-video');
   const media = document.querySelector('.personality-media');
@@ -188,34 +231,69 @@ const personality = await evaluate(`(() => {
     currentTime: video?.currentTime ?? null,
     paused: video?.paused ?? null,
     mediaHeight: Math.round(media?.getBoundingClientRect().height ?? 0),
+    copyTransform: getComputedStyle(document.querySelector('.personality-copy')).transform,
+    mediaTransform: getComputedStyle(media).transform,
+    beatOpacities: [...document.querySelectorAll('.personality-beat')].map((node) => getComputedStyle(node).opacity),
+    activeBeats: [...document.querySelectorAll('.personality-beat')].filter((node) => Number(getComputedStyle(node).opacity) > 0.55).length,
   };
 })()`);
 
-await evaluate("document.querySelector('#works')?.scrollIntoView({behavior:'instant'})");
-await delay(900);
+await scrollChapterTo('#works', 0.08);
 await screenshot("desktop-works.png");
+const worksStart = await evaluate(`({
+  showcaseTransform: getComputedStyle(document.querySelector('.work-showcase')).transform,
+  characterTransform: getComputedStyle(document.querySelector('#works .works-character')).transform,
+})`);
+await scrollChapterTo('#works', 0.56);
+await screenshot("desktop-works-focus.png");
 const works = await evaluate(`({
-  cards: document.querySelectorAll('.work-card').length,
-  realLinks: document.querySelectorAll('a.work-card[href]').length,
+  featured: document.querySelectorAll('.work-showcase').length,
+  realLinks: document.querySelectorAll('a.work-showcase[href]').length,
+  desktopImageLoaded: document.querySelector('.work-showcase-screen img')?.complete ?? false,
+  mobileImageLoaded: document.querySelector('.work-showcase-mobile img')?.complete ?? false,
   characterLoaded: document.querySelector('.works-character')?.complete ?? false,
+  characterVisible: (() => {
+    const rect = document.querySelector('#works .works-character')?.getBoundingClientRect();
+    return Boolean(rect && rect.top < innerHeight && rect.bottom > 0);
+  })(),
+  showcaseTransform: getComputedStyle(document.querySelector('.work-showcase')).transform,
+  characterTransform: getComputedStyle(document.querySelector('#works .works-character')).transform,
+  escapedMarkupVisible: document.body.innerText.includes('&lt;') || document.body.innerText.includes('&gt;'),
 })`);
 
-await evaluate("document.querySelector('#links')?.scrollIntoView({behavior:'instant'})");
-await delay(900);
+await scrollChapterTo('#links', 0.08);
 await screenshot("desktop-links.png");
+const linksStart = await evaluate(`({
+  characterTransform: getComputedStyle(document.querySelector('#links .links-character')).transform,
+  portalTransform: getComputedStyle(document.querySelector('.links-portal')).transform,
+})`);
+await scrollChapterTo('#links', 0.58);
+await screenshot("desktop-links-open.png");
 const links = await evaluate(`({
-  rows: document.querySelectorAll('.link-row').length,
-  realLinks: document.querySelectorAll('a.link-row[href]').length,
-  hrefs: [...document.querySelectorAll('a.link-row[href]')].map((node) => node.href),
+  rows: document.querySelectorAll('.link-gate').length,
+  visibleRows: [...document.querySelectorAll('.link-gate')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+  realLinks: document.querySelectorAll('a.link-gate[href]').length,
+  hrefs: [...document.querySelectorAll('a.link-gate[href]')].map((node) => node.href),
+  characterTransform: getComputedStyle(document.querySelector('#links .links-character')).transform,
+  portalTransform: getComputedStyle(document.querySelector('.links-portal')).transform,
 })`);
 
 await evaluate("document.querySelector('#home')?.scrollIntoView({behavior:'instant'})");
 await delay(300);
-await evaluate("document.querySelector('.hero-talk-shortcut')?.click()");
-await waitFor("document.querySelector('.talk-panel')?.classList.contains('is-open') === true");
-const talkOpen = await evaluate("document.querySelector('.talk-panel')?.classList.contains('is-open') === true");
+const talkStartedAt = Date.now();
+await evaluate("document.querySelector('.talk-button')?.click()");
+await waitFor("document.querySelector('.talk-dialog')?.dataset.state === 'open'");
+await delay(350);
+const talkLatencyMs = Date.now() - talkStartedAt;
+const talkOpen = await evaluate(`(() => {
+  const dialog = document.querySelector('.talk-dialog');
+  const panel = document.querySelector('.talk-panel');
+  const rect = panel?.getBoundingClientRect();
+  return Boolean(dialog?.open && dialog?.dataset.state === 'open' && rect && Math.abs(rect.right - innerWidth) < 1 && panel?.contains(document.activeElement));
+})()`);
+await screenshot("desktop-talk.png");
 await evaluate("document.querySelector('.talk-head button')?.click()");
-await waitFor("document.querySelector('.talk-panel')?.classList.contains('is-open') === false");
+await waitFor("document.querySelector('.talk-dialog')?.open === false");
 
 await send("Emulation.setDeviceMetricsOverride", {
   width: 390,
@@ -235,29 +313,109 @@ const mobileHome = await evaluate(`({
   menuVisible: getComputedStyle(document.querySelector('.menu-button')).display,
 })`);
 
-await evaluate("document.querySelector('#character')?.scrollIntoView({behavior:'instant'})");
-await delay(900);
+await scrollChapterTo('#character', 0.38);
 await screenshot("mobile-character.png");
 const mobileCharacter = await evaluate(`({
   bodyWidth: document.body.scrollWidth,
   viewportWidth: innerWidth,
-  details: document.querySelectorAll('.character-detail').length,
-  imageLoaded: document.querySelector('.character-figure img')?.complete ?? false,
+  scenes: document.querySelectorAll('.character-scene').length,
+  activeScenes: [...document.querySelectorAll('.character-scene')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+  portraitLoaded: document.querySelector('.character-portrait img')?.complete ?? false,
+  detailImagesLoaded: [...document.querySelectorAll('.character-scene img')].every((node) => node.complete),
 })`);
+
+await scrollChapterTo('#personality', 0.46);
+await screenshot("mobile-personality.png");
+const mobilePersonality = await evaluate(`(() => {
+  const media = document.querySelector('.personality-media');
+  return {
+    bodyWidth: document.body.scrollWidth,
+    viewportWidth: innerWidth,
+    mediaVisible: Boolean(media && media.getBoundingClientRect().top < innerHeight && media.getBoundingClientRect().bottom > 0),
+    activeBeats: [...document.querySelectorAll('.personality-beat')].filter((node) => Number(getComputedStyle(node).opacity) > 0.55).length,
+    videoReadyState: document.querySelector('.personality-video')?.readyState ?? null,
+  };
+})()`);
+
+await scrollChapterTo('#works', 0.56);
+await screenshot("mobile-works.png");
+const mobileWorks = await evaluate(`({
+  bodyWidth: document.body.scrollWidth,
+  viewportWidth: innerWidth,
+  featured: document.querySelectorAll('.work-showcase').length,
+  desktopImageLoaded: document.querySelector('.work-showcase-screen img')?.complete ?? false,
+  mobileImageLoaded: document.querySelector('.work-showcase-mobile img')?.complete ?? false,
+  copyVisible: [...document.querySelectorAll('.work-showcase-copy > *')].some((node) => Number(getComputedStyle(node).opacity) > 0.8),
+})`);
+
+await scrollChapterTo('#links', 0.58);
+await screenshot("mobile-links.png");
+const mobileLinks = await evaluate(`({
+  bodyWidth: document.body.scrollWidth,
+  viewportWidth: innerWidth,
+  rows: document.querySelectorAll('.link-gate').length,
+  visibleRows: [...document.querySelectorAll('.link-gate')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+  characterLoaded: document.querySelector('.links-character')?.complete ?? false,
+})`);
+
+await send("Emulation.setDeviceMetricsOverride", {
+  width: 1440,
+  height: 1000,
+  deviceScaleFactor: 1,
+  mobile: false,
+});
+await send("Emulation.setEmulatedMedia", {
+  media: "screen",
+  features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+});
+await navigate(siteUrl);
+await screenshot("reduced-motion-home.png");
+await evaluate("document.querySelector('.talk-button')?.click()");
+await waitFor("document.querySelector('.talk-dialog')?.dataset.state === 'open'");
+const reducedMotion = await evaluate(`({
+  currentClip: document.querySelector('.hero-video.is-visible')?.dataset.clip ?? null,
+  personalityUsesPoster: Boolean(document.querySelector('.personality-poster')),
+  cursorHidden: getComputedStyle(document.querySelector('.cursor-ring')).display === 'none',
+  panelOpen: document.querySelector('.talk-dialog')?.open === true,
+  panelTransform: getComputedStyle(document.querySelector('.side-panel-shell')).transform,
+})`);
+await evaluate("document.querySelector('.talk-head button')?.click()");
+await waitFor("document.querySelector('.talk-dialog')?.open === false");
+await evaluate("document.querySelector('#works')?.scrollIntoView({behavior:'instant', block:'start'})");
+await delay(500);
+await screenshot("reduced-motion-works.png");
+const reducedChapter = await evaluate(`({
+  showcaseVisible: Number(getComputedStyle(document.querySelector('.work-showcase')).opacity) === 1,
+  projectCopyVisible: [...document.querySelectorAll('.work-showcase-copy > *')].every((node) => Number(getComputedStyle(node).opacity) === 1),
+  characterVisible: Number(getComputedStyle(document.querySelector('#works .works-character')).opacity) === 1,
+  stageHeight: Math.round(document.querySelector('.works-stage')?.getBoundingClientRect().height ?? 0),
+})`);
+await send("Emulation.setEmulatedMedia", { media: "screen", features: [] });
 
 const report = {
   desktopHome,
+  bootState,
   portalScroll,
   heroAction,
   indexOpen,
   directoryNavigation,
+  characterStart,
   character,
+  personalityStart,
   personality,
+  worksStart,
   works,
+  linksStart,
   links,
   talkOpen,
+  talkLatencyMs,
   mobileHome,
   mobileCharacter,
+  mobilePersonality,
+  mobileWorks,
+  mobileLinks,
+  reducedMotion,
+  reducedChapter,
   browserErrors,
   failedResources,
 };
@@ -268,18 +426,28 @@ socket.close();
 
 const checks = [
   [desktopHome.title.includes("夜希"), "page title"],
+  [bootState?.visible && bootState?.bodyLocked && bootState?.overflow === "hidden" && bootState?.progressAnimated, "boot state"],
   [desktopHome.sectionCount === 5, "all five sections"],
   [desktopHome.videoReadyState >= 2 && Boolean(desktopHome.activeVideo), "hero video production and consumption"],
   [portalScroll.clip === "portal" && portalScroll.ended && portalScroll.scrollY > 500, "first-scroll portal sequence"],
   [heroAction.clip === "reactKey" && heroAction.currentTime > 0 && !heroAction.paused, "hero action playback"],
   [indexOpen && !directoryNavigation.dialogOpen && directoryNavigation.activeNav === "CHARACTER", "directory navigation"],
-  [character.details === 4 && character.imageLoaded && character.imageHeight > 300, "desktop character presentation"],
-  [personality.hasVideo && personality.readyState >= 2 && personality.currentTime > 0 && !personality.paused, "personality alpha video playback"],
-  [works.cards === 3 && works.realLinks === 2 && works.characterLoaded, "works content"],
-  [links.rows === 3 && links.realLinks === 2, "external links"],
-  [talkOpen, "talk panel"],
+  [character.scenes === 4 && character.activeScenes >= 1 && character.portraitLoaded && character.detailImagesLoaded, "desktop character presentation"],
+  [characterStart.titleTransform !== character.titleTransform && characterStart.portraitTransform !== character.portraitTransform && character.progressTransform !== "none", "character scroll choreography"],
+  [personality.hasVideo && personality.readyState >= 2 && personality.currentTime > 0 && !personality.paused && personality.activeBeats >= 1, "personality alpha video playback"],
+  [personalityStart.mediaTransform !== personality.mediaTransform && JSON.stringify(personalityStart.beatOpacities) !== JSON.stringify(personality.beatOpacities), "personality scroll choreography"],
+  [works.featured === 1 && works.realLinks === 1 && works.desktopImageLoaded && works.mobileImageLoaded && works.characterLoaded && works.characterVisible && !works.escapedMarkupVisible, "works content"],
+  [worksStart.showcaseTransform !== works.showcaseTransform && worksStart.characterTransform !== works.characterTransform, "works scroll choreography"],
+  [links.rows === 2 && links.visibleRows >= 1 && links.realLinks === 1 && links.hrefs[0] === "https://github.com/CheshireMew", "external links"],
+  [linksStart.characterTransform !== links.characterTransform && linksStart.portalTransform !== links.portalTransform, "links scroll choreography"],
+  [talkOpen && talkLatencyMs < 1000, "talk panel direct response"],
   [mobileHome.bodyWidth <= mobileHome.viewportWidth && mobileHome.menuVisible !== "none", "mobile home layout"],
-  [mobileCharacter.bodyWidth <= mobileCharacter.viewportWidth && mobileCharacter.details === 4 && mobileCharacter.imageLoaded, "mobile character layout"],
+  [mobileCharacter.bodyWidth <= mobileCharacter.viewportWidth && mobileCharacter.scenes === 4 && mobileCharacter.activeScenes >= 1 && mobileCharacter.portraitLoaded && mobileCharacter.detailImagesLoaded, "mobile character layout"],
+  [mobilePersonality.bodyWidth <= mobilePersonality.viewportWidth && mobilePersonality.mediaVisible && mobilePersonality.activeBeats >= 1 && mobilePersonality.videoReadyState >= 2, "mobile personality layout"],
+  [mobileWorks.bodyWidth <= mobileWorks.viewportWidth && mobileWorks.featured === 1 && mobileWorks.desktopImageLoaded && mobileWorks.mobileImageLoaded && mobileWorks.copyVisible, "mobile works layout"],
+  [mobileLinks.bodyWidth <= mobileLinks.viewportWidth && mobileLinks.rows === 2 && mobileLinks.visibleRows >= 1 && mobileLinks.characterLoaded, "mobile links layout"],
+  [reducedMotion.currentClip === null && reducedMotion.personalityUsesPoster && reducedMotion.cursorHidden && reducedMotion.panelOpen && reducedMotion.panelTransform === "none", "reduced motion path"],
+  [reducedChapter.showcaseVisible && reducedChapter.projectCopyVisible && reducedChapter.characterVisible && reducedChapter.stageHeight >= 1000, "reduced motion chapter content"],
   [browserErrors.length === 0, "browser console"],
   [failedResources.length === 0, "resource loading"],
 ];

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { characterMedia } from "../content/mediaCatalog";
 import { gsap, ScrollTrigger, useGSAP } from "../animation/gsap";
+import { ChapterHud } from "../components/ChapterHud";
 
 function isSafariBrowser() {
   const userAgent = navigator.userAgent;
@@ -15,19 +16,38 @@ export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }
 
   useGSAP(() => {
     if (reducedMotion) return;
-    gsap.from(".personality-copy > *", {
-      y: 52,
-      opacity: 0,
-      stagger: 0.1,
-      duration: 0.85,
-      ease: "power3.out",
-      scrollTrigger: { trigger: sectionRef.current, start: "top 68%", once: true },
+    const beats = gsap.utils.toArray<HTMLElement>(".personality-beat");
+    gsap.set(beats, { autoAlpha: 0.2, xPercent: 8 });
+    const timeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: 0.8,
+      },
     });
-    gsap.fromTo(".personality-closeup", { xPercent: 18, rotate: 4 }, {
-      xPercent: -4,
-      rotate: -2,
+
+    timeline
+      .fromTo(".personality-copy", { xPercent: -12, autoAlpha: 0 }, { xPercent: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out" })
+      .fromTo(".personality-media", { xPercent: 14, scale: 0.86, autoAlpha: 0 }, { xPercent: 0, scale: 1, autoAlpha: 1, duration: 1, ease: "power3.out" }, 0)
+      .fromTo(".personality-orbit", { scale: 0.6, rotate: -24 }, { scale: 1, rotate: 0, duration: 1.1, ease: "power2.out" }, 0);
+
+    beats.forEach((beat, index) => {
+      timeline
+        .to(beat, { autoAlpha: 1, xPercent: 0, duration: 0.35, ease: "power2.out" })
+        .to(".personality-media", { scale: 1 + index * 0.035, xPercent: -index * 2, duration: 0.65, ease: "power2.inOut" }, "<")
+        .to(beat, { autoAlpha: 1, duration: 0.38 });
+      if (index < beats.length - 1) timeline.to(beat, { autoAlpha: 0.3, xPercent: -4, duration: 0.25 });
+    });
+
+    timeline
+      .fromTo(".personality-closeup", { clipPath: "circle(0% at 78% 50%)", autoAlpha: 0 }, { clipPath: "circle(72% at 72% 50%)", autoAlpha: 0.72, duration: 1.1, ease: "power2.inOut" })
+      .to(".personality-copy", { yPercent: -12, autoAlpha: 0.35, duration: 0.65 }, "<");
+
+    gsap.fromTo(".chapter-progress-fill", { scaleX: 0 }, {
+      scaleX: 1,
       ease: "none",
-      scrollTrigger: { trigger: sectionRef.current, start: "top bottom", end: "bottom top", scrub: 1 },
+      scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "bottom bottom", scrub: true },
     });
   }, { scope: sectionRef, dependencies: [reducedMotion] });
 
@@ -59,19 +79,14 @@ export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }
   }, [useVideo]);
 
   return (
-    <section ref={sectionRef} className="personality-section chapter" id="personality">
-      <div className="personality-grid" aria-hidden="true" />
-      <div className="section-kicker"><span>02</span> PERSONALITY / EYE CONTACT</div>
+    <section ref={sectionRef} className="personality-chapter chapter" id="personality">
       <div className="personality-stage">
+        <ChapterHud index="02" label="PERSONALITY / EYE CONTACT" inverted />
+        <div className="personality-grid-field" aria-hidden="true" />
         <div className="personality-copy">
           <small>SHE NOTICES FIRST</small>
           <h2>她先移动眼睛，<br />然后才让你知道<br /><span>自己被发现了</span>。</h2>
           <p>夜希不是热情的引导员。她更像一只安静观察你的猫：保持距离、判断反应，然后露出一点已经知道答案的笑。</p>
-          <div className="personality-beats" aria-label="性格动作阶段">
-            <span><b>01</b> SIDE GLANCE</span>
-            <span><b>02</b> EYE CONTACT</span>
-            <span><b>03</b> SMALL FANG</span>
-          </div>
         </div>
 
         <div className="personality-media">
@@ -97,6 +112,14 @@ export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }
         <figure className="personality-closeup" aria-hidden="true">
           <img src={characterMedia.personalityCloseup} alt="" />
         </figure>
+
+        <div className="personality-beats" aria-label="性格动作阶段">
+          <article className="personality-beat"><b>01</b><span>SIDE GLANCE</span><small>先确认你是否值得注意</small></article>
+          <article className="personality-beat"><b>02</b><span>EYE CONTACT</span><small>视线真正落到你身上</small></article>
+          <article className="personality-beat"><b>03</b><span>SMALL FANG</span><small>最后才允许笑意出现</small></article>
+        </div>
+
+        <div className="personality-signal" aria-hidden="true"><i /><span>EYE CONTACT ACQUIRED</span></div>
       </div>
     </section>
   );

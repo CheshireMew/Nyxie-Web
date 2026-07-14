@@ -74,3 +74,8 @@ export const characterMedia = {
   linksFrame: "/assets/character/links-frame.webp",
   linksStarChain: "/assets/character/links-star-chain.webp",
 };
+
+export const workMedia = {
+  nyxieDesktop: "/assets/works/nyxie-desktop.png",
+  nyxieMobile: "/assets/works/nyxie-mobile.png",
+};

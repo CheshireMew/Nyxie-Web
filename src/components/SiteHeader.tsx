@@ -1,4 +1,3 @@
-import type { ClipKey } from "../content/mediaCatalog";
 import { sections } from "../content/siteContent";
 import type { SectionId } from "../content/siteContent";
 import { MagneticButton } from "./MagneticButton";
@@ -10,8 +9,8 @@ type Props = {
   reducedMotion: boolean;
   onNavigate: (id: SectionId) => void;
   onOpenIndex: () => void;
+  onOpenTalk: () => void;
   onToggleSound: () => void;
-  onPlay: (key: ClipKey, after?: "talk") => void;
 };
 
 export function SiteHeader({
@@ -21,8 +20,8 @@ export function SiteHeader({
   reducedMotion,
   onNavigate,
   onOpenIndex,
+  onOpenTalk,
   onToggleSound,
-  onPlay,
 }: Props) {
   return (
     <header className={`site-header${compact ? " is-compact" : ""}`}>
@@ -54,7 +53,7 @@ export function SiteHeader({
           className="talk-button"
           type="button"
           reducedMotion={reducedMotion}
-          onClick={() => onPlay("tease", "talk")}
+          onClick={onOpenTalk}
         >
           TALK TO NYXIE
         </MagneticButton>

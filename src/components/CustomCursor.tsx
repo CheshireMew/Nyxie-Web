@@ -10,12 +10,54 @@ export function CustomCursor({ reducedMotion }: { reducedMotion: boolean }) {
     const ring = ringRef.current;
     if (!dot || !ring) return;
 
+    let targetX = -100;
+    let targetY = -100;
+    let currentX = -100;
+    let currentY = -100;
+    let velocityX = 0;
+    let velocityY = 0;
+    let animationFrame = 0;
+    let running = false;
+    let initialized = false;
+
+    const animateRing = () => {
+      const spring = 0.16;
+      const damping = 0.72;
+      velocityX = (velocityX + (targetX - currentX) * spring) * damping;
+      velocityY = (velocityY + (targetY - currentY) * spring) * damping;
+      currentX += velocityX;
+      currentY += velocityY;
+      ring.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+
+      const settled =
+        Math.abs(targetX - currentX) < 0.1 &&
+        Math.abs(targetY - currentY) < 0.1 &&
+        Math.abs(velocityX) < 0.1 &&
+        Math.abs(velocityY) < 0.1;
+      if (settled) {
+        currentX = targetX;
+        currentY = targetY;
+        ring.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        running = false;
+        return;
+      }
+      animationFrame = window.requestAnimationFrame(animateRing);
+    };
+
     const onPointerMove = (event: PointerEvent) => {
       dot.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
-      ring.animate(
-        { transform: `translate3d(${event.clientX}px, ${event.clientY}px, 0)` },
-        { duration: 260, fill: "forwards", easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
-      );
+      targetX = event.clientX;
+      targetY = event.clientY;
+      if (!initialized) {
+        initialized = true;
+        currentX = targetX;
+        currentY = targetY;
+        ring.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      }
+      if (!running) {
+        running = true;
+        animationFrame = window.requestAnimationFrame(animateRing);
+      }
       const target = event.target instanceof Element ? event.target : null;
       document.body.classList.toggle("cursor-active", Boolean(target?.closest("a, button, [data-cursor]")));
     };
@@ -25,6 +67,7 @@ export function CustomCursor({ reducedMotion }: { reducedMotion: boolean }) {
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
       document.documentElement.removeEventListener("mouseleave", onLeave);
+      window.cancelAnimationFrame(animationFrame);
       document.body.classList.remove("cursor-active");
     };
   }, [reducedMotion]);

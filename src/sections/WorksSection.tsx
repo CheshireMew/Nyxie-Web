@@ -1,76 +1,84 @@
 import { useRef } from "react";
 import { characterMedia } from "../content/mediaCatalog";
-import { works } from "../content/siteContent";
+import { featuredWorks } from "../content/siteContent";
 import { gsap, useGSAP } from "../animation/gsap";
+import { ChapterHud } from "../components/ChapterHud";
 
 export function WorksSection({ reducedMotion }: { reducedMotion: boolean }) {
   const sectionRef = useRef<HTMLElement>(null);
 
   useGSAP(() => {
     if (reducedMotion) return;
-    gsap.from(".work-card", {
-      y: 80,
-      opacity: 0,
-      stagger: 0.14,
-      duration: 0.95,
-      ease: "power3.out",
-      scrollTrigger: { trigger: ".works-grid", start: "top 78%", once: true },
+    const timeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: 0.85,
+      },
     });
-    gsap.fromTo(".works-character", { yPercent: 8, rotate: -1.5 }, {
-      yPercent: -5,
-      rotate: 1,
+
+    timeline
+      .fromTo(".works-stage-title", { yPercent: 35, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.7, ease: "power3.out" })
+      .fromTo(".work-showcase", { yPercent: 42, scale: 0.72, rotate: -7, autoAlpha: 0 }, { yPercent: 0, scale: 1, rotate: -1.4, autoAlpha: 1, duration: 1.15, ease: "power3.out" }, 0.2)
+      .fromTo(".works-character", { xPercent: 28, yPercent: 8, scale: 0.88, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 1, duration: 1.05, ease: "power3.out" }, 0.35)
+      .fromTo(".work-showcase-copy > *", { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, stagger: 0.08, duration: 0.55, ease: "power3.out" }, 1.05)
+      .fromTo(".work-showcase-mobile", { xPercent: 45, yPercent: 30, rotate: 9, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, rotate: 2, autoAlpha: 1, duration: 0.8, ease: "power3.out" }, 1.25)
+      .to(".works-stage-title", { yPercent: -42, scale: 0.8, autoAlpha: 0.18, duration: 0.7 })
+      .to(".work-showcase", { rotate: 0, xPercent: -8, scale: 1.06, duration: 0.9, ease: "power2.inOut" }, "<")
+      .to(".works-character", { xPercent: 8, scale: 1.1, duration: 0.9, ease: "power2.inOut" }, "<")
+      .to(".work-showcase-screen img", { scale: 1.045, yPercent: -3, duration: 0.9, ease: "power2.inOut" })
+      .to(".works-character", { xPercent: 14, yPercent: -2, scale: 1.14, duration: 0.9, ease: "power2.inOut" }, "<");
+
+    gsap.fromTo(".chapter-progress-fill", { scaleX: 0 }, {
+      scaleX: 1,
       ease: "none",
-      scrollTrigger: { trigger: sectionRef.current, start: "top bottom", end: "bottom top", scrub: 1.2 },
+      scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "bottom bottom", scrub: true },
     });
   }, { scope: sectionRef, dependencies: [reducedMotion] });
 
   return (
-    <section ref={sectionRef} className="works-section chapter" id="works">
-      <img className="works-moon-chain" src={characterMedia.worksMoonChain} alt="" aria-hidden="true" />
-      <img className="works-gem" src={characterMedia.worksGem} alt="" aria-hidden="true" />
-      <div className="section-kicker dark"><span>03</span> CONTENT / PROJECTS</div>
-      <header className="works-head">
-        <div>
-          <small>WHAT I MAKE</small>
-          <h2>角色让人停下，<br /><span>内容让人继续走</span>。</h2>
-        </div>
-        <p>这里不放生成出来的假文章或假代码。每一张卡片都对应真实地址，后续增加内容只需要更新数据。</p>
-      </header>
+    <section ref={sectionRef} className="works-chapter chapter" id="works">
+      <div className="works-stage">
+        <ChapterHud index="03" label="CONTENT / PROJECTS" />
+        <div className="works-grid-field" aria-hidden="true" />
+        <img className="works-moon-chain" src={characterMedia.worksMoonChain} alt="" aria-hidden="true" />
+        <img className="works-gem" src={characterMedia.worksGem} alt="" aria-hidden="true" />
 
-      <div className="works-layout">
-        <div className="works-character-wrap">
-          <div className="works-character-label"><span>NYXIE</span><small>CREATIVE COMPANION</small></div>
-          <img className="works-character" src={characterMedia.worksCharacter} alt="夜希回头展示斗篷背面的猫笑图案" />
-        </div>
+        <header className="works-stage-title">
+          <small>REAL OUTPUT / NOT A PLACEHOLDER</small>
+          <h2>角色让人停下，<br /><span>作品证明她真的存在</span>。</h2>
+        </header>
 
-        <div className="works-grid">
-          {works.map((work) => {
-            const content = (
-              <>
-                <div className={`work-preview ${work.kind}`} aria-hidden="true">
-                  <span className="work-preview-top"><i /><i /><i /></span>
-                  <strong>{work.kind === "article" ? "Aa" : work.kind === "repository" ? "&lt;/&gt;" : "NX"}</strong>
-                  <em>{work.index}</em>
-                </div>
-                <div className="work-copy">
-                  <small>{work.meta}</small>
-                  <h3>{work.title}</h3>
-                  <p>{work.description}</p>
-                  <span>{work.cta} {work.href ? "↗" : "·"}</span>
-                </div>
-              </>
-            );
-            return work.href ? (
-              <a className="work-card" key={work.index} href={work.href} target="_blank" rel="noreferrer">
-                {content}
-              </a>
-            ) : (
-              <article className="work-card is-pending" key={work.index} aria-label={`${work.title}，${work.cta}`}>
-                {content}
-              </article>
-            );
-          })}
-        </div>
+        <img className="works-character" src={characterMedia.worksCharacter} alt="夜希回头展示斗篷背面的猫笑图案" />
+
+        {featuredWorks.map((work) => (
+          <a className="work-showcase" key={work.index} href={work.href} target="_blank" rel="noreferrer">
+            <div className="work-showcase-bar" aria-hidden="true"><i /><i /><i /><span>NYXIE-WEB / LIVE PROJECT</span></div>
+            <div className="work-showcase-screen">
+              <img src={work.desktopImage} alt={work.desktopImageAlt} loading="lazy" decoding="async" />
+            </div>
+            <figure className="work-showcase-mobile">
+              <img src={work.mobileImage} alt={work.mobileImageAlt} loading="lazy" decoding="async" />
+            </figure>
+            <div className="work-showcase-copy">
+              <div className="work-showcase-index"><b>{work.index}</b><small>{work.meta}</small></div>
+              <div>
+                <h3>{work.title}</h3>
+                <p>{work.description}</p>
+              </div>
+              <ul aria-label="项目实现重点">
+                {work.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
+              </ul>
+              <div className="work-showcase-tags" aria-label="项目技术标签">
+                {work.tags.map((tag) => <span key={tag}>{tag}</span>)}
+              </div>
+              <strong>{work.cta} ↗</strong>
+            </div>
+          </a>
+        ))}
+
+        <div className="works-stage-caption" aria-hidden="true"><span>CREATIVE COMPANION</span><b>NYXIE</b></div>
       </div>
     </section>
   );

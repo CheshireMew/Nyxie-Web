@@ -11,7 +11,6 @@ type Props = {
   reducedMotion: boolean;
   overlaysOpen: boolean;
   onNavigate: (id: SectionId) => void;
-  onOpenTalk: () => void;
 };
 
 const actions: Array<{ key: ClipKey; index: string; zh: string; en: string }> = [
@@ -21,7 +20,7 @@ const actions: Array<{ key: ClipKey; index: string; zh: string; en: string }> = 
   { key: "tease", index: "04", zh: "靠近", en: "TEASE" },
 ];
 
-export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate, onOpenTalk }: Props) {
+export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate }: Props) {
   const sectionRef = useRef<HTMLElement>(null);
   const portalUsedRef = useRef(false);
   const portalLockedRef = useRef(false);
@@ -178,12 +177,14 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate,
               key={action.key}
               type="button"
               className={snapshot.activeAction === action.key ? "is-active" : ""}
+              aria-label={`播放夜希动作：${action.zh}`}
               onClick={() => {
                 if (action.key === "tease") void request(action.key, { after: "talk" });
                 else void request(action.key);
               }}
             >
-              <span>{action.index}</span> {action.zh} {action.en}
+              <span className="control-action-index">{action.index}</span>
+              <span className="control-action-label">{action.zh}<small>{action.en}</small></span>
             </button>
           ))}
         </div>
@@ -204,7 +205,6 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate,
         <span>SCROLL DOWN THE RABBIT HOLE</span><i />
       </button>
 
-      <button className="hero-talk-shortcut" type="button" onClick={onOpenTalk} aria-label="打开夜希互动面板" />
     </section>
   );
 }
