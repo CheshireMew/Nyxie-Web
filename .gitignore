@@ -3,6 +3,9 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Local source and reference material; the site uses assets/media/ derivatives.
+# Local source, archived legacy code, and browser acceptance artifacts.
 /夜希-动画/
 /又Vibe coding 了一个作品集网页 - 小红书.mp4
+/绿幕图/
+/archive/
+/artifacts/

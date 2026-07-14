@@ -1,10 +1,24 @@
 {
   "name": "nyxie-wonderland",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server.mjs",
-    "start": "node server.mjs"
+    "dev": "vite",
+    "start": "vite",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@gsap/react": "latest",
+    "gsap": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "typescript": "latest",
+    "vite": "latest"
   }
 }
