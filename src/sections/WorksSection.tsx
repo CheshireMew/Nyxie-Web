@@ -53,8 +53,6 @@ export function WorksSection({ reducedMotion }: { reducedMotion: boolean }) {
       <div className="works-stage">
         <ChapterHud index="03" label="CONTENT / PROJECTS" />
         <div className="works-grid-field" aria-hidden="true" />
-        <img className="works-moon-chain" src={characterMedia.worksMoonChain} alt="" aria-hidden="true" />
-        <img className="works-gem" src={characterMedia.worksGem} alt="" aria-hidden="true" />
 
         <header className="works-stage-title">
           <small>REAL OUTPUT / NOT A PLACEHOLDER</small>

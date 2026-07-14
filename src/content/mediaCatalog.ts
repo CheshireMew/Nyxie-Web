@@ -68,11 +68,8 @@ export const characterMedia = {
   personalityCloseup: "/assets/character/personality-closeup.webp",
   personalityDynamic: "/assets/character/personality-dynamic.webp",
   worksCharacter: "/assets/character/works-character.webp",
-  worksMoonChain: "/assets/character/works-moon-chain.webp",
-  worksGem: "/assets/character/works-gem.webp",
   linksCharacter: "/assets/character/links-character.webp",
   linksFrame: "/assets/character/links-frame.webp",
-  linksStarChain: "/assets/character/links-star-chain.webp",
 };
 
 export const workMedia = {

@@ -48,8 +48,7 @@ export function LinksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
       .to(".links-character", { xPercent: 7, yPercent: -2, scale: 1.08, duration: 0.85, ease: "power2.inOut" })
       .to(".links-portal", { scale: 1.22, rotate: 8, duration: 0.85, ease: "power2.inOut" }, "<")
       .to(".links-copy h2", { yPercent: -14, scale: 0.88, transformOrigin: "left center", autoAlpha: 0.28, duration: 0.65 }, "<")
-      .to(".links-star-chain", { yPercent: 24, rotate: 12, duration: 0.8, ease: "power2.inOut" })
-      .fromTo(".back-home", { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.45 }, "<");
+      .fromTo(".back-home", { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.45 });
 
     gsap.fromTo(".chapter-progress-fill", { scaleX: 0 }, {
       scaleX: 1,
@@ -63,7 +62,6 @@ export function LinksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
       <div className="links-stage">
         <ChapterHud index="04" label="LINKS / NEXT STOP" />
         <div className="links-grid-field" aria-hidden="true" />
-        <img className="links-star-chain" src={characterMedia.linksStarChain} alt="" aria-hidden="true" />
         <div className="links-portal" aria-hidden="true"><span /><i /></div>
         <img className="links-character" src={characterMedia.linksCharacter} alt="夜希向前迈步并回头看向用户" />
 

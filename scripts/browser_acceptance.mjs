@@ -158,6 +158,12 @@ const chapterScroll = await evaluate(`(() => {
   return { ...ratios, total: Number(Object.values(ratios).reduce((sum, value) => sum + value, 0).toFixed(2)) };
 })()`);
 
+const pastedAccessoryCount = await evaluate(`[
+  'works-moon-chain.webp',
+  'works-gem.webp',
+  'links-star-chain.webp',
+].filter((fileName) => [...document.images].some((image) => image.currentSrc.includes(fileName))).length`);
+
 await evaluate("window.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, cancelable: true }))");
 await waitFor("document.querySelector('.main-nav .is-active')?.textContent === 'CHARACTER'", 18000);
 const portalScroll = await evaluate(`(() => {
@@ -403,6 +409,7 @@ await send("Emulation.setEmulatedMedia", { media: "screen", features: [] });
 const report = {
   desktopHome,
   chapterScroll,
+  pastedAccessoryCount,
   bootState,
   portalScroll,
   heroAction,
@@ -438,6 +445,7 @@ const checks = [
   [bootState?.visible && bootState?.bodyLocked && bootState?.overflow === "hidden" && bootState?.progressAnimated, "boot state"],
   [desktopHome.sectionCount === 5, "all five sections"],
   [chapterScroll.character <= 2.5 && chapterScroll.personality <= 1.7 && chapterScroll.works <= 1.8 && chapterScroll.links <= 1.4 && chapterScroll.total <= 7.4, "compact chapter scroll distances"],
+  [pastedAccessoryCount === 0, "no standalone accessory images"],
   [desktopHome.videoReadyState >= 2 && Boolean(desktopHome.activeVideo), "hero video production and consumption"],
   [portalScroll.clip === "portal" && portalScroll.ended && portalScroll.scrollY > 500, "first-scroll portal sequence"],
   [heroAction.clip === "reactKey" && heroAction.currentTime > 0 && !heroAction.paused, "hero action playback"],
