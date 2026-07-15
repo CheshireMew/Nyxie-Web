@@ -3,12 +3,14 @@ import { characterMedia } from "../content/mediaCatalog";
 import { featuredWorks } from "../content/siteContent";
 import { gsap, useGSAP } from "../animation/gsap";
 import { ChapterHud } from "../components/ChapterHud";
+import { ExternalLinksDrawer } from "../components/ExternalLinks";
 
-export function WorksSection({ reducedMotion }: { reducedMotion: boolean }) {
+export function WorksSection({ reducedMotion, onBackHome }: { reducedMotion: boolean; onBackHome: () => void }) {
   const sectionRef = useRef<HTMLElement>(null);
 
   useGSAP(() => {
     if (reducedMotion) return;
+    const gates = gsap.utils.toArray<HTMLElement>(".external-link--drawer");
     const entrance = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
@@ -25,6 +27,11 @@ export function WorksSection({ reducedMotion }: { reducedMotion: boolean }) {
       .fromTo(".work-showcase-copy > *", { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, stagger: 0.08, duration: 0.55, ease: "power3.out" }, 1.05)
       .fromTo(".work-showcase-mobile", { xPercent: 45, yPercent: 30, rotate: 9, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, rotate: 2, autoAlpha: 1, duration: 0.8, ease: "power3.out" }, 1.25);
 
+    gsap.set(".links-drawer", { yPercent: 112, scale: 0.96, autoAlpha: 0 });
+    gsap.set(".links-drawer-backdrop", { autoAlpha: 0 });
+    gsap.set(gates, { y: 24, autoAlpha: 0 });
+    gsap.set(".works-page-back", { y: 16, autoAlpha: 0 });
+
     const timeline = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
@@ -39,7 +46,14 @@ export function WorksSection({ reducedMotion }: { reducedMotion: boolean }) {
       .to(".work-showcase", { rotate: 0, xPercent: -8, scale: 1.06, duration: 0.9, ease: "power2.inOut" }, "<")
       .to(".works-character", { xPercent: 8, scale: 1.1, duration: 0.9, ease: "power2.inOut" }, "<")
       .to(".work-showcase-screen img", { scale: 1.045, yPercent: -3, duration: 0.9, ease: "power2.inOut" })
-      .to(".works-character", { xPercent: 14, yPercent: -2, scale: 1.14, duration: 0.9, ease: "power2.inOut" }, "<");
+      .to(".works-character", { xPercent: 14, yPercent: -2, scale: 1.14, duration: 0.9, ease: "power2.inOut" }, "<")
+      .to(".work-showcase", { xPercent: -7, scale: 0.97, autoAlpha: 0.2, duration: 0.65, ease: "power2.inOut" }, 1.45)
+      .to(".works-character", { xPercent: 10, scale: 1.08, autoAlpha: 0.26, duration: 0.65, ease: "power2.inOut" }, 1.45)
+      .to(".works-stage-title", { autoAlpha: 0.08, duration: 0.55 }, 1.45)
+      .to(".links-drawer-backdrop", { autoAlpha: 1, duration: 0.52 }, 1.48)
+      .to(".links-drawer", { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.82, ease: "power4.out" }, 1.58)
+      .to(gates, { y: 0, autoAlpha: 1, duration: 0.46, stagger: 0.09, ease: "power3.out" }, 1.94)
+      .to(".works-page-back", { y: 0, autoAlpha: 1, duration: 0.4, ease: "power3.out" }, 2.08);
 
     gsap.fromTo(".chapter-progress-fill", { scaleX: 0 }, {
       scaleX: 1,
@@ -51,7 +65,7 @@ export function WorksSection({ reducedMotion }: { reducedMotion: boolean }) {
   return (
     <section ref={sectionRef} className="works-chapter chapter" id="works">
       <div className="works-stage">
-        <ChapterHud index="03" label="CONTENT / PROJECTS" />
+        <ChapterHud index="05" label="CONTENT / PROJECTS" />
         <div className="works-grid-field" aria-hidden="true" />
 
         <header className="works-stage-title">
@@ -88,6 +102,8 @@ export function WorksSection({ reducedMotion }: { reducedMotion: boolean }) {
         ))}
 
         <div className="works-stage-caption" aria-hidden="true"><span>CREATIVE COMPANION</span><b>NYXIE</b></div>
+        <ExternalLinksDrawer />
+        <button className="back-home works-page-back" type="button" onClick={onBackHome}>BACK TO NYXIE ↑</button>
       </div>
     </section>
   );

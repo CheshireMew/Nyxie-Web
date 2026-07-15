@@ -12,6 +12,7 @@ import { SiteHeader } from "./components/SiteHeader";
 import { DirectoryDialog } from "./components/DirectoryDialog";
 import { TalkPanel } from "./components/TalkPanel";
 import { HeroSection } from "./sections/HeroSection";
+import { GallerySection } from "./sections/GallerySection";
 import { CharacterSection } from "./sections/CharacterSection";
 import { PersonalitySection } from "./sections/PersonalitySection";
 import { WorksSection } from "./sections/WorksSection";
@@ -108,10 +109,11 @@ export default function App() {
           overlaysOpen={site.indexOpen || site.talkOpen}
           onNavigate={navigate}
         />
+        <GallerySection reducedMotion={reducedMotion} />
         <CharacterSection reducedMotion={reducedMotion} />
         <PersonalitySection reducedMotion={reducedMotion} />
-        <WorksSection reducedMotion={reducedMotion} />
-        <LinksSection reducedMotion={reducedMotion} onBackHome={() => navigate("home")} />
+        <LinksSection reducedMotion={reducedMotion} />
+        <WorksSection reducedMotion={reducedMotion} onBackHome={() => navigate("home")} />
       </main>
 
       <DirectoryDialog

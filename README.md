@@ -5,10 +5,11 @@
 ## 页面内容
 
 - `HOME`：首屏角色主视觉、六段已有视频、随机动作、声音和对话入口。
+- `GALLERY`：八种夜希形态的透明角色动作轮播；当前卡片播放 6 秒视频，两侧卡片、箭头、滑动和方向键均可切换。
 - `CHARACTER`：全身形象与脸部、服装、背面、不对称袜鞋四组设计细节。
 - `PERSONALITY`：10 秒透明人物动作视频；不支持 VP9 Alpha 或启用减少动态效果时显示静态海报。
-- `WORKS`：真实 GitHub 项目、创作者主页和待接入的博客卡片。
-- `LINKS`：GitHub、项目仓库和博客入口。
+- `LINKS`：GitHub 与博客入口，原有页面内链接完整保留。
+- `WORKS`：最终章节展示真实 GitHub 项目；页面滚动到底后从下方弹出链接目录，并提供返回首页按钮。
 
 ## 技术结构
 
@@ -16,6 +17,7 @@
 Nyxie-Web/
 ├─ public/assets/
 │  ├─ media/              # 首屏视频、锚点图和性格透明 WebM
+│  ├─ gallery/            # 八种形态的透明 WebM 与静态海报
 │  └─ character/          # 已抠图并裁切的网页角色素材
 ├─ src/
 │  ├─ animation/          # GSAP 注册入口
@@ -23,7 +25,7 @@ Nyxie-Web/
 │  ├─ components/         # 导航、目录、对话、环境效果
 │  ├─ content/            # 文案、链接和媒体路径的唯一数据源
 │  ├─ hooks/              # 页面状态和首屏视频导演
-│  ├─ sections/           # 五个页面章节
+│  ├─ sections/           # 六个页面章节
 │  └─ styles/global.css   # 全站视觉与响应式样式
 ├─ scripts/
 │  ├─ prepare_media.py    # 从绿幕母图生成透明 WebP

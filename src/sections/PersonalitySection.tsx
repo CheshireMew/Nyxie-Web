@@ -91,7 +91,7 @@ export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }
   return (
     <section ref={sectionRef} className="personality-chapter chapter" id="personality">
       <div className="personality-stage">
-        <ChapterHud index="02" label="PERSONALITY / EYE CONTACT" inverted />
+        <ChapterHud index="03" label="PERSONALITY / EYE CONTACT" inverted />
         <div className="personality-grid-field" aria-hidden="true" />
         <div className="personality-copy">
           <small>SHE NOTICES FIRST</small>

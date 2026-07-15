@@ -76,3 +76,14 @@ export const workMedia = {
   nyxieDesktop: "/assets/works/nyxie-desktop.png",
   nyxieMobile: "/assets/works/nyxie-mobile.png",
 };
+
+export const galleryMedia = {
+  goth: { video: "/assets/gallery/goth.webm", poster: "/assets/gallery/goth-poster.webp" },
+  garden: { video: "/assets/gallery/garden.webm", poster: "/assets/gallery/garden-poster.webp" },
+  demon: { video: "/assets/gallery/demon.webm", poster: "/assets/gallery/demon-poster.webp" },
+  winter: { video: "/assets/gallery/winter.webm", poster: "/assets/gallery/winter-poster.webp" },
+  astrologer: { video: "/assets/gallery/astrologer.webm", poster: "/assets/gallery/astrologer-poster.webp" },
+  starsea: { video: "/assets/gallery/starsea.webm", poster: "/assets/gallery/starsea-poster.webp" },
+  forbidden: { video: "/assets/gallery/forbidden.webm", poster: "/assets/gallery/forbidden-poster.webp" },
+  moonlit: { video: "/assets/gallery/moonlit.webm", poster: "/assets/gallery/moonlit-poster.webp" },
+} as const;

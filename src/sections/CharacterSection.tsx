@@ -72,7 +72,7 @@ export function CharacterSection({ reducedMotion }: { reducedMotion: boolean }) 
   return (
     <section ref={sectionRef} className="character-chapter chapter" id="character">
       <div className="character-stage">
-        <ChapterHud index="01" label="CHARACTER / DESIGN LANGUAGE" />
+        <ChapterHud index="02" label="CHARACTER / DESIGN LANGUAGE" />
         <div className="chapter-grid-field" aria-hidden="true" />
         <div className="character-halo" aria-hidden="true"><span /><i /></div>
 
