@@ -10,8 +10,6 @@
 - `WORKS`：真实 GitHub 项目、创作者主页和待接入的博客卡片。
 - `LINKS`：GitHub、项目仓库和博客入口。
 
-博客地址目前没有写入虚构链接。拿到真实地址后，只需修改 `src/content/siteContent.ts`。
-
 ## 技术结构
 
 ```text

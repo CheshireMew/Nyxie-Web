@@ -1,5 +1,9 @@
 import { characterMedia, workMedia } from "./mediaCatalog";
 
+export const siteLinks = {
+  blog: "https://blog.blacknico.com/",
+} as const;
+
 export type SectionId = "home" | "character" | "personality" | "works" | "links";
 
 export const sections: Array<{ id: SectionId; index: string; en: string; zh: string }> = [
@@ -91,6 +95,7 @@ export const externalLinks = [
   {
     index: "02",
     label: "Blog",
-    description: "博客地址待接入",
+    description: "文章、笔记与持续更新",
+    href: siteLinks.blog,
   },
 ];

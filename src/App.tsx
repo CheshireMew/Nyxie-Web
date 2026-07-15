@@ -114,12 +114,6 @@ export default function App() {
         <LinksSection reducedMotion={reducedMotion} onBackHome={() => navigate("home")} />
       </main>
 
-      <footer className="site-footer">
-        <span>NYXIE / CHARACTER &amp; CREATOR</span>
-        <span>© 2026 · CHESHIREMEW</span>
-        <button type="button" onClick={() => navigate("home")}>BACK TO NYXIE ↑</button>
-      </footer>
-
       <DirectoryDialog
         open={site.indexOpen}
         onClose={() => dispatch({ type: "close-index" })}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import type { MouseEvent } from "react";
 import { heroMedia } from "../content/mediaCatalog";
 import type { ClipKey } from "../content/mediaCatalog";
-import type { SectionId } from "../content/siteContent";
+import { siteLinks, type SectionId } from "../content/siteContent";
 import type { PerformanceDirector } from "../hooks/usePerformanceDirector";
 import { MagneticButton } from "../components/MagneticButton";
 
@@ -146,14 +146,14 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
         <p className="hero-role reveal-up">梦境导航员 · 柴郡猫的不可靠继承者</p>
         <p className="hero-intro reveal-up">她不负责带你走出仙境。<br />她只负责让迷路变得值得。</p>
         <div className="hero-cta reveal-up">
-          <MagneticButton
+          <a
             className="primary-button"
-            type="button"
-            reducedMotion={reducedMotion}
-            onClick={() => void request("reactKey")}
+            href={siteLinks.blog}
+            target="_blank"
+            rel="noreferrer"
           >
-            <span>唤醒柴郡猫</span><b>↗</b>
-          </MagneticButton>
+            <span>跳进兔子洞</span><b>↗</b>
+          </a>
           <button className="text-button" type="button" onClick={() => onNavigate("character")}>
             读取角色档案 <span>↓</span>
           </button>

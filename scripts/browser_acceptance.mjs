@@ -180,7 +180,16 @@ await evaluate("document.querySelector('#home')?.scrollIntoView({behavior:'insta
 await waitFor("document.querySelector('.main-nav .is-active')?.textContent === 'HOME'");
 await delay(850);
 
-await evaluate("document.querySelector('.primary-button')?.click()");
+const blogCta = await evaluate(`(() => {
+  const link = document.querySelector('.primary-button');
+  return {
+    tagName: link?.tagName ?? null,
+    text: link?.textContent?.trim() ?? '',
+    href: link?.href ?? null,
+    target: link?.target ?? null,
+  };
+})()`);
+await evaluate("document.querySelector('.control-stack button:first-child')?.click()");
 await delay(950);
 const heroAction = await evaluate(`(() => {
   const video = document.querySelector('.hero-video.is-visible');
@@ -280,19 +289,64 @@ await screenshot("desktop-links.png");
 const linksStart = await evaluate(`({
   characterTransform: getComputedStyle(document.querySelector('#links .links-character')).transform,
   portalTransform: getComputedStyle(document.querySelector('.links-portal')).transform,
+  inlineRows: document.querySelectorAll('.external-link--inline').length,
+  visibleInlineRows: [...document.querySelectorAll('.external-link--inline')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+  inlineRealLinks: document.querySelectorAll('a.external-link--inline[href]').length,
+  drawerTransform: getComputedStyle(document.querySelector('.links-drawer')).transform,
+  drawerOpacity: Number(getComputedStyle(document.querySelector('.links-drawer')).opacity),
+  drawerTop: Math.round(document.querySelector('.links-drawer')?.getBoundingClientRect().top ?? 0),
 })`);
-await scrollChapterTo('#links', 0.58);
+await scrollChapterTo('#links', 0.96);
 await screenshot("desktop-links-open.png");
 const links = await evaluate(`({
-  rows: document.querySelectorAll('.link-gate').length,
-  visibleRows: [...document.querySelectorAll('.link-gate')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
-  realLinks: document.querySelectorAll('a.link-gate[href]').length,
-  hrefs: [...document.querySelectorAll('a.link-gate[href]')].map((node) => node.href),
+  rows: document.querySelectorAll('.external-link--drawer').length,
+  visibleRows: [...document.querySelectorAll('.external-link--drawer')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+  realLinks: document.querySelectorAll('a.external-link--drawer[href]').length,
+  hrefs: [...document.querySelectorAll('a.external-link--drawer[href]')].map((node) => node.href),
   characterTransform: getComputedStyle(document.querySelector('#links .links-character')).transform,
   portalTransform: getComputedStyle(document.querySelector('.links-portal')).transform,
+  drawerTransform: getComputedStyle(document.querySelector('.links-drawer')).transform,
+  drawerOpacity: Number(getComputedStyle(document.querySelector('.links-drawer')).opacity),
+  drawerTop: Math.round(document.querySelector('.links-drawer')?.getBoundingClientRect().top ?? 0),
+  drawerVisible: (() => {
+    const drawer = document.querySelector('.links-drawer');
+    const rect = drawer?.getBoundingClientRect();
+    return Boolean(rect && Number(getComputedStyle(drawer).opacity) > 0.9 && rect.top < innerHeight && rect.bottom > 0);
+  })(),
+  drawerCenterDelta: (() => {
+    const rect = document.querySelector('.links-drawer')?.getBoundingClientRect();
+    return rect ? {
+      x: Math.round(Math.abs(rect.left + rect.width / 2 - document.documentElement.clientWidth / 2)),
+      y: Math.round(Math.abs(rect.top + rect.height / 2 - innerHeight / 2)),
+    } : null;
+  })(),
+  pageBackVisible: (() => {
+    const button = document.querySelector('.links-page-back');
+    const rect = button?.getBoundingClientRect();
+    return Boolean(rect && Number(getComputedStyle(button).opacity) > 0.75 && rect.top < innerHeight && rect.bottom > 0);
+  })(),
+  pageBackBelowProgress: (() => {
+    const buttonRect = document.querySelector('.links-page-back')?.getBoundingClientRect();
+    const progressRect = document.querySelector('#links .chapter-progress-track')?.getBoundingClientRect();
+    return Boolean(buttonRect && progressRect && buttonRect.top > progressRect.bottom);
+  })(),
+  pageBackInsideLinks: document.querySelector('.links-page-back')?.closest('section')?.id === 'links',
+  footerAbsent: document.querySelector('.site-footer') === null,
+  onlineStatus: document.querySelector('.links-drawer-status')?.textContent?.trim() ?? '',
+  pageEndsWithLinks: (() => {
+    const section = document.querySelector('#links');
+    return section ? Math.abs(document.body.scrollHeight - (section.offsetTop + section.offsetHeight)) <= 1 : false;
+  })(),
 })`);
 
-await evaluate("document.querySelector('#home')?.scrollIntoView({behavior:'instant'})");
+await evaluate("document.querySelector('.links-page-back')?.click()");
+await waitFor("window.scrollY <= 4 && document.querySelector('.main-nav .is-active')?.textContent === 'HOME'");
+const linksBackHome = await evaluate(`({
+  scrollY: Math.round(window.scrollY),
+  activeNav: document.querySelector('.main-nav .is-active')?.textContent ?? null,
+  buttonInsideLinks: document.querySelector('.links-page-back')?.closest('section')?.id === 'links',
+  footerPresent: Boolean(document.querySelector('.site-footer')),
+})`);
 await delay(300);
 const talkStartedAt = Date.now();
 await evaluate("document.querySelector('.talk-button')?.click()");
@@ -362,14 +416,38 @@ const mobileWorks = await evaluate(`({
   copyVisible: [...document.querySelectorAll('.work-showcase-copy > *')].some((node) => Number(getComputedStyle(node).opacity) > 0.8),
 })`);
 
-await scrollChapterTo('#links', 0.58);
+await scrollChapterTo('#links', 0.96);
 await screenshot("mobile-links.png");
 const mobileLinks = await evaluate(`({
   bodyWidth: document.body.scrollWidth,
   viewportWidth: innerWidth,
-  rows: document.querySelectorAll('.link-gate').length,
-  visibleRows: [...document.querySelectorAll('.link-gate')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+  inlineRows: document.querySelectorAll('.external-link--inline').length,
+  rows: document.querySelectorAll('.external-link--drawer').length,
+  visibleRows: [...document.querySelectorAll('.external-link--drawer')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
   characterLoaded: document.querySelector('.links-character')?.complete ?? false,
+  drawerVisible: (() => {
+    const drawer = document.querySelector('.links-drawer');
+    const rect = drawer?.getBoundingClientRect();
+    return Boolean(rect && Number(getComputedStyle(drawer).opacity) > 0.9 && rect.top >= 0 && rect.bottom <= innerHeight);
+  })(),
+  drawerCenterDelta: (() => {
+    const rect = document.querySelector('.links-drawer')?.getBoundingClientRect();
+    return rect ? {
+      x: Math.round(Math.abs(rect.left + rect.width / 2 - document.documentElement.clientWidth / 2)),
+      y: Math.round(Math.abs(rect.top + rect.height / 2 - innerHeight / 2)),
+    } : null;
+  })(),
+  pageBackVisible: (() => {
+    const button = document.querySelector('.links-page-back');
+    const rect = button?.getBoundingClientRect();
+    return Boolean(rect && Number(getComputedStyle(button).opacity) > 0.75 && rect.top < innerHeight && rect.bottom > 0);
+  })(),
+  pageBackBelowProgress: (() => {
+    const buttonRect = document.querySelector('.links-page-back')?.getBoundingClientRect();
+    const progressRect = document.querySelector('#links .chapter-progress-track')?.getBoundingClientRect();
+    return Boolean(buttonRect && progressRect && buttonRect.top > progressRect.bottom);
+  })(),
+  footerAbsent: document.querySelector('.site-footer') === null,
 })`);
 
 await send("Emulation.setDeviceMetricsOverride", {
@@ -404,6 +482,22 @@ const reducedChapter = await evaluate(`({
   characterVisible: Number(getComputedStyle(document.querySelector('#works .works-character')).opacity) === 1,
   stageHeight: Math.round(document.querySelector('.works-stage')?.getBoundingClientRect().height ?? 0),
 })`);
+await evaluate("document.querySelector('.links-drawer')?.scrollIntoView({behavior:'instant', block:'center'})");
+await delay(500);
+await screenshot("reduced-motion-links.png");
+const reducedLinks = await evaluate(`({
+  drawerVisible: (() => {
+    const drawer = document.querySelector('.links-drawer');
+    const rect = drawer?.getBoundingClientRect();
+    return Boolean(rect && Number(getComputedStyle(drawer).opacity) === 1 && rect.top < innerHeight && rect.bottom > 0);
+  })(),
+  inlineRows: document.querySelectorAll('.external-link--inline').length,
+  rows: document.querySelectorAll('.external-link--drawer').length,
+  visibleRows: [...document.querySelectorAll('.external-link--drawer')].filter((node) => Number(getComputedStyle(node).opacity) === 1).length,
+  realLinks: document.querySelectorAll('a.external-link--drawer[href]').length,
+  pageBackInsideLinks: document.querySelector('.links-page-back')?.closest('section')?.id === 'links',
+  footerAbsent: document.querySelector('.site-footer') === null,
+})`);
 await send("Emulation.setEmulatedMedia", { media: "screen", features: [] });
 
 const report = {
@@ -412,6 +506,7 @@ const report = {
   pastedAccessoryCount,
   bootState,
   portalScroll,
+  blogCta,
   heroAction,
   indexOpen,
   directoryNavigation,
@@ -423,6 +518,7 @@ const report = {
   works,
   linksStart,
   links,
+  linksBackHome,
   talkOpen,
   talkLatencyMs,
   mobileHome,
@@ -432,6 +528,7 @@ const report = {
   mobileLinks,
   reducedMotion,
   reducedChapter,
+  reducedLinks,
   browserErrors,
   failedResources,
 };
@@ -444,10 +541,11 @@ const checks = [
   [desktopHome.title.includes("夜希"), "page title"],
   [bootState?.visible && bootState?.bodyLocked && bootState?.overflow === "hidden" && bootState?.progressAnimated, "boot state"],
   [desktopHome.sectionCount === 5, "all five sections"],
-  [chapterScroll.character <= 2.5 && chapterScroll.personality <= 1.7 && chapterScroll.works <= 1.8 && chapterScroll.links <= 1.4 && chapterScroll.total <= 7.4, "compact chapter scroll distances"],
+  [chapterScroll.character <= 2.5 && chapterScroll.personality <= 1.7 && chapterScroll.works <= 1.8 && chapterScroll.links <= 1.6 && chapterScroll.total <= 7.6, "compact chapter scroll distances"],
   [pastedAccessoryCount === 0, "no standalone accessory images"],
   [desktopHome.videoReadyState >= 2 && Boolean(desktopHome.activeVideo), "hero video production and consumption"],
   [portalScroll.clip === "portal" && portalScroll.ended && portalScroll.scrollY > 500, "first-scroll portal sequence"],
+  [blogCta.tagName === "A" && blogCta.text.includes("跳进兔子洞") && blogCta.href === "https://blog.blacknico.com/" && blogCta.target === "_blank", "home blog call to action"],
   [heroAction.clip === "reactKey" && heroAction.currentTime > 0 && !heroAction.paused, "hero action playback"],
   [indexOpen && !directoryNavigation.dialogOpen && directoryNavigation.activeNav === "CHARACTER", "directory navigation"],
   [character.scenes === 4 && character.activeScenes >= 1 && character.portraitLoaded && character.detailImagesLoaded, "desktop character presentation"],
@@ -456,16 +554,20 @@ const checks = [
   [personalityStart.mediaTransform !== personality.mediaTransform && JSON.stringify(personalityStart.beatOpacities) !== JSON.stringify(personality.beatOpacities), "personality scroll choreography"],
   [works.featured === 1 && works.realLinks === 1 && works.desktopImageLoaded && works.mobileImageLoaded && works.characterLoaded && works.characterVisible && !works.escapedMarkupVisible, "works content"],
   [worksStart.showcaseTransform !== works.showcaseTransform && worksStart.characterTransform !== works.characterTransform, "works scroll choreography"],
-  [links.rows === 2 && links.visibleRows >= 1 && links.realLinks === 1 && links.hrefs[0] === "https://github.com/CheshireMew", "external links"],
+  [links.rows === 2 && links.visibleRows === 2 && links.realLinks === 2 && links.hrefs[0] === "https://github.com/CheshireMew" && links.hrefs[1] === "https://blog.blacknico.com/" && links.onlineStatus.includes("2 CHANNELS ONLINE"), "external links"],
+  [linksStart.inlineRows === 2 && linksStart.visibleInlineRows === 2 && linksStart.inlineRealLinks === 2, "original inline links preserved"],
   [linksStart.characterTransform !== links.characterTransform && linksStart.portalTransform !== links.portalTransform, "links scroll choreography"],
+  [linksStart.drawerOpacity < 0.1 && links.drawerVisible && links.drawerOpacity > 0.9 && linksStart.drawerTop - links.drawerTop > 200 && linksStart.drawerTransform !== links.drawerTransform && links.drawerCenterDelta?.x <= 2 && links.drawerCenterDelta?.y <= 2, "links centered bottom drawer reveal"],
+  [links.footerAbsent && links.pageEndsWithLinks && links.pageBackInsideLinks && links.pageBackVisible && links.pageBackBelowProgress && !linksBackHome.footerPresent && linksBackHome.buttonInsideLinks && linksBackHome.activeNav === "HOME" && linksBackHome.scrollY <= 4, "footer removed and back-home moved below progress"],
   [talkOpen && talkLatencyMs < 1000, "talk panel direct response"],
   [mobileHome.bodyWidth <= mobileHome.viewportWidth && mobileHome.menuVisible !== "none", "mobile home layout"],
   [mobileCharacter.bodyWidth <= mobileCharacter.viewportWidth && mobileCharacter.scenes === 4 && mobileCharacter.activeScenes >= 1 && mobileCharacter.portraitLoaded && mobileCharacter.detailImagesLoaded, "mobile character layout"],
   [mobilePersonality.bodyWidth <= mobilePersonality.viewportWidth && mobilePersonality.mediaVisible && mobilePersonality.activeBeats >= 1 && mobilePersonality.videoReadyState >= 2, "mobile personality layout"],
   [mobileWorks.bodyWidth <= mobileWorks.viewportWidth && mobileWorks.featured === 1 && mobileWorks.desktopImageLoaded && mobileWorks.mobileImageLoaded && mobileWorks.copyVisible, "mobile works layout"],
-  [mobileLinks.bodyWidth <= mobileLinks.viewportWidth && mobileLinks.rows === 2 && mobileLinks.visibleRows >= 1 && mobileLinks.characterLoaded, "mobile links layout"],
+  [mobileLinks.bodyWidth <= mobileLinks.viewportWidth && mobileLinks.inlineRows === 2 && mobileLinks.rows === 2 && mobileLinks.visibleRows === 2 && mobileLinks.characterLoaded && mobileLinks.drawerVisible && mobileLinks.drawerCenterDelta?.x <= 2 && mobileLinks.drawerCenterDelta?.y <= 2 && mobileLinks.pageBackVisible && mobileLinks.pageBackBelowProgress && mobileLinks.footerAbsent, "mobile links layout"],
   [reducedMotion.currentClip === null && reducedMotion.personalityUsesPoster && reducedMotion.cursorHidden && reducedMotion.panelOpen && reducedMotion.panelTransform === "none", "reduced motion path"],
   [reducedChapter.showcaseVisible && reducedChapter.projectCopyVisible && reducedChapter.characterVisible && reducedChapter.stageHeight >= 1000, "reduced motion chapter content"],
+  [reducedLinks.drawerVisible && reducedLinks.inlineRows === 2 && reducedLinks.rows === 2 && reducedLinks.visibleRows === 2 && reducedLinks.realLinks === 2 && reducedLinks.pageBackInsideLinks && reducedLinks.footerAbsent, "reduced motion links drawer"],
   [browserErrors.length === 0, "browser console"],
   [failedResources.length === 0, "resource loading"],
 ];

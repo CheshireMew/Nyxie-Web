@@ -872,24 +872,7 @@ body.cursor-active .cursor-ring {
   position: relative;
 }
 
-/* Dialogs and footer */
-.site-footer {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  min-height: 110px;
-  padding: 25px clamp(24px, 5vw, 80px);
-  color: rgba(255,255,255,0.47);
-  background: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 7px;
-  letter-spacing: 0.17em;
-}
-
-.site-footer button { justify-self: end; padding: 9px 0; color: var(--white); border: 0; border-bottom: 1px solid rgba(255,255,255,0.35); background: transparent; font-size: var(--font-meta); letter-spacing: 0.14em; cursor: pointer; transition: scale var(--duration-press) var(--ease-out); }
-
+/* Dialogs */
 .side-panel-dialog {
   width: 100%;
   max-width: none;
@@ -1055,7 +1038,6 @@ body.cursor-active .cursor-ring {
 .cheshire-orb:active,
 .scroll-cue:active,
 .back-home:active,
-.site-footer button:active,
 .index-topline button:active,
 .talk-head button:active,
 .chapter-grid button:active,
@@ -1161,16 +1143,10 @@ body.cursor-active .cursor-ring {
 }
 
 @media (max-width: 700px) {
-  .site-footer { grid-template-columns: 1fr auto; gap: 12px; }
-  .site-footer span:nth-child(2) { display: none; }
   .chapter-grid { grid-template-columns: 1fr; }
   .index-title { margin: 8vh 0 4vh; }
   .chapter-grid button { min-height: 110px; }
   .talk-body { padding-top: 32px; padding-bottom: 32px; }
-}
-
-@media (max-width: 430px) {
-  .site-footer { min-height: 88px; padding: 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
