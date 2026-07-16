@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { characterMedia } from "../content/mediaCatalog";
 import { gsap, useGSAP } from "../animation/gsap";
+import { driveChapterPerformance } from "../animation/chapterPerformance";
 import { ChapterHud } from "../components/ChapterHud";
 import { ExternalLinkRows } from "../components/ExternalLinks";
 
@@ -9,45 +10,27 @@ export function LinksSection({ reducedMotion }: { reducedMotion: boolean }) {
 
   useGSAP(() => {
     if (reducedMotion) return;
-    const entrance = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top bottom",
-        end: "top top",
-        scrub: 0.45,
-      },
-    });
+    const section = sectionRef.current;
+    if (!section) return;
+    const entrance = gsap.timeline({ paused: true });
+    const sequence = gsap.timeline({ paused: true });
 
     entrance
       .fromTo(".links-portal", { scale: 0.25, rotate: -24, autoAlpha: 0 }, { scale: 1, rotate: 0, autoAlpha: 1, duration: 1.1, ease: "power3.out" })
       .fromTo(".links-character", { xPercent: -35, yPercent: 8, scale: 0.86, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 1, duration: 1.1, ease: "power3.out" }, 0)
       .fromTo(".links-intro", { xPercent: 16, autoAlpha: 0 }, { xPercent: 0, autoAlpha: 1, duration: 0.9, ease: "power3.out" }, 0.25);
 
-    const timeline = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 0.45,
-      },
-    });
-
-    timeline
+    sequence
       .to(".links-character", { xPercent: -4, yPercent: -2, scale: 1.04, duration: 0.8, ease: "power2.inOut" })
-      .to(".links-portal", { scale: 1.1, rotate: 5, duration: 0.8, ease: "power2.inOut" }, 0)
-      .to(".links-intro", { yPercent: -5, scale: 0.98, duration: 0.8, ease: "power2.inOut" }, 0);
-
-    gsap.fromTo(".chapter-progress-fill", { scaleX: 0 }, {
-      scaleX: 1,
-      ease: "none",
-      scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "bottom bottom", scrub: true },
-    });
+      .to(".links-portal", { scale: 1.1, rotate: 5, duration: 0.8, ease: "power2.inOut" }, "<")
+      .to(".links-intro", { yPercent: -5, scale: 0.98, duration: 0.8, ease: "power2.inOut" }, "<");
+    driveChapterPerformance({ trigger: section, entrance, sequence, runwayVh: 30, trackChapterProgress: true });
   }, { scope: sectionRef, dependencies: [reducedMotion] });
 
   return (
-    <section ref={sectionRef} className="links-chapter chapter" id="links">
+    <section ref={sectionRef} className="links-chapter chapter chapter--sequenced" id="links">
       <div className="links-stage">
-        <ChapterHud index="04" label="LINKS / NEXT STOP" />
+        <ChapterHud index="04" label="LINKS / NEXT STOP" showStatus={false} />
         <div className="links-grid-field" aria-hidden="true" />
         <div className="links-portal" aria-hidden="true"><span /><i /></div>
         <img className="links-character" src={characterMedia.linksCharacter} alt="夜希向前迈步并回头看向用户" />

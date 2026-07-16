@@ -62,13 +62,13 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
         await waitUntilReady();
         const started = await request("portal", { playbackRate: 1.25, holdAtEnd: true });
         if (started) await waitUntilEnded("portal");
-        document.getElementById("character")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        onNavigate("gallery");
       } finally {
         portalLockedRef.current = false;
       }
     })();
     return true;
-  }, [overlaysOpen, reducedMotion, request, snapshot.started, waitUntilEnded, waitUntilReady]);
+  }, [onNavigate, overlaysOpen, reducedMotion, request, snapshot.started, waitUntilEnded, waitUntilReady]);
 
   useEffect(() => {
     const onWheel = (event: WheelEvent) => {
@@ -200,7 +200,7 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
       </div>
 
       <button className="scroll-cue" type="button" onClick={() => {
-        if (!beginPortalScroll()) onNavigate("character");
+        if (!beginPortalScroll()) onNavigate("gallery");
       }}>
         <span>SCROLL DOWN THE RABBIT HOLE</span><i />
       </button>

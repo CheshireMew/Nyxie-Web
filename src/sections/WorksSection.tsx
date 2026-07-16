@@ -1,24 +1,23 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { characterMedia } from "../content/mediaCatalog";
 import { featuredWorks } from "../content/siteContent";
 import { gsap, useGSAP } from "../animation/gsap";
+import { driveChapterPerformance } from "../animation/chapterPerformance";
 import { ChapterHud } from "../components/ChapterHud";
 import { ExternalLinksDrawer } from "../components/ExternalLinks";
 
 export function WorksSection({ reducedMotion, onBackHome }: { reducedMotion: boolean; onBackHome: () => void }) {
   const sectionRef = useRef<HTMLElement>(null);
+  const drawerRevealedRef = useRef(false);
+  const revealDrawerRef = useRef<() => void>(() => undefined);
 
   useGSAP(() => {
     if (reducedMotion) return;
+    const section = sectionRef.current;
+    if (!section) return;
     const gates = gsap.utils.toArray<HTMLElement>(".external-link--drawer");
-    const entrance = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top bottom",
-        end: "top top",
-        scrub: 0.45,
-      },
-    });
+    const entrance = gsap.timeline({ paused: true });
+    const sequence = gsap.timeline({ paused: true });
 
     entrance
       .fromTo(".works-stage-title", { yPercent: 35, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.7, ease: "power3.out" })
@@ -32,40 +31,76 @@ export function WorksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
     gsap.set(gates, { y: 24, autoAlpha: 0 });
     gsap.set(".works-page-back", { y: 16, autoAlpha: 0 });
 
-    const timeline = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 0.45,
-      },
-    });
-
-    timeline
+    sequence
       .to(".works-stage-title", { yPercent: -42, scale: 0.8, autoAlpha: 0.18, duration: 0.7 })
       .to(".work-showcase", { rotate: 0, xPercent: -8, scale: 1.06, duration: 0.9, ease: "power2.inOut" }, "<")
       .to(".works-character", { xPercent: 8, scale: 1.1, duration: 0.9, ease: "power2.inOut" }, "<")
       .to(".work-showcase-screen img", { scale: 1.045, yPercent: -3, duration: 0.9, ease: "power2.inOut" })
-      .to(".works-character", { xPercent: 14, yPercent: -2, scale: 1.14, duration: 0.9, ease: "power2.inOut" }, "<")
-      .to(".work-showcase", { xPercent: -7, scale: 0.97, autoAlpha: 0.2, duration: 0.65, ease: "power2.inOut" }, 1.45)
-      .to(".works-character", { xPercent: 10, scale: 1.08, autoAlpha: 0.26, duration: 0.65, ease: "power2.inOut" }, 1.45)
-      .to(".works-stage-title", { autoAlpha: 0.08, duration: 0.55 }, 1.45)
-      .to(".links-drawer-backdrop", { autoAlpha: 1, duration: 0.52 }, 1.48)
-      .to(".links-drawer", { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.82, ease: "power4.out" }, 1.58)
-      .to(gates, { y: 0, autoAlpha: 1, duration: 0.46, stagger: 0.09, ease: "power3.out" }, 1.94)
-      .to(".works-page-back", { y: 0, autoAlpha: 1, duration: 0.4, ease: "power3.out" }, 2.08);
+      .to(".works-character", { xPercent: 14, yPercent: -2, scale: 1.14, duration: 0.9, ease: "power2.inOut" }, "<");
+    driveChapterPerformance({ trigger: section, entrance, sequence, runwayVh: 42, trackChapterProgress: true });
 
-    gsap.fromTo(".chapter-progress-fill", { scaleX: 0 }, {
-      scaleX: 1,
-      ease: "none",
-      scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "bottom bottom", scrub: true },
+    const drawerTimeline = gsap.timeline({ paused: true })
+      .to(".work-showcase", { xPercent: -7, scale: 0.97, autoAlpha: 0.2, duration: 0.48, ease: "power2.inOut" }, 0)
+      .to(".works-character", { xPercent: 10, scale: 1.08, autoAlpha: 0.26, duration: 0.48, ease: "power2.inOut" }, 0)
+      .to(".works-stage-title", { autoAlpha: 0.08, duration: 0.4 }, 0)
+      .to(".links-drawer-backdrop", { autoAlpha: 1, duration: 0.4 }, 0.03)
+      .to(".links-drawer", { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.62, ease: "power4.out" }, 0.1)
+      .to(gates, { y: 0, autoAlpha: 1, duration: 0.34, stagger: 0.07, ease: "power3.out" }, 0.38)
+      .to(".works-page-back", { y: 0, autoAlpha: 1, duration: 0.3, ease: "power3.out" }, 0.55);
+    drawerTimeline.eventCallback("onComplete", () => {
+      section.dataset.drawerState = "settled";
     });
+
+    revealDrawerRef.current = () => {
+      if (drawerRevealedRef.current) return;
+      drawerRevealedRef.current = true;
+      section.dataset.drawerRevealed = "true";
+      section.dataset.drawerState = "opening";
+      drawerTimeline.play();
+    };
+
+    return () => {
+      revealDrawerRef.current = () => undefined;
+    };
   }, { scope: sectionRef, dependencies: [reducedMotion] });
 
+  useEffect(() => {
+    if (reducedMotion) return;
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const isActive = () => {
+      const bounds = section.getBoundingClientRect();
+      return bounds.top <= window.innerHeight * 0.18 && bounds.bottom >= window.innerHeight * 0.82;
+    };
+    const reveal = () => {
+      if (section.dataset.performanceState !== "settled" || !isActive() || drawerRevealedRef.current) return false;
+      revealDrawerRef.current();
+      return true;
+    };
+    const onWheel = (event: WheelEvent) => {
+      const deltaY = event.deltaY * (event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1);
+      if (deltaY < 6 || !reveal()) return;
+      event.preventDefault();
+    };
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      const movesForward = event.key === "ArrowDown" || event.key === "PageDown" || (event.key === " " && !event.shiftKey);
+      if (!movesForward || !reveal()) return;
+      event.preventDefault();
+    };
+
+    section.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      section.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [reducedMotion]);
+
   return (
-    <section ref={sectionRef} className="works-chapter chapter" id="works">
+    <section ref={sectionRef} className="works-chapter chapter chapter--sequenced" id="works">
       <div className="works-stage">
-        <ChapterHud index="05" label="CONTENT / PROJECTS" />
+        <ChapterHud index="05" label="CONTENT / PROJECTS" showStatus />
         <div className="works-grid-field" aria-hidden="true" />
 
         <header className="works-stage-title">

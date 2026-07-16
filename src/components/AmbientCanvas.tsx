@@ -23,6 +23,7 @@ export function AmbientCanvas({ reducedMotion }: { reducedMotion: boolean }) {
     let width = 0;
     let height = 0;
     let animationFrame = 0;
+    let lastDrawAt = 0;
 
     const resize = () => {
       width = window.innerWidth;
@@ -31,7 +32,7 @@ export function AmbientCanvas({ reducedMotion }: { reducedMotion: boolean }) {
       canvas.width = Math.round(width * ratio);
       canvas.height = Math.round(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      const count = Math.min(52, Math.max(22, Math.round(width / 32)));
+      const count = Math.min(36, Math.max(18, Math.round(width / 44)));
       particles = Array.from({ length: count }, (_, index) => ({
         x: Math.random() * width,
         y: Math.random() * height,
@@ -47,11 +48,15 @@ export function AmbientCanvas({ reducedMotion }: { reducedMotion: boolean }) {
       pointer.y = event.clientY;
     };
 
-    const draw = () => {
+    const draw = (time: number) => {
+      animationFrame = window.requestAnimationFrame(draw);
+      if (time - lastDrawAt < 1000 / 30) return;
+      const frameScale = Math.min(2.5, (time - lastDrawAt) / (1000 / 60));
+      lastDrawAt = time;
       context.clearRect(0, 0, width, height);
       particles.forEach((particle) => {
-        particle.y -= particle.speed;
-        particle.x += particle.drift + (pointer.x - width / 2) * 0.00003;
+        particle.y -= particle.speed * frameScale;
+        particle.x += (particle.drift + (pointer.x - width / 2) * 0.00003) * frameScale;
         if (particle.y < -8) particle.y = height + 8;
         if (particle.x < -8) particle.x = width + 8;
         if (particle.x > width + 8) particle.x = -8;
@@ -60,11 +65,10 @@ export function AmbientCanvas({ reducedMotion }: { reducedMotion: boolean }) {
         context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
         context.fill();
       });
-      animationFrame = window.requestAnimationFrame(draw);
     };
 
     resize();
-    draw();
+    animationFrame = window.requestAnimationFrame(draw);
     window.addEventListener("resize", resize);
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     return () => {

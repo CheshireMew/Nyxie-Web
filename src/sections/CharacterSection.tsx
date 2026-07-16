@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { characterDetails } from "../content/siteContent";
 import { characterMedia } from "../content/mediaCatalog";
 import { gsap, useGSAP } from "../animation/gsap";
+import { driveChapterPerformance } from "../animation/chapterPerformance";
 import { ChapterHud } from "../components/ChapterHud";
 
 export function CharacterSection({ reducedMotion }: { reducedMotion: boolean }) {
@@ -25,54 +26,36 @@ export function CharacterSection({ reducedMotion }: { reducedMotion: boolean }) 
           { x: -15, y: -3, scale: 1.18, rotate: 0.6 },
         ];
 
-    gsap.set(scenes, { autoAlpha: 0, clipPath: "inset(100% 0 0 0)" });
-    const entrance = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top bottom",
-        end: "top top",
-        scrub: 0.45,
-      },
-    });
+    gsap.set(scenes, { autoAlpha: 0, yPercent: 10 });
+    const section = sectionRef.current;
+    if (!section) return;
+    const entrance = gsap.timeline({ paused: true });
+    const sequence = gsap.timeline({ paused: true });
 
     entrance
       .fromTo(".character-stage-title", { yPercent: 28, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.7, ease: "power3.out" })
       .fromTo(".character-portrait", { yPercent: 12, scale: 0.9, autoAlpha: 0 }, { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.9, ease: "power3.out" }, 0)
       .fromTo(".character-halo", { scale: 0.72, rotate: -12, autoAlpha: 0 }, { scale: 1, rotate: 0, autoAlpha: 1, duration: 1 }, 0);
 
-    const timeline = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 0.45,
-      },
-    });
-
-    timeline.to(".character-stage-title", { yPercent: -36, autoAlpha: mobile ? 0.06 : 0.22, scale: 0.82, duration: 0.8 });
+    sequence.to(".character-stage-title", { yPercent: -36, autoAlpha: mobile ? 0.06 : 0.22, scale: 0.82, duration: 0.8 });
 
     scenes.forEach((scene, index) => {
       const pose = portraits[index];
-      timeline
+      sequence
         .set(scene, { autoAlpha: 1 })
-        .to(scene, { clipPath: "inset(0% 0 0 0)", duration: 0.58, ease: "power2.inOut" })
+        .to(scene, { yPercent: 0, duration: 0.58, ease: "power2.inOut" })
         .to(".character-portrait", { xPercent: pose.x, yPercent: pose.y, scale: pose.scale, rotate: pose.rotate, autoAlpha: mobile ? 0.3 : 1, duration: 0.75, ease: "power2.inOut" }, "<")
         .fromTo(scene.querySelector("img"), { scale: 1.14 }, { scale: 1, duration: 0.85, ease: "power2.out" }, "<")
         .set(index > 0 ? scenes[index - 1] : [], { autoAlpha: 0 })
         .to(scene, { autoAlpha: 1, duration: 0.58 });
     });
-
-    gsap.fromTo(".chapter-progress-fill", { scaleX: 0 }, {
-      scaleX: 1,
-      ease: "none",
-      scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "bottom bottom", scrub: true },
-    });
+    driveChapterPerformance({ trigger: section, entrance, sequence, runwayVh: 72, trackChapterProgress: true });
   }, { scope: sectionRef, dependencies: [reducedMotion] });
 
   return (
-    <section ref={sectionRef} className="character-chapter chapter" id="character">
+    <section ref={sectionRef} className="character-chapter chapter chapter--sequenced" id="character">
       <div className="character-stage">
-        <ChapterHud index="02" label="CHARACTER / DESIGN LANGUAGE" />
+        <ChapterHud index="02" label="CHARACTER / DESIGN LANGUAGE" showStatus={false} />
         <div className="chapter-grid-field" aria-hidden="true" />
         <div className="character-halo" aria-hidden="true"><span /><i /></div>
 

@@ -1,33 +1,48 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Dispatch } from "react";
 import { sections } from "../content/siteContent";
 import type { SiteAction } from "../app/siteTypes";
 
 export function usePageState(dispatch: Dispatch<SiteAction>) {
+  const headerSentinelRef = useRef<HTMLSpanElement>(null);
+
   useEffect(() => {
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const marker = window.scrollY + window.innerHeight * 0.38;
-      let active = sections[0].id;
-      for (const section of sections) {
-        const element = document.getElementById(section.id);
-        if (element && element.offsetTop <= marker) active = section.id;
-      }
-      dispatch({ type: "set-section", section: active });
-      dispatch({ type: "set-header-compact", compact: window.scrollY > 32 });
-    };
-    const schedule = () => {
-      if (!frame) frame = window.requestAnimationFrame(update);
+    const elements = sections
+      .map((section) => document.getElementById(section.id))
+      .filter((element): element is HTMLElement => Boolean(element));
+    const sentinel = headerSentinelRef.current;
+    if (!elements.length || !sentinel) return;
+
+    const updateActiveSection = () => {
+      const marker = window.innerHeight * 0.38;
+      const active = elements.find((element) => {
+        const bounds = element.getBoundingClientRect();
+        return bounds.top <= marker && bounds.bottom > marker;
+      });
+      if (active) dispatch({ type: "set-section", section: active.id as (typeof sections)[number]["id"] });
     };
 
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
+    const sectionObserver = new IntersectionObserver(updateActiveSection, {
+      rootMargin: "-38% 0px -61% 0px",
+      threshold: 0,
+    });
+
+    const headerObserver = new IntersectionObserver(([entry]) => {
+      dispatch({ type: "set-header-compact", compact: !entry.isIntersecting });
+    }, { threshold: 0 });
+
+    elements.forEach((element) => sectionObserver.observe(element));
+    headerObserver.observe(sentinel);
+    window.addEventListener("scrollend", updateActiveSection);
+    window.addEventListener("resize", updateActiveSection);
+    updateActiveSection();
     return () => {
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      if (frame) window.cancelAnimationFrame(frame);
+      sectionObserver.disconnect();
+      headerObserver.disconnect();
+      window.removeEventListener("scrollend", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
     };
   }, [dispatch]);
+
+  return headerSentinelRef;
 }

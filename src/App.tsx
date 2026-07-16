@@ -4,7 +4,9 @@ import type { ClipKey } from "./content/mediaCatalog";
 import type { SectionId } from "./content/siteContent";
 import { useReducedMotion } from "./hooks/useReducedMotion";
 import { usePageState } from "./hooks/usePageState";
+import { useChapterWarmup } from "./hooks/useChapterWarmup";
 import { usePerformanceDirector } from "./hooks/usePerformanceDirector";
+import { navigateToChapter } from "./animation/chapterPerformance";
 import { AmbientCanvas } from "./components/AmbientCanvas";
 import { CustomCursor } from "./components/CustomCursor";
 import { BootScreen } from "./components/BootScreen";
@@ -24,7 +26,8 @@ export default function App() {
   const [site, dispatch] = useReducer(siteReducer, initialSiteState);
   const [ready, setReady] = useState(false);
   const reducedMotion = useReducedMotion();
-  usePageState(dispatch);
+  const headerSentinelRef = usePageState(dispatch);
+  useChapterWarmup(ready);
 
   const openTalk = useCallback(() => dispatch({ type: "open-talk" }), []);
   const rejectSound = useCallback(() => dispatch({ type: "set-sound", soundOn: false }), []);
@@ -64,7 +67,7 @@ export default function App() {
 
   const navigate = useCallback((id: SectionId) => {
     dispatch({ type: "close-overlays" });
-    document.getElementById(id)?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    navigateToChapter(id, reducedMotion ? "auto" : "smooth");
   }, [reducedMotion]);
 
   const playAtHero = useCallback((key: ClipKey, after?: "talk") => {
@@ -72,7 +75,7 @@ export default function App() {
     const alreadyHome = window.scrollY <= 4;
     if (!alreadyHome) {
       suppressNextWelcome();
-      document.getElementById("home")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+      navigateToChapter("home", reducedMotion ? "auto" : "smooth");
     }
     window.setTimeout(() => {
       void requestHeroClip(key, after ? { after } : undefined);
@@ -90,6 +93,7 @@ export default function App() {
       <AmbientCanvas reducedMotion={reducedMotion} />
       <div className="grain" aria-hidden="true" />
       <CustomCursor reducedMotion={reducedMotion} />
+      <span ref={headerSentinelRef} className="header-compact-sentinel" aria-hidden="true" />
 
       <SiteHeader
         activeSection={site.activeSection}
