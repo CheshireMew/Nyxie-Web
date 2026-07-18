@@ -42,7 +42,7 @@ export function SiteHeader({
   return (
     <header className="site-header">
       <button className="brand" type="button" onClick={() => onNavigate("home")} disabled={interactionLocked} aria-label="返回首页">
-        <span className="brand-sigil">N<span>×</span></span>
+        <img className="brand-sigil" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" aria-hidden="true" draggable="false" />
         <span className="brand-name">夜希 <small>NYXIE</small></span>
       </button>
 

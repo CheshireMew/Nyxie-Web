@@ -22,14 +22,15 @@ type SetupResult = {
 
 type Options = {
   active: boolean;
+  warmupRequested?: boolean;
   reducedMotion: boolean;
   setup: (context: SetupContext) => SetupResult;
 };
 
-export function useChapterPerformance({ active, reducedMotion, setup }: Options) {
+export function useChapterPerformance({ active, warmupRequested = false, reducedMotion, setup }: Options) {
   const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef<HTMLElement>(null);
-  const mediaActivated = useSectionMedia(active);
+  const mediaActivated = useSectionMedia(active || warmupRequested);
 
   useGSAP(() => {
     if (reducedMotion) return;

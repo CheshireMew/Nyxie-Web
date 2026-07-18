@@ -10,7 +10,9 @@ type CharacterLensOptions = {
 export function useCharacterLens({ active, mediaActivated, reducedMotion }: CharacterLensOptions) {
   const stageRef = useRef<HTMLDivElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
+  const focusMarkerRef = useRef<HTMLSpanElement>(null);
   const baseVideoRef = useRef<HTMLVideoElement>(null);
+  const baseImageRef = useRef<HTMLImageElement>(null);
   const lensCanvasRef = useRef<HTMLCanvasElement>(null);
   const coordinateRef = useRef<HTMLOutputElement>(null);
   const renderFrameRef = useRef(0);
@@ -20,8 +22,15 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
     const stage = stageRef.current;
     const lens = lensRef.current;
     const video = baseVideoRef.current;
+    const image = baseImageRef.current;
     const canvas = lensCanvasRef.current;
-    if (!stage || !lens || !video || !canvas || video.readyState < 2 || video.videoWidth === 0) return;
+    const media = reducedMotion ? image : video;
+    if (!stage || !lens || !media || !canvas) return;
+
+    const sourceWidth = media instanceof HTMLVideoElement ? media.videoWidth : media.naturalWidth;
+    const sourceHeight = media instanceof HTMLVideoElement ? media.videoHeight : media.naturalHeight;
+    const mediaReady = media instanceof HTMLVideoElement ? media.readyState >= 2 : media.complete;
+    if (!mediaReady || sourceWidth === 0 || sourceHeight === 0) return;
 
     const context = canvas.getContext("2d", { alpha: false });
     if (!context) return;
@@ -33,20 +42,26 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
       canvas.height = canvasSize;
     }
 
-    const { x, y, width: stageWidth, height: stageHeight } = focusRef.current;
+    const { x, y } = focusRef.current;
+    const stageRect = stage.getBoundingClientRect();
+    const mediaRect = media.getBoundingClientRect();
     const stageStyle = getComputedStyle(stage);
-    const videoStyle = getComputedStyle(video);
+    const mediaStyle = getComputedStyle(media);
     const zoom = Number.parseFloat(stageStyle.getPropertyValue("--lens-zoom")) || 1.75;
-    const fitScale = videoStyle.objectFit === "cover"
-      ? Math.max(stageWidth / video.videoWidth, stageHeight / video.videoHeight)
-      : Math.min(stageWidth / video.videoWidth, stageHeight / video.videoHeight);
-    const renderedWidth = video.videoWidth * fitScale;
-    const renderedHeight = video.videoHeight * fitScale;
-    const [positionX = "50%", positionY = "50%"] = videoStyle.objectPosition.split(" ");
+    const mediaBoxWidth = mediaRect.width;
+    const mediaBoxHeight = mediaRect.height;
+    const fitScale = mediaStyle.objectFit === "cover"
+      ? Math.max(mediaBoxWidth / sourceWidth, mediaBoxHeight / sourceHeight)
+      : Math.min(mediaBoxWidth / sourceWidth, mediaBoxHeight / sourceHeight);
+    const renderedWidth = sourceWidth * fitScale;
+    const renderedHeight = sourceHeight * fitScale;
+    const [positionX = "50%", positionY = "50%"] = mediaStyle.objectPosition.split(" ");
     const horizontalFactor = (Number.parseFloat(positionX) || 0) / 100;
     const verticalFactor = (Number.parseFloat(positionY) || 0) / 100;
-    const mediaLeft = (stageWidth - renderedWidth) * horizontalFactor;
-    const mediaTop = (stageHeight - renderedHeight) * verticalFactor;
+    const mediaBoxLeft = mediaRect.left - stageRect.left;
+    const mediaBoxTop = mediaRect.top - stageRect.top;
+    const mediaLeft = mediaBoxLeft + (mediaBoxWidth - renderedWidth) * horizontalFactor;
+    const mediaTop = mediaBoxTop + (mediaBoxHeight - renderedHeight) * verticalFactor;
     const sourceCenterX = (x - mediaLeft) / fitScale;
     const sourceCenterY = (y - mediaTop) / fitScale;
     const sourceSize = lensSize / (zoom * fitScale);
@@ -54,8 +69,8 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
     const requestedTop = sourceCenterY - sourceSize / 2;
     const sourceLeft = Math.max(0, requestedLeft);
     const sourceTop = Math.max(0, requestedTop);
-    const sourceRight = Math.min(video.videoWidth, requestedLeft + sourceSize);
-    const sourceBottom = Math.min(video.videoHeight, requestedTop + sourceSize);
+    const sourceRight = Math.min(sourceWidth, requestedLeft + sourceSize);
+    const sourceBottom = Math.min(sourceHeight, requestedTop + sourceSize);
 
     context.fillStyle = "#e8f2f9";
     context.fillRect(0, 0, canvas.width, canvas.height);
@@ -65,7 +80,7 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
     const destinationWidth = ((sourceRight - sourceLeft) / sourceSize) * canvas.width;
     const destinationHeight = ((sourceBottom - sourceTop) / sourceSize) * canvas.height;
     context.drawImage(
-      video,
+      media,
       sourceLeft,
       sourceTop,
       sourceRight - sourceLeft,
@@ -75,7 +90,7 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
       destinationWidth,
       destinationHeight,
     );
-  }, []);
+  }, [reducedMotion]);
 
   const stopLensRendering = useCallback(() => {
     window.cancelAnimationFrame(renderFrameRef.current);
@@ -97,14 +112,12 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
 
   const hideLens = useCallback(() => {
     stageRef.current?.classList.remove("is-lens-active");
-    document.body.classList.remove("character-lens-active");
     stopLensRendering();
   }, [stopLensRendering]);
 
-  const showLens = useCallback((pointerType: string) => {
+  const showLens = useCallback(() => {
     if (!active) return;
     stageRef.current?.classList.add("is-lens-active", "has-used-lens");
-    document.body.classList.toggle("character-lens-active", pointerType !== "touch");
 
     if (!reducedMotion) startLensRendering();
   }, [active, reducedMotion, startLensRendering]);
@@ -112,22 +125,15 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
   const updateLens: PointerEventHandler<HTMLDivElement> = useCallback((event) => {
     if (!active) return;
     const stage = stageRef.current;
-    const lens = lensRef.current;
-    if (!stage || !lens) return;
+    const focusMarker = focusMarkerRef.current;
+    if (!stage || !focusMarker) return;
 
     const rect = stage.getBoundingClientRect();
     const x = Math.min(rect.width, Math.max(0, event.clientX - rect.left));
     const y = Math.min(rect.height, Math.max(0, event.clientY - rect.top));
-    const lensRadius = lens.offsetWidth / 2;
     focusRef.current = { x, y, width: rect.width, height: rect.height };
 
-    lens.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
-    lens.style.setProperty("--stage-width", `${rect.width}px`);
-    lens.style.setProperty("--stage-height", `${rect.height}px`);
-    lens.style.setProperty("--media-left", `${lensRadius - x}px`);
-    lens.style.setProperty("--media-top", `${lensRadius - y}px`);
-    lens.style.setProperty("--focus-x", `${x}px`);
-    lens.style.setProperty("--focus-y", `${y}px`);
+    focusMarker.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
 
     if (coordinateRef.current) {
       const horizontal = Math.round((x / rect.width) * 100).toString().padStart(3, "0");
@@ -135,18 +141,18 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
       coordinateRef.current.value = `X ${horizontal} / Y ${vertical}`;
     }
 
-    if (!reducedMotion) drawLensFrame();
-  }, [active, drawLensFrame, reducedMotion]);
+    drawLensFrame();
+  }, [active, drawLensFrame]);
 
   const onPointerEnter: PointerEventHandler<HTMLDivElement> = useCallback((event) => {
     if (event.pointerType === "touch") return;
-    showLens(event.pointerType);
+    showLens();
     updateLens(event);
   }, [showLens, updateLens]);
 
   const onPointerMove: PointerEventHandler<HTMLDivElement> = useCallback((event) => {
     if (event.pointerType !== "touch" || event.currentTarget.hasPointerCapture(event.pointerId)) {
-      showLens(event.pointerType);
+      showLens();
       updateLens(event);
     }
   }, [showLens, updateLens]);
@@ -154,7 +160,7 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
   const onPointerDown: PointerEventHandler<HTMLDivElement> = useCallback((event) => {
     if (event.pointerType !== "touch") return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    showLens(event.pointerType);
+    showLens();
     updateLens(event);
   }, [showLens, updateLens]);
 
@@ -185,7 +191,9 @@ export function useCharacterLens({ active, mediaActivated, reducedMotion }: Char
   return {
     stageRef,
     lensRef,
+    focusMarkerRef,
     baseVideoRef,
+    baseImageRef,
     lensCanvasRef,
     coordinateRef,
     pointerHandlers: {

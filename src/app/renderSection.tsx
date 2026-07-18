@@ -3,8 +3,7 @@ import { CharacterSection } from "../sections/CharacterSection";
 import { GallerySection } from "../sections/GallerySection";
 import { HeroSection } from "../sections/HeroSection";
 import { LinksSection } from "../sections/LinksSection";
-import { PersonalitySection } from "../sections/PersonalitySection";
-import { WorksSection } from "../sections/WorksSection";
+import { nextSectionAfter } from "./sectionRegistry";
 import type { SectionDefinition, SectionId } from "./sectionRegistry";
 
 type SectionRuntime = {
@@ -24,6 +23,8 @@ function assertNever(value: never): never {
 }
 
 export function renderSection(definition: SectionDefinition, runtime: SectionRuntime) {
+  const sequentialWarmupRequested = nextSectionAfter(runtime.activeSection)?.id === definition.id;
+
   switch (definition.id) {
     case "home":
       return (
@@ -48,13 +49,24 @@ export function renderSection(definition: SectionDefinition, runtime: SectionRun
         />
       );
     case "character":
-      return <CharacterSection definition={definition} reducedMotion={runtime.reducedMotion} active={runtime.activeSection === definition.id} />;
-    case "personality":
-      return <PersonalitySection definition={definition} reducedMotion={runtime.reducedMotion} active={runtime.activeSection === definition.id} />;
+      return (
+        <CharacterSection
+          definition={definition}
+          reducedMotion={runtime.reducedMotion}
+          active={runtime.activeSection === definition.id}
+          warmupRequested={sequentialWarmupRequested}
+        />
+      );
     case "links":
-      return <LinksSection definition={definition} reducedMotion={runtime.reducedMotion} active={runtime.activeSection === definition.id} />;
-    case "works":
-      return <WorksSection definition={definition} reducedMotion={runtime.reducedMotion} active={runtime.activeSection === definition.id} onBackHome={() => runtime.onNavigate("home")} />;
+      return (
+        <LinksSection
+          definition={definition}
+          reducedMotion={runtime.reducedMotion}
+          active={runtime.activeSection === definition.id}
+          warmupRequested={sequentialWarmupRequested}
+          onBackHome={() => runtime.onNavigate("home")}
+        />
+      );
     default:
       return assertNever(definition);
   }

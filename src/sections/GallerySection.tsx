@@ -74,7 +74,7 @@ export function GallerySection({ definition, reducedMotion, active: sectionActiv
 
         <header className="gallery-heading">
           <small>NYXIE / EIGHT SIGNALS</small>
-          <h2>同一双红瞳，<br /><span>八种不同的夜色</span>。</h2>
+          <h2>你眼中的我，<br /><span>又是怎样的呢？</span></h2>
           <p>本次随机抽取三种形态供滚轮浏览。向下滚动一次切换一位，浏览完三位后进入下一页；左右按钮、两侧角色或方向键可查看全部八种形态，向上滚动直接返回首页。</p>
         </header>
 

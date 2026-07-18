@@ -52,39 +52,23 @@ const mobileCharacter = await evaluate(`(() => {
 })()`);
 await screenshot("mobile-character.png");
 
-await scrollChapterTo('#personality', 0.46);
-const mobilePersonality = await evaluate(`({
-  bodyWidth: document.body.scrollWidth, viewportWidth: innerWidth,
-  videoReadyState: document.querySelector('.personality-video')?.readyState ?? null,
-  activeBeats: [...document.querySelectorAll('.personality-beat')].filter((node) => Number(getComputedStyle(node).opacity) > 0.55).length,
-})`);
-
-await scrollChapterTo('#links', 0.24);
-await screenshot("mobile-links.png");
-const mobileLinks = await evaluate(`({
-  bodyWidth: document.body.scrollWidth, viewportWidth: innerWidth,
-  inlineRows: document.querySelectorAll('#links .external-link--inline').length,
-  visibleRows: [...document.querySelectorAll('#links .external-link--inline')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
-  drawerInsideLinks: Boolean(document.querySelector('#links .links-drawer')),
-})`);
-
-await scrollChapterTo('#works', 1, 0);
-await waitFor("Number(document.querySelector('#works')?.dataset.forwardProgress ?? 0) >= 0.999");
-await waitFor("document.querySelector('#works')?.dataset.drawerState === 'settled'");
-await screenshot("mobile-works-open.png");
-const mobileWorks = await evaluate(`(() => {
+await scrollChapterTo('#links', 1, 0);
+await waitFor("Number(document.querySelector('#links')?.dataset.forwardProgress ?? 0) >= 0.999");
+await waitFor("document.querySelector('#links')?.dataset.drawerState === 'settled'");
+await screenshot("mobile-links-open.png");
+const mobileLinks = await evaluate(`(() => {
   const drawer = document.querySelector('.links-drawer');
   const drawerRect = drawer?.getBoundingClientRect();
-  const buttonRect = document.querySelector('.works-page-back')?.getBoundingClientRect();
-  const progressRect = document.querySelector('#works .chapter-progress-track')?.getBoundingClientRect();
+  const buttonRect = document.querySelector('.links-page-back')?.getBoundingClientRect();
+  const progressRect = document.querySelector('#links .chapter-progress-track')?.getBoundingClientRect();
   return {
     bodyWidth: document.body.scrollWidth, viewportWidth: innerWidth,
-    featured: document.querySelectorAll('#works .work-showcase').length,
-    rows: document.querySelectorAll('#works .external-link--drawer').length,
-    visibleRows: [...document.querySelectorAll('#works .external-link--drawer')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+    featured: document.querySelectorAll('#links .work-showcase').length,
+    rows: document.querySelectorAll('#links .external-link--drawer').length,
+    visibleRows: [...document.querySelectorAll('#links .external-link--drawer')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
     drawerVisible: Boolean(drawerRect && Number(getComputedStyle(drawer).opacity) > 0.9 && drawerRect.top >= 0 && drawerRect.bottom <= innerHeight),
     drawerCenterDelta: drawerRect ? Math.round(Math.abs(drawerRect.left + drawerRect.width / 2 - document.documentElement.clientWidth / 2)) : null,
-    backVisible: Boolean(buttonRect && Number(getComputedStyle(document.querySelector('.works-page-back')).opacity) > 0.75 && buttonRect.top < innerHeight && buttonRect.bottom > 0),
+    backVisible: Boolean(buttonRect && Number(getComputedStyle(document.querySelector('.links-page-back')).opacity) > 0.75 && buttonRect.top < innerHeight && buttonRect.bottom > 0),
     backBelowProgress: Boolean(buttonRect && progressRect && buttonRect.top > progressRect.bottom),
     backCenterDelta: buttonRect ? Math.round(Math.abs(buttonRect.left + buttonRect.width / 2 - document.documentElement.clientWidth / 2)) : null,
   };
@@ -105,16 +89,15 @@ const reducedGallery = await evaluate(`({
 
 await evaluate("document.querySelector('.links-drawer')?.scrollIntoView({behavior:'instant', block:'center'})");
 await delay(500);
-await screenshot("reduced-motion-works.png");
-const reducedWorks = await evaluate(`(() => {
+await screenshot("reduced-motion-links.png");
+const reducedLinks = await evaluate(`(() => {
   const drawer = document.querySelector('.links-drawer');
   const rect = drawer?.getBoundingClientRect();
   return {
     drawerVisible: Boolean(rect && Number(getComputedStyle(drawer).opacity) === 1 && rect.top < innerHeight && rect.bottom > 0),
-    rows: document.querySelectorAll('#works .external-link--drawer').length,
-    workVisible: Number(getComputedStyle(document.querySelector('#works .work-showcase')).opacity) === 1,
-    backInsideWorks: document.querySelector('.works-page-back')?.closest('section')?.id === 'works',
-    personalityUsesPoster: Boolean(document.querySelector('.personality-poster')),
+    rows: document.querySelectorAll('#links .external-link--drawer').length,
+    workVisible: Number(getComputedStyle(document.querySelector('#links .work-showcase')).opacity) === 1,
+    backInsideLinks: document.querySelector('.links-page-back')?.closest('section')?.id === 'links',
     cursorHidden: getComputedStyle(document.querySelector('.cursor-ring')).display === 'none',
   };
 })()`);
@@ -154,11 +137,9 @@ const wideGallery = await evaluate(`(() => {
     mobileHome,
     mobileGallery,
     mobileCharacter,
-    mobilePersonality,
     mobileLinks,
-    mobileWorks,
     reducedGallery,
-    reducedWorks,
+    reducedLinks,
     wideGallery,
   };
 }

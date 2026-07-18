@@ -17,9 +17,10 @@
   --duration-press: 140ms;
   --duration-fast: 180ms;
   --duration-ui: 240ms;
-  --font-micro: 9px;
-  --font-meta: 10px;
-  --font-control: 11px;
+  --font-micro: 12px;
+  --font-meta: 13px;
+  --font-control: 14px;
+  --font-body: 14px;
   --header-height: 68px;
   color-scheme: light;
   font-synthesis: none;
@@ -97,4 +98,3 @@ video {
   color: var(--white);
   background: var(--red);
 }
-

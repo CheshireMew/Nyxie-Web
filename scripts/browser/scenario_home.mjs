@@ -68,7 +68,6 @@ const homeResourceBudget = await evaluate(`(() => {
     galleryRequests: resources.filter((entry) => entry.name.includes('/assets/gallery/')).length,
     characterRequests: resources.filter((entry) => entry.name.includes('/assets/character/')).length,
     worksRequests: resources.filter((entry) => entry.name.includes('/assets/works/')).length,
-    personalityVideoRequests: resources.filter((entry) => entry.name.endsWith('/assets/media/personality.webm')).length,
     bgmRequests: resources.filter((entry) => entry.name.endsWith('/assets/audio/nyxie-bgm.m4a')).length,
     galleryVideoBytes: completed.filter((entry) => entry.name.includes('/assets/gallery/') && entry.name.endsWith('.webm')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
     worksImageBytes: completed.filter((entry) => entry.name.includes('/assets/works/')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
@@ -87,11 +86,13 @@ const reloadEntry = await evaluate(`({
   navigationType: performance.getEntriesByType('navigation')[0]?.type ?? null,
   scrollY: Math.round(scrollY),
   hash: location.hash,
-  characterTop: Math.round(document.querySelector('#character')?.getBoundingClientRect().top ?? -9999),
+  homeTop: Math.round(document.querySelector('#home')?.getBoundingClientRect().top ?? -9999),
   restoration: history.scrollRestoration,
   activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
 })`);
 await screenshot("desktop-reload-home.png");
+await evaluate("document.querySelectorAll('.main-nav button')[2]?.click()");
+await waitFor("location.hash === '#character' && document.querySelector('.main-nav .is-active')?.textContent === 'CHARACTER' && Math.abs(document.querySelector('#character')?.getBoundingClientRect().top ?? -9999) <= 8");
 await evaluate("document.querySelector('.main-nav button:first-child')?.click()");
 await waitFor("scrollY <= 4 && document.querySelector('.main-nav .is-active')?.textContent === 'HOME'");
 await delay(450);

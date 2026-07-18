@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="32" fill="#eef4f9"/>
-  <circle cx="32" cy="32" r="29" fill="none" stroke="#11151c" stroke-width="2"/>
-  <path d="M22 40V19h4l12 15V19h4v21h-4L26 25v15z" fill="#11151c"/>
-  <path d="m27 47 10 10m0-10L27 57" stroke="#c91f3c" stroke-width="3" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <style>path { vector-effect: non-scaling-stroke; }</style>
+  <circle cx="24" cy="24" r="23.5" fill="#eef4f9"/>
+  <g fill="none" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4">
+    <path d="M12 8A20 20 0 0 1 38.6 37.6M36.3 39.8A20 20 0 0 1 6.7 34" stroke="#11151c" stroke-width="1.15"/>
+    <path d="M7.2 31V9.4L22.2 27.6V16L27 9.4V28.5" stroke="#11151c" stroke-width="2.15"/>
+    <path d="M18.5 36.8L34.5 21.4" stroke="#11151c" stroke-width="2.15"/>
+    <path d="M27.1 29.9L34.4 36.8" stroke="#c91f3c" stroke-width="2.1"/>
+  </g>
 </svg>

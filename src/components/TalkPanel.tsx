@@ -29,7 +29,7 @@ export function TalkPanel({ open, onClose, onNavigate, onPlayAtHero }: Props) {
         <blockquote>“既然都看到这里了，<br />就别只盯着首屏。”</blockquote>
         <div className="quick-actions">
           <button type="button" onClick={() => onNavigate("character")}>读取角色设定</button>
-          <button type="button" onClick={() => onNavigate("personality")}>看看我的反应</button>
+          <button type="button" onClick={() => onPlayAtHero("tease")}>看看我的反应</button>
           <button type="button" onClick={() => onPlayAtHero("vanish")}>回首页看我消失</button>
         </div>
       </div>

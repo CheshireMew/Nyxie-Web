@@ -43,7 +43,7 @@
   margin: 0;
   text-align: center;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 10px;
+  font-size: var(--font-micro);
   letter-spacing: 0.32em;
 }
 
@@ -51,4 +51,3 @@
   from { transform: translateX(-110%); }
   to { transform: translateX(340%); }
 }
-

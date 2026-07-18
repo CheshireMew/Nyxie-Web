@@ -24,13 +24,13 @@ const galleryCopy = {
     accent: "#c91f3c",
   },
   garden: {
-    title: "花庭形态",
+    title: "春色满园",
     en: "SOFT BLOOM",
     description: "轻紫薄纱收起锋芒，让回眸和微风成为这一面的主要动作。",
     accent: "#a98ed3",
   },
   demon: {
-    title: "恶魔形态",
+    title: "紫焰魅魔",
     en: "NIGHTFIRE",
     description: "弯角、蝠翼、尾巴与紫焰，把危险感集中在完整轮廓里。",
     accent: "#8f5ce7",
@@ -48,7 +48,7 @@ const galleryCopy = {
     accent: "#c49a4b",
   },
   starsea: {
-    title: "星海形态",
+    title: "星海翩跹",
     en: "STELLAR TIDE",
     description: "淡紫薄纱与水光降低重量，让夜希像从星海边缘回身。",
     accent: "#7897d8",

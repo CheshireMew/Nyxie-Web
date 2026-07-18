@@ -10,7 +10,8 @@
 @media (max-width: 760px) {
   :root { --header-height: 58px; }
   .site-header { padding: 0 16px; }
-  .brand-sigil { width: 36px; height: 36px; }
+  .brand-sigil { width: 38px; height: 38px; }
+  .brand-name { gap: 0; font-size: 16px; }
   .brand-name small,
   .bgm-toggle span:last-child,
   .talk-button { display: none; }

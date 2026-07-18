@@ -4,9 +4,10 @@ import { useChapterPerformance } from "../hooks/useChapterPerformance";
 import { useCharacterLens } from "../features/character/useCharacterLens";
 import type { SectionDefinitionFor } from "../app/sectionRegistry";
 
-export function CharacterSection({ definition, reducedMotion, active }: { definition: SectionDefinitionFor<"character">; reducedMotion: boolean; active: boolean }) {
+export function CharacterSection({ definition, reducedMotion, active, warmupRequested }: { definition: SectionDefinitionFor<"character">; reducedMotion: boolean; active: boolean; warmupRequested: boolean }) {
   const { sectionRef, progressRef, mediaActivated } = useChapterPerformance({
     active,
+    warmupRequested,
     reducedMotion,
     setup: ({ gsap, progressFill }) => {
       const entrance = gsap.timeline({ paused: true });
@@ -22,13 +23,13 @@ export function CharacterSection({ definition, reducedMotion, active }: { defini
   const lens = useCharacterLens({ active, mediaActivated, reducedMotion });
 
   return (
-    <section ref={sectionRef} className="character-chapter chapter" id={definition.id}>
+    <section ref={sectionRef} className="character-chapter chapter" id={definition.id} data-character-media={active ? "active" : warmupRequested ? "warming" : "idle"}>
       <div ref={lens.stageRef} className="character-stage" data-cursor="detail" {...lens.pointerHandlers}>
         <ChapterHud index={definition.index} label={definition.hudLabel} inverted={definition.hudInverted} showStatus={definition.showHudStatus} progressRef={progressRef} />
 
         <div className="character-media" role="img" aria-label="夜希的全身动态形象">
           {reducedMotion ? (
-            <img className="character-film" src={mediaActivated ? characterMedia.loopPoster : undefined} alt="" aria-hidden="true" />
+            <img ref={lens.baseImageRef} className="character-film" src={mediaActivated ? characterMedia.loopPoster : undefined} alt="" aria-hidden="true" />
           ) : (
             <video
               ref={lens.baseVideoRef}
@@ -49,35 +50,39 @@ export function CharacterSection({ definition, reducedMotion, active }: { defini
           <div className="character-film-grid" aria-hidden="true" />
         </div>
 
-        <header className="character-interface">
-          <small>CHARACTER / 02</small>
-          <h2 id="character-title">NYXIE <span>夜希</span></h2>
-          <p>
-            <span className="character-instruction--pointer">移动鼠标，查看画面细节</span>
-            <span className="character-instruction--touch">触摸画面，查看局部细节</span>
-          </p>
-        </header>
+        <span ref={lens.focusMarkerRef} className="character-focus-marker" aria-hidden="true" />
 
-        <aside className="character-readout" aria-label="画面查看状态">
-          <span>FULL FIGURE</span>
-          <span>DETAIL / 1.75×</span>
-          <output ref={lens.coordinateRef}>X 000 / Y 000</output>
+        <aside className="character-inspector" aria-label="人物细节查看台">
+          <div className="character-inspector-lens">
+            <div className="character-lens-hint" aria-hidden="true">
+              <i />
+              <span>MOVE TO INSPECT</span>
+            </div>
+
+            <div ref={lens.lensRef} className="character-lens" aria-hidden="true">
+              <canvas ref={lens.lensCanvasRef} className="character-lens-canvas" />
+              <span className="character-lens-crosshair" />
+              <span className="character-lens-scale">1.75×</span>
+            </div>
+          </div>
+
+          <div className="character-inspector-copy">
+            <header className="character-interface">
+              <small>CHARACTER / 02</small>
+              <h2 id="character-title">NYXIE <span>夜希</span></h2>
+              <p>
+                <span className="character-instruction--pointer">移动鼠标，查看画面细节</span>
+                <span className="character-instruction--touch">触摸画面，查看局部细节</span>
+              </p>
+            </header>
+
+            <div className="character-readout" aria-label="画面查看状态">
+              <span>FULL FIGURE</span>
+              <span>DETAIL / 1.75×</span>
+              <output ref={lens.coordinateRef}>X 000 / Y 000</output>
+            </div>
+          </div>
         </aside>
-
-        <div className="character-lens-hint" aria-hidden="true">
-          <i />
-          <span>MOVE TO INSPECT</span>
-        </div>
-
-        <div ref={lens.lensRef} className="character-lens" aria-hidden="true">
-          {reducedMotion ? (
-            <img className="character-lens-media" src={mediaActivated ? characterMedia.loopPoster : undefined} alt="" />
-          ) : (
-            <canvas ref={lens.lensCanvasRef} className="character-lens-canvas" />
-          )}
-          <span className="character-lens-crosshair" />
-          <span className="character-lens-scale">1.75×</span>
-        </div>
       </div>
     </section>
   );

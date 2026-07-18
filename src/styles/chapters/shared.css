@@ -5,31 +5,23 @@
 /* Shared scroll-performance chapters */
 .gallery-chapter,
 .character-chapter,
-.personality-chapter,
-.works-chapter,
 .links-chapter {
   position: relative;
 }
 
 .gallery-chapter,
 .character-chapter,
-.personality-chapter,
-.links-chapter,
-.works-chapter { min-height: 100svh; }
+.links-chapter { min-height: 100svh; }
 
 .chapter--sequenced { height: calc(100svh + var(--chapter-runway, 0svh)); }
 
-.chapter--sequenced > .personality-stage,
-.chapter--sequenced > .links-stage,
-.chapter--sequenced > .works-stage {
+.chapter--sequenced > .links-stage {
   position: sticky;
   top: 0;
 }
 
 .gallery-stage,
 .character-stage,
-.personality-stage,
-.works-stage,
 .links-stage {
   position: relative;
   width: 100%;
@@ -41,7 +33,6 @@
 }
 
 .character-stage,
-.works-stage,
 .links-stage {
   color: var(--ink);
   background:
@@ -51,8 +42,6 @@
 
 .gallery-grid-field,
 .chapter-grid-field,
-.personality-grid-field,
-.works-grid-field,
 .links-grid-field {
   position: absolute;
   z-index: -2;
@@ -77,15 +66,6 @@
     radial-gradient(rgba(17,21,28,0.18) 0.65px, transparent 0.8px);
   background-size: 76px 76px, 76px 76px, 8px 8px;
   mask-image: radial-gradient(circle at 60% 48%, #000 8%, rgba(0,0,0,0.68) 58%, transparent 94%);
-}
-
-.personality-grid-field {
-  opacity: 0.13;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px);
-  background-size: 76px 76px;
-  mask-image: radial-gradient(circle at 68% 50%, #000, transparent 72%);
 }
 
 .chapter-hud {

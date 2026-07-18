@@ -58,7 +58,6 @@ export default function App() {
       const section = sectionIdFromHash();
       if (section) void navigateToChapter(section, "auto", "none");
     };
-    navigateFromHistory();
     window.addEventListener("popstate", navigateFromHistory);
     return () => window.removeEventListener("popstate", navigateFromHistory);
   }, [ready]);

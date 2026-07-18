@@ -106,6 +106,30 @@ const portalScroll = await evaluate(`(() => {
   };
 })()`);
 
+await waitFor(`(() => {
+  const section = document.querySelector('#character');
+  const video = section?.querySelector('.character-film');
+  return section?.dataset.characterMedia === 'warming'
+    && video?.currentSrc.endsWith('/assets/character/character-loop.webm')
+    && video.preload === 'auto'
+    && video.readyState >= 2
+    && video.poster.endsWith('/assets/character/character-loop-poster.webp');
+})()`, 10000);
+const characterWarmup = await evaluate(`(() => {
+  const section = document.querySelector('#character');
+  const video = section?.querySelector('.character-film');
+  if (video) video.dataset.acceptanceWarmupToken = 'same-character-player';
+  return {
+    mediaState: section?.dataset.characterMedia ?? null,
+    playerCount: section?.querySelectorAll('video.character-film').length ?? 0,
+    source: video?.currentSrc ?? '',
+    poster: video?.poster ?? '',
+    preload: video?.preload ?? null,
+    readyState: video?.readyState ?? 0,
+    paused: video?.paused ?? false,
+  };
+})()`);
+
 await waitFor("document.querySelector('.gallery-form-video.is-active')?.currentTime > 0.1");
 const galleryInitialPlayback = await evaluate(`(() => {
   const video = document.querySelector('.gallery-form-video.is-active');
@@ -480,6 +504,7 @@ const galleryReversePlayback = await evaluate(`(() => {
       galleryPortalWarmup,
       portalLock,
       portalScroll,
+      characterWarmup,
       galleryInitialPlayback,
       heroFailure,
       heroAction,

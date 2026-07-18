@@ -94,7 +94,7 @@
   color: rgba(17, 21, 28, 0.42);
   writing-mode: vertical-rl;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 9px;
+  font-size: var(--font-micro);
   letter-spacing: 0.32em;
 }
 
@@ -114,7 +114,7 @@
   align-items: center;
   gap: 10px;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 10px;
+  font-size: var(--font-meta);
   font-weight: 700;
   letter-spacing: 0.18em;
 }
@@ -188,7 +188,7 @@
   margin: 22px 0 0;
   color: #44505d;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  font-size: clamp(13px, 1vw, 16px);
+  font-size: clamp(var(--font-body), 1vw, 16px);
   line-height: 1.9;
 }
 
@@ -215,7 +215,7 @@
   border-radius: 2px;
   color: var(--white);
   background: var(--ink);
-  font-size: 12px;
+  font-size: var(--font-control);
   font-weight: 800;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -238,7 +238,7 @@
   border: 0;
   border-bottom: 1px solid currentColor;
   background: none;
-  font-size: 11px;
+  font-size: var(--font-control);
   font-weight: 800;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -319,6 +319,7 @@
 
 .control-caption small {
   color: var(--red);
+  font-size: inherit;
 }
 
 .video-retry {
@@ -500,4 +501,3 @@
   from { transform: translateX(-100%); }
   to { transform: translateX(100%); }
 }
-

@@ -15,10 +15,6 @@
     "loopVideoWebm": "assets/character/character-loop.webm",
     "loopVideoMp4": "assets/character/character-loop.mp4",
     "loopPoster": "assets/character/character-loop-poster.webp",
-    "personalityVideo": "assets/media/personality.webm",
-    "personalityPoster": "assets/character/personality-poster.webp",
-    "personalityCloseup": "assets/character/personality-closeup.webp",
-    "worksCharacter": "assets/character/works-character.webp",
     "linksCharacter": "assets/character/links-character.webp"
   },
   "works": {

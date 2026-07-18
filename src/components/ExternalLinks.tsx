@@ -1,8 +1,7 @@
 import { externalLinks } from "../content/siteContent";
 
-export function ExternalLinkRows({ variant }: { variant: "inline" | "drawer" }) {
+function ExternalLinkRows() {
   return externalLinks.map((link) => {
-    const className = `external-link external-link--${variant}`;
     const content = (
       <>
         <span>{link.index}</span>
@@ -17,8 +16,8 @@ export function ExternalLinkRows({ variant }: { variant: "inline" | "drawer" }) 
 
     return (
       <a
-        className={className}
-        key={`${variant}-${link.index}`}
+        className="external-link external-link--drawer"
+        key={link.index}
         href={link.href}
         target="_blank"
         rel="noreferrer"
@@ -36,29 +35,31 @@ export function ExternalLinksDrawer() {
   return (
     <>
       <div className="links-drawer-backdrop" aria-hidden="true" />
-      <aside className="links-drawer" aria-label="夜希的外部链接">
-        <div className="links-drawer-rail">
-          <span>05 / EXIT DIRECTORY</span>
-          <span className="links-drawer-status"><i aria-hidden="true" />{availableLinkCount} CHANNELS ONLINE</span>
-        </div>
-
-        <div className="links-drawer-head">
-          <div>
-            <small>CHOOSE YOUR NEXT STOP</small>
-            <h3>夜希的其他入口</h3>
-            <p>作品已经看完。选择一个真实入口，在新的标签页继续。</p>
+      <div className="links-drawer-positioner">
+        <aside className="links-drawer" aria-label="夜希的外部链接">
+          <div className="links-drawer-rail">
+            <span>05 / EXIT DIRECTORY</span>
+            <span className="links-drawer-status"><i aria-hidden="true" />{availableLinkCount} CHANNELS ONLINE</span>
           </div>
-          <span className="links-drawer-mark" aria-hidden="true">N<i>×</i></span>
-        </div>
 
-        <div className="drawer-link-gates">
-          <ExternalLinkRows variant="drawer" />
-        </div>
+          <div className="links-drawer-head">
+            <div>
+              <small>CHOOSE YOUR NEXT STOP</small>
+              <h3>探索更多</h3>
+              <p>点击链接，获取更多信息。</p>
+            </div>
+            <span className="links-drawer-mark" aria-hidden="true">N<i>×</i></span>
+          </div>
 
-        <div className="links-drawer-foot">
-          <span>END OF CURRENT PAGE / 2026</span>
-        </div>
-      </aside>
+          <div className="drawer-link-gates">
+            <ExternalLinkRows />
+          </div>
+
+          <div className="links-drawer-foot">
+            <span>END OF CURRENT PAGE / 2026</span>
+          </div>
+        </aside>
+      </div>
     </>
   );
 }

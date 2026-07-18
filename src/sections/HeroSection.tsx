@@ -196,8 +196,8 @@ export function HeroSection({
           <span className="title-cn">夜希</span>
           <span className="title-en">NYXIE</span>
         </h1>
-        <p className="hero-role reveal-up">梦境导航员 · 柴郡猫的不可靠继承者</p>
-        <p className="hero-intro reveal-up">她不负责带你走出仙境。<br />她只负责让迷路变得值得。</p>
+        <p className="hero-role reveal-up">柴郡猫拟人化 · 个人原创 IP 角色形象</p>
+        <p className="hero-intro reveal-up">在纷乱的世界里，<br />保持清醒。</p>
         <div className="hero-cta reveal-up">
           <a
             className="primary-button"

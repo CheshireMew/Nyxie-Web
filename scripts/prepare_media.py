@@ -21,9 +21,7 @@ class Asset:
 
 
 ASSETS = (
-    Asset("04｜内容与项目素材母图.png", "works-character.webp", (35, 0, 625, 941)),
-    Asset("05｜最终入口素材母图.png", "links-character.webp", (190, 0, 660, 941)),
-    Asset("ChatGPT Image 2026年7月14日 14_50_16.png", "personality-closeup.webp"),
+    Asset("04｜内容与项目素材母图.png", "links-character.webp", (35, 0, 625, 941)),
 )
 
 

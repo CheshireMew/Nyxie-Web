@@ -2,29 +2,19 @@
   .chapter--sequenced { height: auto; }
   .gallery-chapter,
   .character-chapter,
-  .personality-chapter,
-  .works-chapter,
   .links-chapter { min-height: auto; }
   .gallery-stage,
   .character-stage,
-  .personality-stage,
-  .works-stage,
   .links-stage { position: relative; height: auto; min-height: 100svh; overflow: hidden; padding: calc(var(--header-height) + 90px) clamp(20px, 6vw, 80px) 110px; }
   .chapter-hud-heading { top: calc(var(--header-height) + 20px); }
   .chapter-progress-fill { transform: scaleX(1); }
   .gallery-heading,
   .gallery-carousel,
-  .personality-copy,
-  .works-stage-title,
-  .links-intro,
-  .personality-media,
-  .works-character,
+  .links-stage-title,
   .links-character,
   .work-showcase { position: relative; inset: auto; width: 100%; transform: none !important; opacity: 1 !important; visibility: visible !important; }
   .gallery-heading,
-  .personality-copy,
-  .works-stage-title,
-  .links-intro { margin-bottom: 40px; }
+  .links-stage-title { margin-bottom: 40px; }
   .gallery-orbit,
   .gallery-form-watermark { display: none; }
   .gallery-carousel { display: grid; grid-template-rows: 38px minmax(0, 1fr) auto; left: auto; width: min(700px, 100%); height: min(820px, 80vh); min-height: 620px; margin: 0 auto 80px; translate: none !important; }
@@ -35,19 +25,14 @@
   .gallery-side-card,
   .gallery-arrow { display: none; }
   .gallery-pagination { position: relative; inset: auto; justify-content: center; margin: -54px auto 62px; translate: none; }
-  .personality-media,
-  .works-character,
   .links-character { height: 68vh; min-height: 520px; }
   .character-stage { height: 100svh; min-height: 680px; padding: 0; }
   .character-film { transform: none !important; opacity: 1 !important; visibility: visible !important; }
-  .personality-beats { position: relative; inset: auto; width: 100%; margin: 24px 0; }
-  .personality-closeup { display: none; }
   .work-showcase { height: auto; min-height: 680px; }
-  .links-portal { opacity: 0.65 !important; transform: none !important; }
-  .links-scroll-hint i::after { animation: none; transform: none; }
   .links-drawer-backdrop { display: none; }
+  .links-drawer-positioner { position: relative; inset: auto; display: block; width: 100%; pointer-events: auto; }
   .links-drawer { position: relative; inset: auto; width: 100%; max-width: 820px; max-height: none; margin: 0 auto; overflow: visible; opacity: 1 !important; visibility: visible !important; translate: none; transform: none !important; }
   .external-link { transform: none !important; opacity: 1 !important; visibility: visible !important; }
-  .works-page-back { position: absolute; bottom: 10px; left: 50%; translate: -50% 0; }
+  .links-page-back { position: absolute; bottom: 10px; left: 50%; translate: -50% 0; }
   .back-home { opacity: 1 !important; visibility: visible !important; transform: none !important; }
 }

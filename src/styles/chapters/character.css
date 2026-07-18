@@ -1,6 +1,6 @@
 /* Full-figure moving portrait with a synchronized detail lens. */
 .character-stage {
-  --lens-size: clamp(188px, 14vw, 238px);
+  --lens-size: clamp(248px, 20vw, 420px);
   --lens-zoom: 1.75;
   background: #e8f2f9;
   touch-action: pan-y;
@@ -23,12 +23,11 @@
   background: #e8f2f9;
 }
 
-.character-film,
-.character-lens-media {
+.character-film {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: center center;
+  object-position: left center;
   background: #e8f2f9;
 }
 
@@ -54,7 +53,7 @@
 
 .character-film-grid {
   z-index: 2;
-  left: 54%;
+  left: 48%;
   opacity: 0.2;
   background-image:
     linear-gradient(rgba(17, 21, 28, 0.13) 1px, transparent 1px),
@@ -64,12 +63,55 @@
   mask-image: linear-gradient(90deg, transparent, #000 38%, rgba(0, 0, 0, 0.58));
 }
 
-.character-interface {
+.character-inspector {
   position: absolute;
   z-index: 14;
-  top: clamp(160px, 25vh, 260px);
-  right: clamp(56px, 7vw, 130px);
-  width: min(31vw, 480px);
+  top: calc(var(--header-height) + 58px);
+  right: clamp(28px, 2.3vw, 54px);
+  bottom: 5.5vh;
+  display: grid;
+  grid-template-columns: minmax(260px, 1.15fr) minmax(220px, 0.85fr);
+  gap: clamp(22px, 2vw, 38px);
+  align-items: center;
+  width: min(43vw, 860px);
+  padding: clamp(24px, 2.2vw, 42px);
+  border: 1px solid rgba(17, 21, 28, 0.11);
+  background: linear-gradient(90deg, rgba(238, 246, 251, 0.14), rgba(238, 246, 251, 0.58) 52%, rgba(238, 246, 251, 0.9));
+  box-shadow: 0 24px 80px rgba(72, 96, 118, 0.08);
+  pointer-events: none;
+}
+
+.character-inspector::before {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  left: 24px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, rgba(201, 31, 60, 0.58), rgba(17, 21, 28, 0.13) 34%, transparent 82%);
+}
+
+.character-inspector-lens {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+.character-inspector-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
+  min-width: 0;
+  padding-left: clamp(18px, 1.6vw, 30px);
+  border-left: 1px solid rgba(17, 21, 28, 0.13);
+}
+
+.character-interface {
+  position: relative;
+  width: 100%;
 }
 
 .character-interface small,
@@ -90,7 +132,7 @@
 .character-interface h2 {
   margin: 18px 0 22px;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(74px, 8vw, 150px);
+  font-size: clamp(50px, 3.8vw, 78px);
   font-weight: 400;
   line-height: 0.78;
   letter-spacing: -0.075em;
@@ -111,7 +153,7 @@
   gap: 12px;
   margin: 0;
   color: rgba(17, 21, 28, 0.58);
-  font-size: 10px;
+  font-size: var(--font-body);
 }
 
 .character-interface p::before {
@@ -124,34 +166,34 @@
 .character-instruction--touch { display: none; }
 
 .character-readout {
-  position: absolute;
-  z-index: 14;
-  right: clamp(56px, 7vw, 130px);
-  bottom: 10vh;
+  position: relative;
   display: grid;
-  grid-template-columns: auto auto;
-  gap: 7px 18px;
-  min-width: min(31vw, 480px);
+  grid-template-columns: 1fr;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  margin-top: clamp(38px, 7vh, 76px);
   padding-top: 13px;
   border-top: 1px solid rgba(17, 21, 28, 0.24);
   color: rgba(17, 21, 28, 0.52);
-  font-size: 9px;
+  font-size: var(--font-micro);
 }
 
 .character-readout span:nth-child(2) { color: var(--red); }
-.character-readout output { grid-column: 1 / 3; color: var(--ink); font: inherit; }
+.character-readout output { grid-column: 1; color: var(--ink); font: inherit; }
 
 .character-lens-hint {
   position: absolute;
   z-index: 13;
-  top: 57%;
-  left: 62%;
+  top: 50%;
+  left: 50%;
   display: grid;
   justify-items: center;
   gap: 10px;
   color: rgba(17, 21, 28, 0.42);
-  font-size: 8px;
+  font-size: var(--font-micro);
   pointer-events: none;
+  translate: -50% -50%;
   transform-origin: center;
   transition: opacity 240ms var(--ease-out), scale 240ms var(--ease-out);
 }
@@ -180,10 +222,8 @@
 .character-stage.has-used-lens .character-lens-hint { opacity: 0; scale: 0.8; }
 
 .character-lens {
-  position: absolute;
+  position: relative;
   z-index: 30;
-  top: 0;
-  left: 0;
   width: var(--lens-size);
   height: var(--lens-size);
   overflow: hidden;
@@ -196,24 +236,43 @@
     0 24px 70px rgba(41, 70, 94, 0.28);
   opacity: 0;
   pointer-events: none;
-  transform: translate3d(-400px, -400px, 0) translate(-50%, -50%) scale(0.72);
-  transition: opacity 160ms var(--ease-out);
+  transform: scale(0.94);
+  transition: opacity 160ms var(--ease-out), transform 260ms var(--ease-out);
   will-change: transform;
 }
 
-.character-stage.is-lens-active .character-lens { opacity: 1; }
+.character-stage.is-lens-active .character-lens { opacity: 1; transform: scale(1); }
 
-.character-lens-media {
+.character-focus-marker {
   position: absolute;
-  top: var(--media-top, 0);
-  left: var(--media-left, 0);
-  width: var(--stage-width, 100vw);
-  max-width: none;
-  height: var(--stage-height, 100vh);
-  transform: scale(var(--lens-zoom));
-  transform-origin: var(--focus-x, 50%) var(--focus-y, 50%);
-  filter: contrast(1.035) saturate(1.03);
+  z-index: 29;
+  top: 0;
+  left: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(180, 137, 67, 0.86);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(245, 250, 253, 0.58);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+  transition: opacity 120ms var(--ease-out);
+  will-change: transform;
 }
+
+.character-focus-marker::before,
+.character-focus-marker::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  content: "";
+  background: rgba(201, 31, 60, 0.82);
+  translate: -50% -50%;
+}
+
+.character-focus-marker::before { width: 12px; height: 1px; }
+.character-focus-marker::after { width: 1px; height: 12px; }
+.character-stage.is-lens-active .character-focus-marker { opacity: 1; }
 
 .character-lens-canvas {
   position: absolute;
@@ -254,7 +313,7 @@
   padding: 4px 6px;
   color: var(--ink);
   background: rgba(249, 252, 255, 0.78);
-  font-size: 8px;
+  font-size: var(--font-micro);
 }
 
 @media (hover: hover) and (pointer: fine) {

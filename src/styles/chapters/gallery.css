@@ -13,7 +13,7 @@
 .gallery-heading small { color: var(--gallery-accent); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: var(--font-meta); letter-spacing: 0.24em; }
 .gallery-heading h2 { margin: 16px 0 18px; font-family: "Songti SC", "Noto Serif SC", serif; font-size: clamp(44px, 4.5vw, 72px); font-weight: 400; line-height: 1.02; letter-spacing: -0.06em; }
 .gallery-heading h2 span { color: var(--gallery-accent); }
-.gallery-heading p { max-width: 360px; margin: 0; color: rgba(17,21,28,0.5); font-size: 11px; line-height: 1.85; }
+.gallery-heading p { max-width: 420px; margin: 0; color: rgba(17,21,28,0.5); font-size: var(--font-body); line-height: 1.7; }
 .gallery-orbit { position: absolute; z-index: 1; top: 15vh; left: 42vw; width: min(48vw, 760px); aspect-ratio: 1; border: 1px solid color-mix(in srgb, var(--gallery-accent) 30%, transparent); border-radius: 50%; rotate: -9deg; pointer-events: none; }
 .gallery-orbit::before { position: absolute; inset: 8%; content: ""; border: 1px dashed rgba(17,21,28,0.15); border-radius: inherit; }
 .gallery-orbit::after { position: absolute; top: 50%; right: -16%; left: -16%; height: 1px; content: ""; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gallery-accent) 58%, transparent), transparent); rotate: -18deg; }
@@ -34,10 +34,10 @@
 .gallery-card-copy { position: absolute; z-index: 25; bottom: 10vh; left: max(-18vw, calc(400px - 40vw)); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 10px 18px; width: min(31vw, 470px); min-height: 142px; padding: 18px 0 0; border-top: 1px solid rgba(17,21,28,0.24); background: transparent; animation: gallery-copy-in 220ms var(--ease-out) both; }
 .gallery-card-copy small { color: var(--gallery-accent); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: var(--font-micro); letter-spacing: 0.13em; }
 .gallery-card-copy h3 { margin: 5px 0 0; font-family: "Songti SC", serif; font-size: clamp(36px, 3.2vw, 50px); font-weight: 400; line-height: 1; }
-.gallery-card-copy p { grid-column: 1 / 3; max-width: 390px; margin: 0; color: rgba(17,21,28,0.5); font-size: 10px; line-height: 1.75; }
-.gallery-playing { display: inline-flex; align-items: center; gap: 7px; padding-top: 4px; color: rgba(17,21,28,0.5); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 8px; letter-spacing: 0.11em; white-space: nowrap; }
+.gallery-card-copy p { grid-column: 1 / 3; max-width: 420px; margin: 0; color: rgba(17,21,28,0.5); font-size: var(--font-body); line-height: 1.65; }
+.gallery-playing { display: inline-flex; align-items: center; gap: 7px; padding-top: 4px; color: rgba(17,21,28,0.5); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: var(--font-micro); letter-spacing: 0.11em; white-space: nowrap; }
 .gallery-playing i { width: 6px; height: 6px; border-radius: 50%; background: var(--gallery-accent); box-shadow: 0 0 13px var(--gallery-accent); }
-.gallery-video-retry { grid-column: 2; justify-self: end; padding: 0; color: var(--gallery-accent); border: 0; border-bottom: 1px solid currentColor; background: transparent; font-size: 9px; cursor: pointer; }
+.gallery-video-retry { grid-column: 2; justify-self: end; padding: 0; color: var(--gallery-accent); border: 0; border-bottom: 1px solid currentColor; background: transparent; font-size: var(--font-meta); cursor: pointer; }
 @keyframes gallery-copy-in {
   from { opacity: 0.24; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -51,7 +51,7 @@
 .gallery-arrow--previous { left: 2vw; }
 .gallery-arrow--next { right: 2vw; }
 .gallery-pagination { position: absolute; z-index: 30; bottom: 34px; left: 50%; display: flex; gap: 5px; translate: -50% 0; }
-.gallery-pagination button { display: grid; place-items: center; width: 34px; height: 24px; padding: 0; color: rgba(17,21,28,0.35); border: 0; border-bottom: 1px solid rgba(17,21,28,0.18); background: transparent; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 8px; cursor: pointer; transition: color var(--duration-ui) var(--ease-out), border-color var(--duration-ui) var(--ease-out), scale var(--duration-press) var(--ease-out); }
+.gallery-pagination button { display: grid; place-items: center; width: 38px; height: 28px; padding: 0; color: rgba(17,21,28,0.35); border: 0; border-bottom: 1px solid rgba(17,21,28,0.18); background: transparent; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: var(--font-micro); cursor: pointer; transition: color var(--duration-ui) var(--ease-out), border-color var(--duration-ui) var(--ease-out), scale var(--duration-press) var(--ease-out); }
 .gallery-pagination button.is-active { color: var(--ink); border-color: var(--gallery-accent); }
 .gallery-chapter:focus-visible { outline: 1px solid var(--gallery-accent); outline-offset: -3px; }
 

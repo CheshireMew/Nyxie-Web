@@ -17,7 +17,7 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: fit-content;
   padding: 0;
   border: 0;
@@ -27,31 +27,30 @@
 }
 
 .brand-sigil {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--ink);
-  border-radius: 50%;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.12em;
-}
-
-.brand-sigil span {
-  color: var(--red);
+  display: block;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  user-select: none;
 }
 
 .brand-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 18px;
   font-weight: 800;
+  line-height: 1;
   letter-spacing: 0.08em;
 }
 
 .brand-name small {
-  margin-left: 5px;
+  margin-left: 0;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 9px;
+  font-size: var(--font-micro);
+  letter-spacing: 0.16em;
 }
 
 .main-nav {
@@ -67,7 +66,7 @@
   color: rgba(17, 21, 28, 0.64);
   background: none;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 10px;
+  font-size: var(--font-meta);
   letter-spacing: 0.12em;
   cursor: pointer;
   transition: color var(--duration-fast) var(--ease-out), scale var(--duration-press) var(--ease-out);
@@ -174,4 +173,3 @@
   margin: 6px 0;
   background: currentColor;
 }
-

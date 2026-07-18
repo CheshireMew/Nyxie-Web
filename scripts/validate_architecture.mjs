@@ -48,7 +48,7 @@ for (const forbidden of ["dataset.chapterNavigation", "nyxie:chapter-settled"]) 
 
 for (const [file, content] of sourceByPath) {
   const path = projectPath(file);
-  if (path.startsWith("src/sections/") && /id="(?:home|gallery|character|personality|links|works)"/.test(content)) {
+  if (path.startsWith("src/sections/") && /id="(?:home|gallery|character|links)"/.test(content)) {
     failures.push(`章节组件仍硬编码注册 ID：${path}`);
   }
   if (path.startsWith("src/sections/") && /<ChapterHud\s+index="/.test(content)) {
