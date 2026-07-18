@@ -12,11 +12,9 @@
     }
   },
   "character": {
-    "full": "assets/character/character-full.webp",
-    "face": "assets/character/detail-face.webp",
-    "costume": "assets/character/detail-costume.webp",
-    "back": "assets/character/detail-back.webp",
-    "legs": "assets/character/detail-legs.webp",
+    "loopVideoWebm": "assets/character/character-loop.webm",
+    "loopVideoMp4": "assets/character/character-loop.mp4",
+    "loopPoster": "assets/character/character-loop-poster.webp",
     "personalityVideo": "assets/media/personality.webm",
     "personalityPoster": "assets/character/personality-poster.webp",
     "personalityCloseup": "assets/character/personality-closeup.webp",

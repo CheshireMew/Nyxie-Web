@@ -14,17 +14,14 @@
   .chapter-progress-fill { transform: scaleX(1); }
   .gallery-heading,
   .gallery-carousel,
-  .character-stage-title,
   .personality-copy,
   .works-stage-title,
   .links-intro,
-  .character-portrait,
   .personality-media,
   .works-character,
   .links-character,
   .work-showcase { position: relative; inset: auto; width: 100%; transform: none !important; opacity: 1 !important; visibility: visible !important; }
   .gallery-heading,
-  .character-stage-title,
   .personality-copy,
   .works-stage-title,
   .links-intro { margin-bottom: 40px; }
@@ -38,12 +35,11 @@
   .gallery-side-card,
   .gallery-arrow { display: none; }
   .gallery-pagination { position: relative; inset: auto; justify-content: center; margin: -54px auto 62px; translate: none; }
-  .character-portrait,
   .personality-media,
   .works-character,
   .links-character { height: 68vh; min-height: 520px; }
-  .character-scenes { position: relative; inset: auto; display: grid; gap: 16px; width: 100%; height: auto; }
-  .character-scene { position: relative; inset: auto; min-height: 420px; transform: none !important; opacity: 1 !important; visibility: visible !important; }
+  .character-stage { height: 100svh; min-height: 680px; padding: 0; }
+  .character-film { transform: none !important; opacity: 1 !important; visibility: visible !important; }
   .personality-beats { position: relative; inset: auto; width: 100%; margin: 24px 0; }
   .personality-closeup { display: none; }
   .work-showcase { height: auto; min-height: 680px; }

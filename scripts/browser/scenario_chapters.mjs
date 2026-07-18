@@ -17,28 +17,50 @@ const characterBeforeStage = await evaluate(`(() => {
     pageTop: Math.round(section?.getBoundingClientRect().top ?? -9999),
     stageTop: Math.round(stage?.getBoundingClientRect().top ?? -9999),
     entranceState: section?.dataset.entranceState ?? null,
-    performanceState: section?.dataset.performanceState ?? null,
-    performanceProgress: Number(section?.dataset.forwardProgress ?? 0),
-    visibleScenes: [...section.querySelectorAll('.character-scene')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
+    lensOpacity: Number(getComputedStyle(section?.querySelector('.character-lens')).opacity),
   };
 })()`);
 
-await scrollChapterTo('#character', 0.38);
+await scrollChapterTo('#character', 0);
+await waitFor("document.querySelector('#character .character-film')?.readyState >= 2");
+await waitFor("(document.querySelector('#character .character-film')?.currentTime ?? 0) > 0.05");
+await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 470, y: 410 });
+await waitFor("(document.querySelector('#character .character-lens-canvas')?.width ?? 0) > 0");
+await delay(160);
 const characterScrollBefore = await evaluate("Math.round(scrollY)");
 await wheelAt(720, 500, 120);
 const characterScrollAfter = await evaluate("Math.round(scrollY)");
 await screenshot("desktop-character.png");
-const character = await evaluate(`({
-  scenes: document.querySelectorAll('.character-scene').length,
-  middleStatusLabels: document.querySelectorAll('#character .chapter-hud-status > span').length,
-  activeScenes: [...document.querySelectorAll('.character-scene')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
-  portraitLoaded: document.querySelector('.character-portrait img')?.complete ?? false,
-  detailImagesLoaded: [...document.querySelectorAll('.character-scene img')].every((node) => node.complete),
-  progressTransform: getComputedStyle(document.querySelector('#character .chapter-progress-fill')).transform,
-  performanceProgress: Number(document.querySelector('#character')?.dataset.forwardProgress ?? 0),
-  stageTop: Math.round(document.querySelector('#character .character-stage')?.getBoundingClientRect().top ?? -9999),
-  nextChapterTop: Math.round(document.querySelector('#personality')?.getBoundingClientRect().top ?? -9999),
-})`);
+const character = await evaluate(`(() => {
+  const video = document.querySelector('#character .character-film');
+  const lensCanvas = document.querySelector('#character .character-lens-canvas');
+  const lens = document.querySelector('#character .character-lens');
+  const stage = document.querySelector('#character .character-stage');
+  const context = lensCanvas?.getContext('2d');
+  const centerPixel = context && lensCanvas.width > 0
+    ? Array.from(context.getImageData(Math.floor(lensCanvas.width / 2), Math.floor(lensCanvas.height / 2), 1, 1).data)
+    : [];
+  return {
+    middleStatusLabels: document.querySelectorAll('#character .chapter-hud-status > span').length,
+    videoReadyState: video?.readyState ?? 0,
+    videoWidth: video?.videoWidth ?? 0,
+    videoHeight: video?.videoHeight ?? 0,
+    videoCurrentTime: video?.currentTime ?? 0,
+    videoPaused: video?.paused ?? true,
+    videoMuted: video?.muted ?? false,
+    videoLoop: video?.loop ?? false,
+    lensOpacity: Number(getComputedStyle(lens).opacity),
+    lensTransform: getComputedStyle(lens).transform,
+    lensCanvasWidth: lensCanvas?.width ?? 0,
+    lensCanvasHeight: lensCanvas?.height ?? 0,
+    lensCenterLuma: centerPixel.length === 4 ? centerPixel[0] + centerPixel[1] + centerPixel[2] : 765,
+    coordinate: document.querySelector('#character .character-readout output')?.value ?? '',
+    progressTransform: getComputedStyle(document.querySelector('#character .chapter-progress-fill')).transform,
+    stageTop: Math.round(stage?.getBoundingClientRect().top ?? -9999),
+    stageHeight: Math.round(stage?.getBoundingClientRect().height ?? 0),
+    nextChapterTop: Math.round(document.querySelector('#personality')?.getBoundingClientRect().top ?? -9999),
+  };
+})()`);
 character.internalWheelDelta = characterScrollAfter - characterScrollBefore;
 
 await scrollChapterTo('#character', 0.99);
@@ -49,15 +71,13 @@ const nativeBoundaryDown = await evaluate(`(() => {
   const character = document.querySelector('#character');
   const personality = document.querySelector('#personality');
   const padding = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-  const finalScene = character?.querySelector('.character-scene:last-child');
+  const video = character?.querySelector('.character-film');
   return {
     activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
     nativeDelta: Math.round(scrollY) - ${nativeBoundaryDownBefore},
     pageTop: Math.round(personality?.getBoundingClientRect().top ?? -9999),
     padding: Math.round(padding),
-    characterProgress: Number(character?.dataset.forwardProgress ?? 0),
-    characterState: character?.dataset.performanceState ?? null,
-    finalSceneOpacity: Number(getComputedStyle(finalScene).opacity),
+    characterVideoPaused: video?.paused ?? true,
   };
 })()`);
 
@@ -68,11 +88,10 @@ const personalityFirstEntry = await evaluate(`(() => {
 })()`);
 const characterFinalBeforeReverse = await evaluate(`(() => {
   const section = document.querySelector('#character');
+  const video = section?.querySelector('.character-film');
   return {
-    progress: Number(section?.dataset.forwardProgress ?? 0),
-    fill: getComputedStyle(section.querySelector('.chapter-progress-fill')).transform,
-    scenes: [...section.querySelectorAll('.character-scene')].map((scene) => getComputedStyle(scene).opacity),
-    portrait: getComputedStyle(section.querySelector('.character-portrait')).transform,
+    currentTime: video?.currentTime ?? 0,
+    paused: video?.paused ?? true,
   };
 })()`);
 const nativeBoundaryUpBefore = await evaluate("Math.round(scrollY)");
@@ -94,11 +113,10 @@ const personalityFrozenAfterUp = await evaluate(`(() => {
 await scrollChapterTo('#character', 0.2);
 const characterFinalAfterReverse = await evaluate(`(() => {
   const section = document.querySelector('#character');
+  const video = section?.querySelector('.character-film');
   return {
-    progress: Number(section?.dataset.forwardProgress ?? 0),
-    fill: getComputedStyle(section.querySelector('.chapter-progress-fill')).transform,
-    scenes: [...section.querySelectorAll('.character-scene')].map((scene) => getComputedStyle(scene).opacity),
-    portrait: getComputedStyle(section.querySelector('.character-portrait')).transform,
+    currentTime: video?.currentTime ?? 0,
+    paused: video?.paused ?? true,
   };
 })()`);
 
@@ -223,7 +241,7 @@ const worksBackdropProtection = {
   currentUrl: await evaluate("location.href"),
 };
 
-const completedChapterProgress = await evaluate(`Object.fromEntries(['character', 'personality', 'links', 'works'].map((id) => [id, Number(document.getElementById(id)?.dataset.forwardProgress ?? 0)]))`);
+const completedChapterProgress = await evaluate(`Object.fromEntries(['personality', 'links', 'works'].map((id) => [id, Number(document.getElementById(id)?.dataset.forwardProgress ?? 0)]))`);
 const worksFinalBeforeReverse = await evaluate(`(() => {
   const section = document.querySelector('#works');
   return {

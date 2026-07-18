@@ -74,18 +74,6 @@ export const galleryItems: GalleryItem[] = galleryIds.map((id, index) => ({
   ...getGalleryMedia(id),
 }));
 
-export const characterIdentity = {
-  eyebrow: "CHARACTER STUDY / NO. 025",
-  title: ["她不靠细节", "被记住，", "靠的是轮廓。"],
-  description: "黑白压低音量，红色只留给视线。猫耳、短发与不对称关系共同收束成一个名字——夜希。",
-  meta: ["NYXIE", "DREAM NAVIGATOR", "BLACK CAT ENTITY"],
-  signatures: [
-    { index: "01", en: "SILHOUETTE", title: "猫耳与短发", note: "先看见完整轮廓，再发现细节。" },
-    { index: "02", en: "COLOR", title: "黑白与信号红", note: "红色只出现一次，因此无法忽略。" },
-    { index: "03", en: "RHYTHM", title: "克制的不对称", note: "一点偏差，让安静的画面留下记忆。" },
-  ],
-} as const;
-
 export type FeaturedWork = {
   index: string;
   title: string;

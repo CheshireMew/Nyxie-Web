@@ -31,11 +31,26 @@ const mobileGallery = await evaluate(`(() => {
   };
 })()`);
 
-await scrollChapterTo('#character', 0.38);
-const mobileCharacter = await evaluate(`({
-  bodyWidth: document.body.scrollWidth, viewportWidth: innerWidth, scenes: document.querySelectorAll('.character-scene').length,
-  activeScenes: [...document.querySelectorAll('.character-scene')].filter((node) => Number(getComputedStyle(node).opacity) > 0.45).length,
-})`);
+await scrollChapterTo('#character', 0);
+await waitFor("document.querySelector('#character .character-film')?.readyState >= 2");
+const mobileCharacter = await evaluate(`(() => {
+  const video = document.querySelector('#character .character-film');
+  const title = document.querySelector('#character .character-interface')?.getBoundingClientRect();
+  const instruction = document.querySelector('#character .character-instruction--touch');
+  return {
+    bodyWidth: document.body.scrollWidth,
+    viewportWidth: innerWidth,
+    videoReadyState: video?.readyState ?? 0,
+    videoWidth: video?.videoWidth ?? 0,
+    videoHeight: video?.videoHeight ?? 0,
+    videoMuted: video?.muted ?? false,
+    objectFit: getComputedStyle(video).objectFit,
+    objectPosition: getComputedStyle(video).objectPosition,
+    titleInsideViewport: Boolean(title && title.left >= 0 && title.right <= innerWidth && title.top >= 0 && title.bottom <= innerHeight),
+    touchInstructionVisible: instruction ? getComputedStyle(instruction).display !== 'none' : false,
+  };
+})()`);
+await screenshot("mobile-character.png");
 
 await scrollChapterTo('#personality', 0.46);
 const mobilePersonality = await evaluate(`({

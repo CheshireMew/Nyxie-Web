@@ -63,3 +63,7 @@ body.cursor-active .cursor-ring::before {
   background: rgba(201, 31, 60, 0.08);
 }
 
+body.character-lens-active .cursor-dot,
+body.character-lens-active .cursor-ring {
+  opacity: 0;
+}

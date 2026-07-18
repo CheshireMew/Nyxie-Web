@@ -21,11 +21,6 @@ class Asset:
 
 
 ASSETS = (
-    Asset("02｜角色设定素材母图.png", "character-full.webp", (120, 0, 610, 941)),
-    Asset("02｜角色设定素材母图.png", "detail-face.webp", (680, 0, 1220, 465)),
-    Asset("02｜角色设定素材母图.png", "detail-costume.webp", (1190, 0, 1672, 455)),
-    Asset("02｜角色设定素材母图.png", "detail-back.webp", (680, 435, 1225, 925)),
-    Asset("02｜角色设定素材母图.png", "detail-legs.webp", (1200, 435, 1645, 941)),
     Asset("04｜内容与项目素材母图.png", "works-character.webp", (35, 0, 625, 941)),
     Asset("05｜最终入口素材母图.png", "links-character.webp", (190, 0, 660, 941)),
     Asset("ChatGPT Image 2026年7月14日 14_50_16.png", "personality-closeup.webp"),

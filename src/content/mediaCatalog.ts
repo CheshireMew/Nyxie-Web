@@ -82,6 +82,9 @@ export const heroMedia = {
 };
 
 export const characterMedia = {
+  loopVideoWebm: assetUrl(mediaManifest.character.loopVideoWebm),
+  loopVideoMp4: assetUrl(mediaManifest.character.loopVideoMp4),
+  loopPoster: assetUrl(mediaManifest.character.loopPoster),
   personalityVideo: assetUrl(mediaManifest.character.personalityVideo),
   personalityPoster: assetUrl(mediaManifest.character.personalityPoster),
   personalityCloseup: assetUrl(mediaManifest.character.personalityCloseup),

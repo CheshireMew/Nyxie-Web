@@ -10,6 +10,7 @@ export function useChapterWarmup(activeSection: SectionId, enabled: boolean) {
     const nextSection = nextSectionAfter(activeSection);
     const sources = [...new Set(nextSection?.warmup ?? [])];
     let index = 0;
+    let warmingVideo: HTMLVideoElement | null = null;
 
     document.documentElement.dataset.chapterWarmupTarget = nextSection?.id ?? "none";
     if (sources.length === 0) {
@@ -30,14 +31,39 @@ export function useChapterWarmup(activeSection: SectionId, enabled: boolean) {
       }
       index += 1;
 
-      const image = new Image();
-      image.decoding = "async";
-      image.fetchPriority = "low";
-      image.src = source;
-      try {
-        await image.decode();
-      } catch {
-        // The visible component remains responsible for its own fallback.
+      if (/\.(?:mp4|webm)(?:$|[?#])/i.test(source)) {
+        await new Promise<void>((resolve) => {
+          const video = document.createElement("video");
+          warmingVideo = video;
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeout);
+            video.removeEventListener("canplay", finish);
+            video.removeEventListener("error", finish);
+            if (warmingVideo === video) warmingVideo = null;
+            resolve();
+          };
+          const timeout = window.setTimeout(finish, 6000);
+          video.preload = "auto";
+          video.muted = true;
+          video.playsInline = true;
+          video.addEventListener("canplay", finish, { once: true });
+          video.addEventListener("error", finish, { once: true });
+          video.src = source;
+          video.load();
+        });
+      } else {
+        const image = new Image();
+        image.decoding = "async";
+        image.fetchPriority = "low";
+        image.src = source;
+        try {
+          await image.decode();
+        } catch {
+          // The visible component remains responsible for its own fallback.
+        }
       }
       if (!cancelled) timer = window.setTimeout(() => { void warmNext(); }, 80);
     };
@@ -46,6 +72,11 @@ export function useChapterWarmup(activeSection: SectionId, enabled: boolean) {
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      if (warmingVideo) {
+        warmingVideo.removeAttribute("src");
+        warmingVideo.load();
+        warmingVideo = null;
+      }
       delete document.documentElement.dataset.chapterWarmup;
       delete document.documentElement.dataset.chapterWarmupTarget;
     };

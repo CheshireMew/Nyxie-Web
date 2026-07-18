@@ -5,8 +5,9 @@
   .gallery-side-card { width: 23vw; }
   .gallery-side-card--previous { left: 3vw; }
   .gallery-side-card--next { right: 0; }
-  .character-scenes { right: 4vw; width: 48vw; }
-  .character-portrait { left: 3vw; width: 52vw; }
+  .character-interface,
+  .character-readout { right: 4vw; width: 34vw; min-width: 0; }
+  .character-lens-hint { left: 60%; }
   .personality-copy { left: 5vw; width: 47vw; }
   .personality-media { right: -4vw; width: 66vw; }
   .personality-beats { left: 5vw; width: 48vw; }
@@ -58,20 +59,48 @@
   .gallery-pagination { bottom: 32px; gap: 1px; }
   .gallery-pagination button { width: 30px; }
 
-  .character-stage-title { top: 17vh; left: 20px; width: calc(100% - 40px); }
-  .character-stage-title h2 { font-size: clamp(38px, 11.8vw, 52px); line-height: 1.06; }
-  .character-stage-title p { width: 88%; font-size: 11px; }
-  .character-halo { bottom: 2vh; left: 40%; width: 110vw; }
-  .character-portrait { bottom: -3vh; left: -15vw; width: 92vw; height: 68vh; }
-  .character-portrait figcaption { right: 3vw; bottom: 9vh; }
-  .character-scenes { top: 23vh; right: 16px; width: calc(100% - 32px); height: 60vh; }
-  .character-scene { grid-template-columns: 0.82fr 1fr; gap: 14px; padding: 14px; }
-  .character-scene { background: rgba(245,250,253,0.94); }
-  .character-scene-image { min-height: 260px; }
-  .scene-index { margin-bottom: 10px; font-size: 34px; }
-  .character-scene-copy h3 { margin: 8px 0 10px; font-size: 24px; }
-  .character-scene-copy p { font-size: 11px; line-height: 1.65; }
-  .character-reticle { display: none; }
+  .character-stage { --lens-size: 154px; --lens-zoom: 1.62; }
+  .character-stage::after { inset: calc(var(--header-height) + 12px) 12px 18px; }
+  .character-film,
+  .character-lens-media { object-fit: cover; object-position: 17% center; }
+  .character-film-wash {
+    background:
+      linear-gradient(90deg, transparent 34%, rgba(239,247,252,0.16) 58%, rgba(239,247,252,0.54) 100%),
+      linear-gradient(180deg, rgba(238,246,251,0.2), transparent 20%, transparent 78%, rgba(226,239,248,0.22));
+  }
+  .character-film-grid { display: none; }
+  .character-interface { top: calc(var(--header-height) + 96px); right: 13px; width: 38px; }
+  .character-interface small { display: none; }
+  .character-interface h2 {
+    margin: 0;
+    font-size: 31px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-orientation: upright;
+    writing-mode: vertical-rl;
+  }
+  .character-interface h2 span { margin: 14px 0 0; font-size: 12px; letter-spacing: 0.12em; }
+  .character-interface p {
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 6px 4px;
+    color: rgba(17, 21, 28, 0.66);
+    background: rgba(239, 247, 252, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(17, 21, 28, 0.08);
+    font-size: 7px;
+    line-height: 1.4;
+    text-orientation: upright;
+    writing-mode: vertical-rl;
+  }
+  .character-interface p::before { flex: 0 0 22px; width: 1px; height: 22px; }
+  .character-instruction--pointer { display: none; }
+  .character-instruction--touch { display: inline; }
+  .character-readout { right: 18px; bottom: 9vh; grid-template-columns: 1fr; gap: 5px; width: 112px; min-width: 0; padding-top: 9px; font-size: 7px; }
+  .character-readout output { grid-column: 1; }
+  .character-lens-hint { display: none; }
+  .character-lens { box-shadow: 0 0 0 5px rgba(245,250,253,0.72), 0 0 0 6px rgba(17,21,28,0.2), 0 18px 44px rgba(41,70,94,0.26); }
+  .character-lens-scale { right: 18px; bottom: 15px; }
 
   .personality-copy { top: 16vh; left: 20px; width: calc(100% - 40px); }
   .personality-copy h2 { font-size: clamp(38px, 11vw, 50px); }
@@ -119,4 +148,3 @@
   .works-stage .chapter-hud-status { display: none; }
   .works-page-back { bottom: 8px; }
 }
-

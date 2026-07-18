@@ -9,10 +9,10 @@ export const sectionRegistry = [
     index: "02",
     en: "CHARACTER",
     zh: "角色设定",
-    hudLabel: "CHARACTER / DESIGN LANGUAGE",
+    hudLabel: "CHARACTER / FULL FIGURE",
     hudInverted: false,
     showHudStatus: false,
-    warmup: [],
+    warmup: [characterMedia.loopPoster, characterMedia.loopVideoWebm],
   },
   {
     id: "personality",
