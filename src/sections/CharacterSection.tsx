@@ -1,90 +1,67 @@
-import { useRef } from "react";
-import { characterDetails } from "../content/siteContent";
-import { characterMedia } from "../content/mediaCatalog";
-import { gsap, useGSAP } from "../animation/gsap";
-import { driveChapterPerformance } from "../animation/chapterPerformance";
+import { characterIdentity } from "../content/siteContent";
 import { ChapterHud } from "../components/ChapterHud";
+import { useChapterPerformance } from "../hooks/useChapterPerformance";
+import type { SectionDefinitionFor } from "../app/sectionRegistry";
 
-export function CharacterSection({ reducedMotion }: { reducedMotion: boolean }) {
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useGSAP(() => {
-    if (reducedMotion) return;
-    const mobile = window.matchMedia("(max-width: 760px)").matches;
-    const scenes = gsap.utils.toArray<HTMLElement>(".character-scene");
-    const portraits = mobile
-      ? [
-          { x: -35, y: 11, scale: 0.74, rotate: -1.2 },
-          { x: -42, y: 12, scale: 0.7, rotate: 0.7 },
-          { x: -37, y: 10, scale: 0.76, rotate: -0.8 },
-          { x: -44, y: 13, scale: 0.7, rotate: 0.9 },
-        ]
-      : [
-          { x: -2, y: 0, scale: 1.02, rotate: -0.7 },
-          { x: -7, y: 1, scale: 1.08, rotate: 0.5 },
-          { x: -11, y: -1, scale: 1.13, rotate: -0.4 },
-          { x: -15, y: -3, scale: 1.18, rotate: 0.6 },
-        ];
-
-    gsap.set(scenes, { autoAlpha: 0, yPercent: 10 });
-    const section = sectionRef.current;
-    if (!section) return;
-    const entrance = gsap.timeline({ paused: true });
-    const sequence = gsap.timeline({ paused: true });
-
-    entrance
-      .fromTo(".character-stage-title", { yPercent: 28, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.7, ease: "power3.out" })
-      .fromTo(".character-portrait", { yPercent: 12, scale: 0.9, autoAlpha: 0 }, { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.9, ease: "power3.out" }, 0)
-      .fromTo(".character-halo", { scale: 0.72, rotate: -12, autoAlpha: 0 }, { scale: 1, rotate: 0, autoAlpha: 1, duration: 1 }, 0);
-
-    sequence.to(".character-stage-title", { yPercent: -36, autoAlpha: mobile ? 0.06 : 0.22, scale: 0.82, duration: 0.8 });
-
-    scenes.forEach((scene, index) => {
-      const pose = portraits[index];
-      sequence
-        .set(scene, { autoAlpha: 1 })
-        .to(scene, { yPercent: 0, duration: 0.58, ease: "power2.inOut" })
-        .to(".character-portrait", { xPercent: pose.x, yPercent: pose.y, scale: pose.scale, rotate: pose.rotate, autoAlpha: mobile ? 0.3 : 1, duration: 0.75, ease: "power2.inOut" }, "<")
-        .fromTo(scene.querySelector("img"), { scale: 1.14 }, { scale: 1, duration: 0.85, ease: "power2.out" }, "<")
-        .set(index > 0 ? scenes[index - 1] : [], { autoAlpha: 0 })
-        .to(scene, { autoAlpha: 1, duration: 0.58 });
-    });
-    driveChapterPerformance({ trigger: section, entrance, sequence, runwayVh: 72, trackChapterProgress: true });
-  }, { scope: sectionRef, dependencies: [reducedMotion] });
+export function CharacterSection({ definition, reducedMotion, active }: { definition: SectionDefinitionFor<"character">; reducedMotion: boolean; active: boolean }) {
+  const { sectionRef, progressRef } = useChapterPerformance({
+    active,
+    reducedMotion,
+    setup: ({ gsap, progressFill }) => {
+      const entrance = gsap.timeline({ paused: true });
+      entrance
+        .fromTo(".character-intro > *", { yPercent: 34, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.72, stagger: 0.07, ease: "power3.out" })
+        .fromTo(".character-sigil", { scale: 0.72, rotate: -10, autoAlpha: 0 }, { scale: 1, rotate: 0, autoAlpha: 1, duration: 1.05, ease: "power3.out" }, 0.04)
+        .fromTo(".character-sigil-core", { scale: 0.82 }, { scale: 1, duration: 1.08, ease: "power2.out" }, 0.08)
+        .fromTo(".character-wordmark", { xPercent: 7, autoAlpha: 0 }, { xPercent: 0, autoAlpha: 1, duration: 1.1, ease: "power2.out" }, 0.12)
+        .fromTo(".character-signature", { yPercent: 24, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.58, stagger: 0.09, ease: "power2.out" }, 0.32)
+        .fromTo(progressFill, { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power2.out" }, 0);
+      return { entrance };
+    },
+  });
 
   return (
-    <section ref={sectionRef} className="character-chapter chapter chapter--sequenced" id="character">
+    <section ref={sectionRef} className="character-chapter chapter" id={definition.id}>
       <div className="character-stage">
-        <ChapterHud index="02" label="CHARACTER / DESIGN LANGUAGE" showStatus={false} />
-        <div className="chapter-grid-field" aria-hidden="true" />
-        <div className="character-halo" aria-hidden="true"><span /><i /></div>
+        <ChapterHud index={definition.index} label={definition.hudLabel} inverted={definition.hudInverted} showStatus={definition.showHudStatus} progressRef={progressRef} />
+        <div className="character-paper-grid" aria-hidden="true" />
+        <div className="character-wordmark" aria-hidden="true">NYXIE</div>
 
-        <header className="character-stage-title">
-          <small>RECOGNITION BEFORE EXPLANATION</small>
-          <h2>不是装饰的集合，<br />是夜希的<span>完整轮廓</span>。</h2>
-          <p>继续向下。镜头会逐一锁定她最容易被记住的四个特征。</p>
+        <header className="character-intro">
+          <small>{characterIdentity.eyebrow}</small>
+          <h2>
+            {characterIdentity.title.map((line, index) => (
+              <span className={index === characterIdentity.title.length - 1 ? "is-accent" : undefined} key={line}>{line}</span>
+            ))}
+          </h2>
+          <p>{characterIdentity.description}</p>
+          <div className="character-meta" aria-label="角色身份">
+            {characterIdentity.meta.map((item) => <span key={item}>{item}</span>)}
+          </div>
         </header>
 
-        <figure className="character-portrait">
-          <img src={characterMedia.full} alt="夜希自然比例3D全身形象" />
-          <figcaption><b>NYXIE</b><span>MODEL 025 / DREAM NAVIGATOR</span></figcaption>
-        </figure>
-
-        <div className="character-scenes">
-          {characterDetails.map((detail) => (
-            <article className="character-scene" key={detail.id}>
-              <div className="character-scene-image"><img src={detail.image} alt={detail.imageAlt} /></div>
-              <div className="character-scene-copy">
-                <div className="scene-index">{detail.index}</div>
-                <small>{detail.eyebrow}</small>
-                <h3>{detail.title}</h3>
-                <p>{detail.body}</p>
-              </div>
-            </article>
-          ))}
+        <div className="character-sigil" aria-hidden="true">
+          <span className="character-orbit character-orbit--outer" />
+          <span className="character-orbit character-orbit--inner" />
+          <span className="character-orbit-dot character-orbit-dot--red" />
+          <span className="character-orbit-dot character-orbit-dot--gold" />
+          <div className="character-sigil-core">
+            <span className="character-sigil-letter">N</span>
+            <span className="character-sigil-eye"><i /></span>
+            <b>025</b>
+          </div>
+          <span className="character-sigil-caption">IDENTITY / VISUAL FINGERPRINT</span>
         </div>
 
-        <div className="character-reticle" aria-hidden="true"><span>IDENTITY LOCK</span><i /></div>
+        <ol className="character-signatures" aria-label="夜希的视觉指纹">
+          {characterIdentity.signatures.map((signature) => (
+            <li className="character-signature" key={signature.en}>
+              <div><b>{signature.index}</b><small>{signature.en}</small></div>
+              <strong>{signature.title}</strong>
+              <p>{signature.note}</p>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

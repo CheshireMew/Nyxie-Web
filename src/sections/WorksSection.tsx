@@ -1,20 +1,19 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { characterMedia } from "../content/mediaCatalog";
 import { featuredWorks } from "../content/siteContent";
-import { gsap, useGSAP } from "../animation/gsap";
-import { driveChapterPerformance } from "../animation/chapterPerformance";
 import { ChapterHud } from "../components/ChapterHud";
 import { ExternalLinksDrawer } from "../components/ExternalLinks";
+import { useChapterPerformance } from "../hooks/useChapterPerformance";
+import type { SectionDefinitionFor } from "../app/sectionRegistry";
 
-export function WorksSection({ reducedMotion, onBackHome }: { reducedMotion: boolean; onBackHome: () => void }) {
-  const sectionRef = useRef<HTMLElement>(null);
+export function WorksSection({ definition, reducedMotion, active, onBackHome }: { definition: SectionDefinitionFor<"works">; reducedMotion: boolean; active: boolean; onBackHome: () => void }) {
   const drawerRevealedRef = useRef(false);
   const revealDrawerRef = useRef<() => void>(() => undefined);
-
-  useGSAP(() => {
-    if (reducedMotion) return;
-    const section = sectionRef.current;
-    if (!section) return;
+  const { sectionRef, progressRef, mediaActivated } = useChapterPerformance({
+    active,
+    reducedMotion,
+    setup: ({ section, gsap }) => {
+    drawerRevealedRef.current = false;
     const gates = gsap.utils.toArray<HTMLElement>(".external-link--drawer");
     const entrance = gsap.timeline({ paused: true });
     const sequence = gsap.timeline({ paused: true });
@@ -37,7 +36,6 @@ export function WorksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
       .to(".works-character", { xPercent: 8, scale: 1.1, duration: 0.9, ease: "power2.inOut" }, "<")
       .to(".work-showcase-screen img", { scale: 1.045, yPercent: -3, duration: 0.9, ease: "power2.inOut" })
       .to(".works-character", { xPercent: 14, yPercent: -2, scale: 1.14, duration: 0.9, ease: "power2.inOut" }, "<");
-    driveChapterPerformance({ trigger: section, entrance, sequence, runwayVh: 42, trackChapterProgress: true });
 
     const drawerTimeline = gsap.timeline({ paused: true })
       .to(".work-showcase", { xPercent: -7, scale: 0.97, autoAlpha: 0.2, duration: 0.48, ease: "power2.inOut" }, 0)
@@ -59,48 +57,20 @@ export function WorksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
       drawerTimeline.play();
     };
 
-    return () => {
-      revealDrawerRef.current = () => undefined;
+    return {
+      entrance,
+      sequence,
+      runwayVh: 42,
+      onSettled: () => revealDrawerRef.current(),
+      cleanup: () => { revealDrawerRef.current = () => undefined; },
     };
-  }, { scope: sectionRef, dependencies: [reducedMotion] });
-
-  useEffect(() => {
-    if (reducedMotion) return;
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const isActive = () => {
-      const bounds = section.getBoundingClientRect();
-      return bounds.top <= window.innerHeight * 0.18 && bounds.bottom >= window.innerHeight * 0.82;
-    };
-    const reveal = () => {
-      if (section.dataset.performanceState !== "settled" || !isActive() || drawerRevealedRef.current) return false;
-      revealDrawerRef.current();
-      return true;
-    };
-    const onWheel = (event: WheelEvent) => {
-      const deltaY = event.deltaY * (event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1);
-      if (deltaY < 6 || !reveal()) return;
-      event.preventDefault();
-    };
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      const movesForward = event.key === "ArrowDown" || event.key === "PageDown" || (event.key === " " && !event.shiftKey);
-      if (!movesForward || !reveal()) return;
-      event.preventDefault();
-    };
-
-    section.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      section.removeEventListener("wheel", onWheel);
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [reducedMotion]);
+    },
+  });
 
   return (
-    <section ref={sectionRef} className="works-chapter chapter chapter--sequenced" id="works">
+    <section ref={sectionRef} className="works-chapter chapter chapter--sequenced" id={definition.id}>
       <div className="works-stage">
-        <ChapterHud index="05" label="CONTENT / PROJECTS" showStatus />
+        <ChapterHud index={definition.index} label={definition.hudLabel} inverted={definition.hudInverted} showStatus={definition.showHudStatus} progressRef={progressRef} />
         <div className="works-grid-field" aria-hidden="true" />
 
         <header className="works-stage-title">
@@ -108,16 +78,16 @@ export function WorksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
           <h2>角色让人停下，<br /><span>作品证明她真的存在</span>。</h2>
         </header>
 
-        <img className="works-character" src={characterMedia.worksCharacter} alt="夜希回头展示斗篷背面的猫笑图案" />
+        <img className="works-character" src={mediaActivated ? characterMedia.worksCharacter : undefined} alt="夜希回头展示斗篷背面的猫笑图案" decoding="async" />
 
         {featuredWorks.map((work) => (
-          <a className="work-showcase" key={work.index} href={work.href} target="_blank" rel="noreferrer">
+          <article className="work-showcase" key={work.index}>
             <div className="work-showcase-bar" aria-hidden="true"><i /><i /><i /><span>NYXIE-WEB / LIVE PROJECT</span></div>
             <div className="work-showcase-screen">
-              <img src={work.desktopImage} alt={work.desktopImageAlt} loading="lazy" decoding="async" />
+              <img src={mediaActivated ? work.desktopImage : undefined} alt={work.desktopImageAlt} decoding="async" />
             </div>
             <figure className="work-showcase-mobile">
-              <img src={work.mobileImage} alt={work.mobileImageAlt} loading="lazy" decoding="async" />
+              <img src={mediaActivated ? work.mobileImage : undefined} alt={work.mobileImageAlt} decoding="async" />
             </figure>
             <div className="work-showcase-copy">
               <div className="work-showcase-index"><b>{work.index}</b><small>{work.meta}</small></div>
@@ -131,9 +101,8 @@ export function WorksSection({ reducedMotion, onBackHome }: { reducedMotion: boo
               <div className="work-showcase-tags" aria-label="项目技术标签">
                 {work.tags.map((tag) => <span key={tag}>{tag}</span>)}
               </div>
-              <strong>{work.cta} ↗</strong>
             </div>
-          </a>
+          </article>
         ))}
 
         <div className="works-stage-caption" aria-hidden="true"><span>CREATIVE COMPANION</span><b>NYXIE</b></div>

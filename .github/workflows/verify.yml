@@ -1,0 +1,38 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - name: Browser acceptance (root and static subpath)
+        shell: bash
+        run: |
+          npm run preview > /tmp/nyxie-vite.log 2>&1 &
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory . > /tmp/nyxie-static.log 2>&1 &
+          google-chrome --headless=new --disable-gpu --no-sandbox --remote-debugging-port=9222 about:blank > /tmp/nyxie-chrome.log 2>&1 &
+          for attempt in {1..40}; do
+            if curl --fail --silent http://127.0.0.1:4173 > /dev/null && curl --fail --silent http://127.0.0.1:4174/dist/ > /dev/null && curl --fail --silent http://127.0.0.1:9222/json/version > /dev/null; then
+              break
+            fi
+            sleep 0.25
+          done
+          npm run test:browser
+          NYXIE_TEST_URL=http://127.0.0.1:4174/dist npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-acceptance
+          path: artifacts/browser-acceptance/

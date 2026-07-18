@@ -1,25 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { characterMedia } from "../content/mediaCatalog";
-import { gsap, ScrollTrigger, useGSAP } from "../animation/gsap";
-import { driveChapterPerformance } from "../animation/chapterPerformance";
+import { ScrollTrigger } from "../animation/gsap";
 import { ChapterHud } from "../components/ChapterHud";
+import { useChapterPerformance } from "../hooks/useChapterPerformance";
+import type { SectionDefinitionFor } from "../app/sectionRegistry";
 
 function isSafariBrowser() {
   const userAgent = navigator.userAgent;
   return /Safari/i.test(userAgent) && !/Chrome|Chromium|CriOS|Edg|OPR|Android/i.test(userAgent);
 }
 
-export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }) {
-  const sectionRef = useRef<HTMLElement>(null);
+export function PersonalitySection({ definition, reducedMotion, active }: { definition: SectionDefinitionFor<"personality">; reducedMotion: boolean; active: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const performanceStartedRef = useRef(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const useVideo = useMemo(() => !reducedMotion && !isSafariBrowser() && !videoFailed, [reducedMotion, videoFailed]);
-
-  useGSAP(() => {
-    if (reducedMotion) return;
-    const section = sectionRef.current;
-    if (!section) return;
+  const { sectionRef, progressRef, mediaActivated } = useChapterPerformance({
+    active,
+    reducedMotion,
+    setup: ({ gsap }) => {
     const beats = gsap.utils.toArray<HTMLElement>(".personality-beat");
     gsap.set(beats, { autoAlpha: 0.2, xPercent: 8 });
     gsap.set(beats[0], { autoAlpha: 1, xPercent: 0 });
@@ -46,11 +45,12 @@ export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }
     sequence
       .fromTo(".personality-closeup", { xPercent: 12, scale: 0.9, autoAlpha: 0 }, { xPercent: 0, scale: 1, autoAlpha: 0.62, duration: 1.1, ease: "power2.inOut" })
       .to(".personality-copy", { yPercent: -12, autoAlpha: 0.35, duration: 0.65 }, "<");
-    driveChapterPerformance({ trigger: section, entrance, sequence, runwayVh: 56, trackChapterProgress: true });
-  }, { scope: sectionRef, dependencies: [reducedMotion] });
+    return { entrance, sequence, runwayVh: 56 };
+    },
+  });
 
   useEffect(() => {
-    if (!useVideo || !sectionRef.current || !videoRef.current) return;
+    if (!useVideo || !mediaActivated || !sectionRef.current || !videoRef.current) return;
     const video = videoRef.current;
     const trigger = ScrollTrigger.create({
       trigger: sectionRef.current,
@@ -73,12 +73,12 @@ export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }
       trigger.kill();
       video.pause();
     };
-  }, [useVideo]);
+  }, [mediaActivated, useVideo]);
 
   return (
-    <section ref={sectionRef} className="personality-chapter chapter chapter--sequenced" id="personality">
+    <section ref={sectionRef} className="personality-chapter chapter chapter--sequenced" id={definition.id}>
       <div className="personality-stage">
-        <ChapterHud index="03" label="PERSONALITY / EYE CONTACT" inverted showStatus={false} />
+        <ChapterHud index={definition.index} label={definition.hudLabel} inverted={definition.hudInverted} showStatus={definition.showHudStatus} progressRef={progressRef} />
         <div className="personality-grid-field" aria-hidden="true" />
         <div className="personality-copy">
           <small>SHE NOTICES FIRST</small>
@@ -92,22 +92,22 @@ export function PersonalitySection({ reducedMotion }: { reducedMotion: boolean }
             <video
               ref={videoRef}
               className="personality-video"
-              src={characterMedia.personalityVideo}
-              poster={characterMedia.personalityPoster}
+              src={mediaActivated ? characterMedia.personalityVideo : undefined}
+              poster={mediaActivated ? characterMedia.personalityPoster : undefined}
               muted
               playsInline
-              preload="metadata"
+              preload="none"
               onError={() => setVideoFailed(true)}
               aria-label="夜希从侧视到注视用户的透明人物动画"
             />
           ) : (
-            <img className="personality-poster" src={characterMedia.personalityPoster} alt="夜希注视用户的表情" />
+            <img className="personality-poster" src={mediaActivated ? characterMedia.personalityPoster : undefined} alt="夜希注视用户的表情" decoding="async" />
           )}
           <span className="personality-caption">10 SEC / ONE CONTINUOUS REACTION</span>
         </div>
 
         <figure className="personality-closeup" aria-hidden="true">
-          <img src={characterMedia.personalityCloseup} alt="" />
+          <img src={mediaActivated ? characterMedia.personalityCloseup : undefined} alt="" decoding="async" />
         </figure>
 
         <div className="personality-beats" aria-label="性格动作阶段">

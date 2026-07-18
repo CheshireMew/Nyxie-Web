@@ -1,55 +1,80 @@
-export type ClipKey = "idleMain" | "idleKey" | "reactKey" | "vanish" | "portal" | "tease";
+import mediaManifest from "./mediaManifest.json";
+
+export type ClipKey = keyof typeof mediaManifest.hero.clips;
+export type GalleryId = keyof typeof mediaManifest.gallery;
 
 export type ClipDefinition = {
   src: string;
   label: string;
   counter: string;
+  playbackRate: number;
   switchLead: number;
   kind: "idle" | "action";
 };
 
+export const galleryVideoPlayback = {
+  playbackRate: 1.5,
+  muted: true,
+} as const;
+
+function assetUrl(path: string) {
+  return `${import.meta.env.BASE_URL}${path}`;
+}
+
+export const backgroundMusic = {
+  src: assetUrl(mediaManifest.backgroundMusic),
+  mimeType: "audio/mp4",
+  volume: 0.55,
+} as const;
+
 export const heroMedia = {
-  anchor: "/assets/media/anchor-b.webp",
+  anchor: assetUrl(mediaManifest.hero.anchor),
   clips: {
     idleMain: {
-      src: "/assets/media/idle-main.mp4",
+      src: assetUrl(mediaManifest.hero.clips.idleMain),
       label: "IDLE PERFORMANCE",
       counter: "IDLE / 01",
+      playbackRate: 2,
       switchLead: 0.62,
       kind: "idle",
     },
     idleKey: {
-      src: "/assets/media/idle-key.mp4",
+      src: assetUrl(mediaManifest.hero.clips.idleKey),
       label: "GOLDEN KEY",
       counter: "IDLE / 02",
+      playbackRate: 2,
       switchLead: 0.48,
       kind: "idle",
     },
     reactKey: {
-      src: "/assets/media/react-key.mp4",
+      src: assetUrl(mediaManifest.hero.clips.reactKey),
       label: "KEY INCOMING",
       counter: "ACTION / 01",
+      playbackRate: 2,
       switchLead: 0.5,
       kind: "action",
     },
     vanish: {
-      src: "/assets/media/vanish.mp4",
+      src: assetUrl(mediaManifest.hero.clips.vanish),
       label: "CHESHIRE VANISH",
       counter: "ACTION / 02",
+      playbackRate: 2,
       switchLead: 0.5,
       kind: "action",
     },
     portal: {
-      src: "/assets/media/portal.mp4",
+      src: assetUrl(mediaManifest.hero.clips.portal),
       label: "OPENING WRONG DOOR",
       counter: "ACTION / 03",
+      playbackRate: 2,
       switchLead: 0.5,
       kind: "action",
     },
     tease: {
-      src: "/assets/media/tease.mp4",
+      src: assetUrl(mediaManifest.hero.clips.tease),
       label: "COME CLOSER",
       counter: "ACTION / 04",
+      playbackRate: 2,
       switchLead: 0.5,
       kind: "action",
     },
@@ -57,33 +82,21 @@ export const heroMedia = {
 };
 
 export const characterMedia = {
-  full: "/assets/character/character-full.webp",
-  face: "/assets/character/detail-face.webp",
-  costume: "/assets/character/detail-costume.webp",
-  back: "/assets/character/detail-back.webp",
-  legs: "/assets/character/detail-legs.webp",
-  personalityStart: "/assets/character/personality-start.webp",
-  personalityVideo: "/assets/media/personality.webm",
-  personalityPoster: "/assets/character/personality-poster.webp",
-  personalityCloseup: "/assets/character/personality-closeup.webp",
-  personalityDynamic: "/assets/character/personality-dynamic.webp",
-  worksCharacter: "/assets/character/works-character.webp",
-  linksCharacter: "/assets/character/links-character.webp",
-  linksFrame: "/assets/character/links-frame.webp",
+  personalityVideo: assetUrl(mediaManifest.character.personalityVideo),
+  personalityPoster: assetUrl(mediaManifest.character.personalityPoster),
+  personalityCloseup: assetUrl(mediaManifest.character.personalityCloseup),
+  worksCharacter: assetUrl(mediaManifest.character.worksCharacter),
+  linksCharacter: assetUrl(mediaManifest.character.linksCharacter),
 };
 
 export const workMedia = {
-  nyxieDesktop: "/assets/works/nyxie-desktop.png",
-  nyxieMobile: "/assets/works/nyxie-mobile.png",
+  nyxieDesktop: assetUrl(mediaManifest.works.nyxieDesktop),
+  nyxieMobile: assetUrl(mediaManifest.works.nyxieMobile),
 };
 
-export const galleryMedia = {
-  goth: { video: "/assets/gallery/goth.webm", poster: "/assets/gallery/goth-poster.webp" },
-  garden: { video: "/assets/gallery/garden.webm", poster: "/assets/gallery/garden-poster.webp" },
-  demon: { video: "/assets/gallery/demon.webm", poster: "/assets/gallery/demon-poster.webp" },
-  winter: { video: "/assets/gallery/winter.webm", poster: "/assets/gallery/winter-poster.webp" },
-  astrologer: { video: "/assets/gallery/astrologer.webm", poster: "/assets/gallery/astrologer-poster.webp" },
-  starsea: { video: "/assets/gallery/starsea.webm", poster: "/assets/gallery/starsea-poster.webp" },
-  forbidden: { video: "/assets/gallery/forbidden.webm", poster: "/assets/gallery/forbidden-poster.webp" },
-  moonlit: { video: "/assets/gallery/moonlit.webm", poster: "/assets/gallery/moonlit-poster.webp" },
-} as const;
+export const galleryIds = Object.keys(mediaManifest.gallery) as GalleryId[];
+
+export function getGalleryMedia(id: GalleryId) {
+  const media = mediaManifest.gallery[id];
+  return { video: assetUrl(media.video), poster: assetUrl(media.poster) };
+}

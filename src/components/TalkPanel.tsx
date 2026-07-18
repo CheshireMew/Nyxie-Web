@@ -1,5 +1,5 @@
 import type { ClipKey } from "../content/mediaCatalog";
-import type { SectionId } from "../content/siteContent";
+import type { SectionId } from "../app/sectionRegistry";
 import { SidePanelShell } from "./SidePanelShell";
 
 type Props = {
@@ -13,6 +13,7 @@ export function TalkPanel({ open, onClose, onNavigate, onPlayAtHero }: Props) {
   return (
     <SidePanelShell
       open={open}
+      id="nyxie-talk-panel"
       onClose={onClose}
       ariaLabel="夜希互动面板"
       dialogClassName="talk-dialog"

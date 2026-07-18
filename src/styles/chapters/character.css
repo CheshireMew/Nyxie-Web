@@ -1,0 +1,45 @@
+/* Character performance */
+.character-stage::before { position: absolute; z-index: -1; inset: 0; content: ""; background: linear-gradient(110deg, rgba(255,255,255,0.56), transparent 42%, rgba(109,159,200,0.12)); }
+.character-stage-title { position: absolute; z-index: 6; top: 19vh; left: clamp(56px, 7vw, 124px); width: min(53vw, 850px); transform-origin: left top; }
+.character-stage-title small,
+.works-stage-title small,
+.links-intro > small { color: var(--red); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: var(--font-meta); letter-spacing: 0.28em; }
+.character-stage-title h2,
+.works-stage-title h2,
+.links-intro h2,
+.personality-copy h2 { margin: 18px 0 24px; font-family: "Songti SC", "Noto Serif SC", serif; font-size: clamp(50px, 6.4vw, 102px); font-weight: 400; line-height: 0.98; letter-spacing: -0.065em; }
+.character-stage-title h2 span,
+.works-stage-title h2 span,
+.links-intro h2 span,
+.personality-copy h2 span { color: var(--red); }
+.character-stage-title p { width: min(390px, 90%); margin: 0; color: var(--muted); font-size: 13px; line-height: 1.9; }
+
+.character-halo { position: absolute; z-index: 1; top: auto; right: auto; bottom: 6vh; left: 32%; width: min(52vw, 780px); aspect-ratio: 1; border: 1px solid rgba(180,137,67,0.42); border-radius: 50%; transform: translateX(-50%); }
+.character-halo::before,
+.character-halo::after,
+.character-halo span,
+.character-halo i { position: absolute; content: ""; border-radius: 50%; }
+.character-halo::before { inset: 8%; border: 1px dashed rgba(17,21,28,0.2); }
+.character-halo::after { inset: 23%; border: 1px solid rgba(109,159,200,0.32); }
+.character-halo span { top: 7%; right: 14%; left: auto; width: 11px; height: 11px; background: var(--red); box-shadow: 0 0 20px var(--red); }
+.character-halo i { inset: 42%; width: auto; height: auto; border: 1px solid rgba(17,21,28,0.18); background: transparent; }
+
+.character-portrait { position: absolute; z-index: 4; bottom: -6vh; left: 9vw; width: min(48vw, 720px); height: 91vh; margin: 0; transform-origin: bottom center; }
+.character-portrait > img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(26px 34px 30px rgba(17,21,28,0.22)); }
+.character-portrait figcaption { position: absolute; right: -3vw; bottom: 10vh; display: grid; gap: 3px; padding: 14px 17px; border: 1px solid rgba(17,21,28,0.18); background: rgba(245,250,253,0.66); backdrop-filter: blur(12px); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.character-portrait figcaption b { font-size: 28px; letter-spacing: -0.05em; }
+.character-portrait figcaption span { color: var(--red); font-size: var(--font-micro); letter-spacing: 0.12em; }
+
+.character-scenes { position: absolute; z-index: 10; top: 20vh; right: clamp(42px, 6vw, 110px); width: min(44vw, 670px); height: 64vh; }
+.character-scene { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(190px, 0.8fr) minmax(240px, 1.1fr); align-items: center; gap: clamp(20px, 3vw, 44px); padding: clamp(20px, 2.4vw, 38px); border: 1px solid rgba(17,21,28,0.18); background: rgba(245,250,253,0.94); box-shadow: 0 34px 90px rgba(43,66,83,0.16); }
+.character-scene-image { position: relative; height: 100%; min-height: 320px; overflow: hidden; border: 1px solid rgba(17,21,28,0.13); background: linear-gradient(145deg, rgba(109,159,200,0.2), rgba(255,255,255,0.58)); }
+.character-scene-image::after { position: absolute; inset: 12px; content: ""; border: 1px solid rgba(180,137,67,0.34); pointer-events: none; }
+.character-scene-image img { width: 100%; height: 100%; object-fit: contain; }
+.character-scene-copy { position: relative; }
+.scene-index { margin-bottom: 22px; color: var(--red); font-family: Georgia, serif; font-size: 48px; }
+.character-scene-copy small { color: var(--gold); font-size: var(--font-meta); letter-spacing: 0.12em; }
+.character-scene-copy h3 { margin: 15px 0 18px; font-family: "Songti SC", serif; font-size: clamp(28px, 2.6vw, 42px); line-height: 1.14; }
+.character-scene-copy p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.9; }
+.character-reticle { position: absolute; z-index: 7; bottom: 12vh; left: 45%; color: rgba(17,21,28,0.48); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: var(--font-micro); letter-spacing: 0.16em; }
+.character-reticle i { display: block; width: 86px; height: 1px; margin-top: 8px; background: linear-gradient(90deg, var(--red), transparent); }
+

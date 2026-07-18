@@ -1,5 +1,5 @@
-import { sections } from "../content/siteContent";
-import type { SectionId } from "../content/siteContent";
+import { sectionRegistry } from "../app/sectionRegistry";
+import type { SectionId } from "../app/sectionRegistry";
 import { SidePanelShell } from "./SidePanelShell";
 
 type Props = {
@@ -12,6 +12,7 @@ export function DirectoryDialog({ open, onClose, onNavigate }: Props) {
   return (
     <SidePanelShell
       open={open}
+      id="chapter-directory"
       onClose={onClose}
       ariaLabel="章节目录"
       dialogClassName="index-dialog"
@@ -26,7 +27,7 @@ export function DirectoryDialog({ open, onClose, onNavigate }: Props) {
         <h2>INDEX</h2>
       </div>
       <div className="chapter-grid">
-        {sections.slice(1).map((section) => (
+        {sectionRegistry.slice(1).map((section) => (
           <button key={section.id} type="button" onClick={() => onNavigate(section.id)}>
             <span>{section.index}</span>
             <strong>{section.en}</strong>

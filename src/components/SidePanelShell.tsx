@@ -8,6 +8,7 @@ type PanelState = "closed" | "opening" | "open" | "closing";
 
 type Props = {
   open: boolean;
+  id: string;
   onClose: () => void;
   ariaLabel: string;
   dialogClassName: string;
@@ -17,6 +18,7 @@ type Props = {
 
 export function SidePanelShell({
   open,
+  id,
   onClose,
   ariaLabel,
   dialogClassName,
@@ -25,6 +27,7 @@ export function SidePanelShell({
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const [panelState, setPanelState] = useState<PanelState>("closed");
 
   useEffect(() => {
@@ -35,7 +38,10 @@ export function SidePanelShell({
     let closeTimer = 0;
 
     if (open) {
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open) {
+        openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        dialog.showModal();
+      }
       setPanelState("opening");
       frame = window.requestAnimationFrame(() => {
         setPanelState("open");
@@ -46,6 +52,8 @@ export function SidePanelShell({
       closeTimer = window.setTimeout(() => {
         dialog.close();
         setPanelState("closed");
+        openerRef.current?.focus();
+        openerRef.current = null;
       }, PANEL_EXIT_MS);
     } else {
       setPanelState("closed");
@@ -65,6 +73,7 @@ export function SidePanelShell({
   return (
     <dialog
       ref={dialogRef}
+      id={id}
       className={`side-panel-dialog ${dialogClassName}`}
       data-state={panelState}
       aria-label={ariaLabel}

@@ -1,0 +1,64 @@
+{
+  "backgroundMusic": "assets/audio/nyxie-bgm.m4a",
+  "hero": {
+    "anchor": "assets/media/anchor-b.webp",
+    "clips": {
+      "idleMain": "assets/media/idle-main.mp4",
+      "idleKey": "assets/media/idle-key.mp4",
+      "reactKey": "assets/media/react-key.mp4",
+      "vanish": "assets/media/vanish.mp4",
+      "portal": "assets/media/portal.mp4",
+      "tease": "assets/media/tease.mp4"
+    }
+  },
+  "character": {
+    "full": "assets/character/character-full.webp",
+    "face": "assets/character/detail-face.webp",
+    "costume": "assets/character/detail-costume.webp",
+    "back": "assets/character/detail-back.webp",
+    "legs": "assets/character/detail-legs.webp",
+    "personalityVideo": "assets/media/personality.webm",
+    "personalityPoster": "assets/character/personality-poster.webp",
+    "personalityCloseup": "assets/character/personality-closeup.webp",
+    "worksCharacter": "assets/character/works-character.webp",
+    "linksCharacter": "assets/character/links-character.webp"
+  },
+  "works": {
+    "nyxieDesktop": "assets/works/nyxie-desktop.png",
+    "nyxieMobile": "assets/works/nyxie-mobile.png"
+  },
+  "gallery": {
+    "goth": {
+      "video": "assets/gallery/goth.webm",
+      "poster": "assets/gallery/goth-poster.webp"
+    },
+    "garden": {
+      "video": "assets/gallery/garden.webm",
+      "poster": "assets/gallery/garden-poster.webp"
+    },
+    "demon": {
+      "video": "assets/gallery/demon.webm",
+      "poster": "assets/gallery/demon-poster.webp"
+    },
+    "winter": {
+      "video": "assets/gallery/winter.webm",
+      "poster": "assets/gallery/winter-poster.webp"
+    },
+    "astrologer": {
+      "video": "assets/gallery/astrologer.webm",
+      "poster": "assets/gallery/astrologer-poster.webp"
+    },
+    "starsea": {
+      "video": "assets/gallery/starsea.webm",
+      "poster": "assets/gallery/starsea-poster.webp"
+    },
+    "forbidden": {
+      "video": "assets/gallery/forbidden.webm",
+      "poster": "assets/gallery/forbidden-poster.webp"
+    },
+    "moonlit": {
+      "video": "assets/gallery/moonlit.webm",
+      "poster": "assets/gallery/moonlit-poster.webp"
+    }
+  }
+}

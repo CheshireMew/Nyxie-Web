@@ -4,17 +4,78 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#eef6ff" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
     <meta
       name="description"
       content="夜希 Nyxie 的角色展示与个人内容入口。"
     />
-    <link rel="preload" href="/assets/media/anchor-b.webp" as="image" type="image/webp" />
-    <link rel="preload" href="/assets/media/idle-main.mp4" as="video" type="video/mp4" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="夜希 NYXIE｜角色展示与创作入口" />
+    <meta property="og:description" content="夜希 Nyxie 的角色展示、互动动画与个人创作入口。" />
+    <meta property="og:image" content="%BASE_URL%assets/media/anchor-b.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preload" href="%BASE_URL%assets/media/anchor-b.webp" as="image" type="image/webp" />
     <title>夜希 NYXIE｜角色展示与创作入口</title>
+    <script>
+      (() => {
+        const chapterHashes = new Set(["#home", "#gallery", "#character", "#personality", "#links", "#works"]);
+        const resetPageScroll = () => {
+          if (chapterHashes.has(window.location.hash)) return;
+          const root = document.documentElement;
+          const previousBehavior = root.style.scrollBehavior;
+          root.style.scrollBehavior = "auto";
+          window.scrollTo(0, 0);
+          root.style.scrollBehavior = previousBehavior;
+        };
+        if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+        resetPageScroll();
+        window.addEventListener("pageshow", resetPageScroll);
+      })();
+    </script>
+    <style>
+      .static-boot-screen { position: fixed; z-index: 2000; inset: 0; display: grid; place-content: center; gap: 20px; color: #11151c; background: #eef4f9; font-family: system-ui, sans-serif; }
+      .static-boot-screen[hidden], .static-fallback[hidden] { display: none; }
+      .static-boot-screen .boot-mark { margin: auto; font-size: clamp(58px, 8vw, 110px); font-weight: 900; letter-spacing: -0.12em; }
+      .static-boot-screen .boot-line { width: min(44vw, 420px); height: 2px; overflow: hidden; background: rgba(17, 21, 28, 0.12); }
+      .static-boot-screen .boot-line span { display: block; width: 42%; height: 100%; background: linear-gradient(90deg, #c91f3c, #b48943); transform: translateX(-110%); animation: static-boot-scan 1.1s cubic-bezier(0.77, 0, 0.175, 1) infinite; }
+      .static-boot-screen p { margin: 0; text-align: center; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; letter-spacing: 0.32em; }
+      @keyframes static-boot-scan { from { transform: translateX(-110%); } to { transform: translateX(340%); } }
+      .static-fallback { min-height: 100vh; box-sizing: border-box; padding: 12vh 8vw; color: #11151c; background: #eef6ff; font-family: system-ui, sans-serif; }
+      .static-fallback h1 { margin: 0; font-size: clamp(3rem, 12vw, 8rem); }
+      .static-fallback p { max-width: 42rem; font-size: 1.1rem; line-height: 1.8; }
+      .static-fallback a { margin-right: 1.5rem; color: #9c1730; }
+      .static-fallback .noscript-message { display: none; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root">
+      <div class="boot-screen static-boot-screen" aria-hidden="true">
+        <div class="boot-mark">NX</div>
+        <div class="boot-line"><span></span></div>
+        <p>OPENING THE WRONG DOOR</p>
+      </div>
+      <main class="static-fallback" hidden>
+        <h1>夜希 NYXIE</h1>
+        <p>梦境导航员、柴郡猫的不可靠继承者。这里收录夜希的角色设定、互动动画与创作项目。</p>
+        <p class="noscript-message">互动动画需要 JavaScript，但下面的作品入口仍然可以使用。</p>
+        <p><a href="https://github.com/CheshireMew">GitHub</a><a href="https://blog.blacknico.com/">Blog</a></p>
+      </main>
+    </div>
+    <noscript>
+      <style>.static-boot-screen { display: none; } .static-fallback[hidden] { display: block; } .static-fallback .noscript-message { display: block; }</style>
+    </noscript>
+    <script>
+      window.__showNyxieFallback = () => {
+        const root = document.getElementById("root");
+        const staticBoot = root?.querySelector(".static-boot-screen");
+        const fallback = root?.querySelector(".static-fallback");
+        if (!staticBoot || !fallback) return;
+        staticBoot.setAttribute("hidden", "");
+        fallback.removeAttribute("hidden");
+      };
+      window.setTimeout(window.__showNyxieFallback, 8000);
+    </script>
+    <script type="module" src="/src/main.tsx" onerror="window.__showNyxieFallback()"></script>
   </body>
 </html>

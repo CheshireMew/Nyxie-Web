@@ -1,4 +1,5 @@
 import { gsap, ScrollTrigger } from "./gsap";
+import { isChapterNavigationInProgress } from "../navigation/chapterNavigation";
 
 type ChapterPerformanceOptions = {
   trigger: HTMLElement;
@@ -6,12 +7,12 @@ type ChapterPerformanceOptions = {
   sequence?: Timeline;
   runwayVh?: number;
   trackChapterProgress?: boolean;
+  progressFill?: HTMLElement | null;
+  onSettled?: () => void;
 };
 
 type Timeline = ReturnType<typeof gsap.timeline>;
 
-let navigationTimer: number | null = null;
-let navigationFinish: (() => void) | null = null;
 let refreshFrame: number | null = null;
 
 function clampProgress(progress: number) {
@@ -26,45 +27,19 @@ function scheduleRefresh() {
   });
 }
 
-function isProgrammaticNavigation() {
-  return document.documentElement.dataset.chapterNavigation === "true";
-}
-
-export function navigateToChapter(id: string, behavior: ScrollBehavior) {
-  const target = document.getElementById(id);
-  if (!target) return;
-
-  navigationFinish?.();
-  const root = document.documentElement;
-  const finish = () => {
-    window.removeEventListener("scrollend", finish);
-    delete root.dataset.chapterNavigation;
-    if (navigationTimer !== null) window.clearTimeout(navigationTimer);
-    navigationTimer = null;
-    if (navigationFinish === finish) navigationFinish = null;
-  };
-
-  root.dataset.chapterNavigation = "true";
-  navigationFinish = finish;
-  window.addEventListener("scrollend", finish, { once: true });
-  navigationTimer = window.setTimeout(finish, behavior === "smooth" ? 1600 : 120);
-  target.scrollIntoView({ behavior, block: "start" });
-}
-
 export function driveChapterPerformance({
   trigger,
   entrance,
   sequence,
   runwayVh = 0,
   trackChapterProgress = false,
+  progressFill = null,
+  onSettled,
 }: ChapterPerformanceOptions) {
   let entranceProgress = 0;
   let sequenceProgress = 0;
   let skippingReverse = false;
-  const progressFill = trackChapterProgress
-    ? trigger.querySelector<HTMLElement>(".chapter-progress-fill")
-    : null;
-
+  let settledNotified = false;
   const commitEntrance = (progress: number) => {
     const nextProgress = Math.max(entranceProgress, clampProgress(progress));
     if (nextProgress <= entranceProgress && entrance.progress() === nextProgress) return;
@@ -83,12 +58,17 @@ export function driveChapterPerformance({
     sequence.progress(nextProgress).pause();
     if (progressFill) gsap.set(progressFill, { scaleX: nextProgress });
     if (trackChapterProgress) trigger.dataset.forwardProgress = nextProgress.toFixed(4);
-    trigger.dataset.performanceState = nextProgress >= 0.9999 ? "settled" : "performing";
+    const settled = nextProgress >= 0.9999;
+    trigger.dataset.performanceState = settled ? "settled" : "performing";
+    if (settled && !settledNotified) {
+      settledNotified = true;
+      onSettled?.();
+    }
   };
 
   const skipReverseRunway = () => {
     commitSequence(1);
-    if (skippingReverse || isProgrammaticNavigation()) return;
+    if (skippingReverse || isChapterNavigationInProgress()) return;
 
     const sectionTop = trigger.getBoundingClientRect().top + window.scrollY;
     if (window.scrollY <= sectionTop + 1) return;

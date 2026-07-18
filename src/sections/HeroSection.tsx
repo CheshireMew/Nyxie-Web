@@ -2,14 +2,20 @@ import { useCallback, useEffect, useRef } from "react";
 import type { MouseEvent } from "react";
 import { heroMedia } from "../content/mediaCatalog";
 import type { ClipKey } from "../content/mediaCatalog";
-import { siteLinks, type SectionId } from "../content/siteContent";
-import type { PerformanceDirector } from "../hooks/usePerformanceDirector";
+import { siteLinks } from "../content/siteContent";
+import type { SectionId } from "../app/sectionRegistry";
+import type { PerformanceDirector } from "../features/hero/types";
 import { MagneticButton } from "../components/MagneticButton";
+import type { SectionDefinitionFor } from "../app/sectionRegistry";
 
 type Props = {
+  definition: SectionDefinitionFor<"home">;
   director: PerformanceDirector;
   reducedMotion: boolean;
   overlaysOpen: boolean;
+  portalConsumed: boolean;
+  onGalleryWarmup: () => void;
+  onPortalConsumed: () => void;
   onNavigate: (id: SectionId) => void;
 };
 
@@ -20,18 +26,27 @@ const actions: Array<{ key: ClipKey; index: string; zh: string; en: string }> = 
   { key: "tease", index: "04", zh: "靠近", en: "TEASE" },
 ];
 
-export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate }: Props) {
+export function HeroSection({
+  definition,
+  director,
+  reducedMotion,
+  overlaysOpen,
+  portalConsumed,
+  onGalleryWarmup,
+  onPortalConsumed,
+  onNavigate,
+}: Props) {
   const sectionRef = useRef<HTMLElement>(null);
-  const portalUsedRef = useRef(false);
-  const portalLockedRef = useRef(false);
+  const portalRequestPendingRef = useRef(false);
   const touchStartRef = useRef(0);
   const {
     playRandom,
+    isInteractionLocked,
     request,
+    retry,
     setHeroVisible,
     snapshot,
     waitUntilEnded,
-    waitUntilReady,
   } = director;
 
   useEffect(() => {
@@ -47,32 +62,35 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
 
   const beginPortalScroll = useCallback(() => {
     if (
-      portalUsedRef.current ||
-      portalLockedRef.current ||
+      portalConsumed ||
+      portalRequestPendingRef.current ||
+      isInteractionLocked() ||
       reducedMotion ||
       !snapshot.started ||
       window.scrollY > 4 ||
       overlaysOpen
     ) return false;
 
-    portalUsedRef.current = true;
-    portalLockedRef.current = true;
+    portalRequestPendingRef.current = true;
     void (async () => {
-      try {
-        await waitUntilReady();
-        const started = await request("portal", { playbackRate: 1.25, holdAtEnd: true });
-        if (started) await waitUntilEnded("portal");
-        onNavigate("gallery");
-      } finally {
-        portalLockedRef.current = false;
+      const started = await request("portal", { lockUntilEnd: true });
+      if (!started) {
+        portalRequestPendingRef.current = false;
+        return;
       }
+      onPortalConsumed();
+      onGalleryWarmup();
+      const completed = await waitUntilEnded("portal");
+      portalRequestPendingRef.current = false;
+      if (completed) onNavigate("gallery");
     })();
     return true;
-  }, [onNavigate, overlaysOpen, reducedMotion, request, snapshot.started, waitUntilEnded, waitUntilReady]);
+  }, [isInteractionLocked, onGalleryWarmup, onNavigate, onPortalConsumed, overlaysOpen, portalConsumed, reducedMotion, request, snapshot.started, waitUntilEnded]);
 
   useEffect(() => {
+    const scrollKeys = new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "]);
     const onWheel = (event: WheelEvent) => {
-      if (portalLockedRef.current) {
+      if (isInteractionLocked()) {
         event.preventDefault();
         return;
       }
@@ -82,22 +100,44 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
       touchStartRef.current = event.touches[0]?.clientY ?? 0;
     };
     const onTouchMove = (event: TouchEvent) => {
-      if (portalLockedRef.current) {
+      if (isInteractionLocked()) {
         event.preventDefault();
         return;
       }
       const current = event.touches[0]?.clientY ?? touchStartRef.current;
       if (touchStartRef.current - current > 46 && beginPortalScroll()) event.preventDefault();
     };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!scrollKeys.has(event.key)) return;
+      if (isInteractionLocked()) {
+        event.preventDefault();
+        return;
+      }
+      const target = event.target instanceof Element ? event.target : null;
+      const isInteractive = target?.closest("a, button, input, textarea, select, [contenteditable='true']");
+      const movesDown = event.key === "ArrowDown" || event.key === "PageDown" || event.key === "End" || event.key === " ";
+      if (!isInteractive && movesDown && beginPortalScroll()) event.preventDefault();
+    };
     window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("keydown", onKeyDown);
     };
-  }, [beginPortalScroll]);
+  }, [beginPortalScroll, isInteractionLocked]);
+
+  const retryPlayback = useCallback(async () => {
+    const started = await retry();
+    if (!started || !isInteractionLocked()) return;
+    onPortalConsumed();
+    onGalleryWarmup();
+    const completed = await waitUntilEnded("portal");
+    if (completed) onNavigate("gallery");
+  }, [isInteractionLocked, onGalleryWarmup, onNavigate, onPortalConsumed, retry, waitUntilEnded]);
 
   const onHeroClick = (event: MouseEvent<HTMLElement>) => {
     const target = event.target instanceof Element ? event.target : null;
@@ -110,8 +150,21 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
     void request("reactKey");
   };
 
+  const blockClicksDuringPortal = (event: MouseEvent<HTMLElement>) => {
+    if (!isInteractionLocked()) return;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   return (
-    <section ref={sectionRef} className="hero" id="home" aria-label="夜希首页" onClick={onHeroClick}>
+    <section
+      ref={sectionRef}
+      className="hero"
+      id={definition.id}
+      aria-label="夜希首页"
+      onClickCapture={blockClicksDuringPortal}
+      onClick={onHeroClick}
+    >
       <div ref={director.stageRef} className="hero-media">
         <img className="hero-anchor" src={heroMedia.anchor} alt="夜希坐在云海之上的透明观测平台" />
         <video
@@ -167,8 +220,11 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
 
       <div className="hero-controls" aria-label="角色互动控制">
         <div className="control-caption">
-          <span>{snapshot.status}</span>
+          <span aria-live="polite">{snapshot.status}</span>
           <small>{snapshot.counter}</small>
+          {snapshot.error && (
+            <button type="button" className="video-retry" onClick={() => { void retryPlayback(); }}>RETRY VIDEO</button>
+          )}
         </div>
         <div className="clip-progress" aria-hidden="true"><span ref={director.progressRef} /></div>
         <div className="control-stack">
@@ -178,6 +234,7 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
               type="button"
               className={snapshot.activeAction === action.key ? "is-active" : ""}
               aria-label={`播放夜希动作：${action.zh}`}
+              disabled={snapshot.interactionLocked || snapshot.phase === "loading" || snapshot.phase === "error"}
               onClick={() => {
                 if (action.key === "tease") void request(action.key, { after: "talk" });
                 else void request(action.key);
@@ -193,6 +250,7 @@ export function HeroSection({ director, reducedMotion, overlaysOpen, onNavigate 
           type="button"
           reducedMotion={reducedMotion}
           onClick={() => void playRandom()}
+          disabled={snapshot.interactionLocked || snapshot.phase === "loading" || snapshot.phase === "error"}
           aria-label="随机播放夜希动画"
         >
           <span className="orb-eye" /><span className="orb-label">PLAY<br />MAD</span>

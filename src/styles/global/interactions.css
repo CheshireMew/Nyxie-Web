@@ -1,0 +1,43 @@
+.brand:active,
+.main-nav button:active,
+.bgm-toggle:active,
+.menu-button:active,
+.talk-button:active,
+.primary-button:active,
+.text-button:active,
+.control-stack button:active,
+.cheshire-orb:active,
+.scroll-cue:active,
+.back-home:active,
+.index-topline button:active,
+.talk-head button:active,
+.chapter-grid button:active,
+.quick-actions button:active {
+  scale: 0.97;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .main-nav button:hover { color: var(--ink); }
+  .main-nav button:hover::after { transform: scaleX(1); transform-origin: left; }
+  .talk-button:hover { color: var(--white); background: var(--ink); }
+
+  .primary-button:hover {
+    background: #202936;
+    box-shadow: 9px 9px 0 rgba(201,31,60,0.2);
+    transform: translate(-2px, -2px);
+  }
+
+  .control-stack button:hover {
+    color: var(--ink);
+    border-color: rgba(17,21,28,0.42);
+    background: rgba(255,255,255,0.78);
+    transform: translateX(-3px);
+  }
+
+  .chapter-grid button:hover { color: var(--white); background: var(--ink); }
+  .chapter-grid button:hover small { color: rgba(255,255,255,0.52); }
+  .quick-actions button:hover { color: var(--ink); background: var(--white); }
+  .index-topline button:hover,
+  .talk-head button:hover { background: rgba(255,255,255,0.15); }
+}
+

@@ -26,15 +26,9 @@ ASSETS = (
     Asset("02｜角色设定素材母图.png", "detail-costume.webp", (1190, 0, 1672, 455)),
     Asset("02｜角色设定素材母图.png", "detail-back.webp", (680, 435, 1225, 925)),
     Asset("02｜角色设定素材母图.png", "detail-legs.webp", (1200, 435, 1645, 941)),
-    Asset("03｜性格视频首帧.png", "personality-start.webp", (700, 0, 1220, 941)),
     Asset("04｜内容与项目素材母图.png", "works-character.webp", (35, 0, 625, 941)),
-    Asset("04｜内容与项目素材母图.png", "works-moon-chain.webp", (615, 575, 790, 875)),
-    Asset("04｜内容与项目素材母图.png", "works-gem.webp", (980, 600, 1320, 880)),
     Asset("05｜最终入口素材母图.png", "links-character.webp", (190, 0, 660, 941)),
-    Asset("05｜最终入口素材母图.png", "links-frame.webp", (740, 45, 1485, 335)),
-    Asset("05｜最终入口素材母图.png", "links-star-chain.webp", (20, 560, 220, 900)),
     Asset("ChatGPT Image 2026年7月14日 14_50_16.png", "personality-closeup.webp"),
-    Asset("ChatGPT Image 2026年7月14日 14_50_29.png", "personality-dynamic.webp"),
 )
 
 

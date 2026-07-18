@@ -1,26 +1,24 @@
 import { useEffect } from "react";
-import { characterMedia } from "../content/mediaCatalog";
-import { characterDetails, featuredWorks, galleryItems } from "../content/siteContent";
+import { nextSectionAfter } from "../app/sectionRegistry";
+import type { SectionId } from "../app/sectionRegistry";
 
-const chapterImageSources = [
-  characterMedia.full,
-  ...characterDetails.map((detail) => detail.image),
-  ...galleryItems.map((item) => item.poster),
-  characterMedia.personalityPoster,
-  characterMedia.personalityCloseup,
-  characterMedia.linksCharacter,
-  characterMedia.worksCharacter,
-  ...featuredWorks.flatMap((work) => [work.desktopImage, work.mobileImage]),
-];
-
-export function useChapterWarmup(enabled: boolean) {
+export function useChapterWarmup(activeSection: SectionId, enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     let timer = 0;
-    const sources = [...new Set(chapterImageSources)];
+    const nextSection = nextSectionAfter(activeSection);
+    const sources = [...new Set(nextSection?.warmup ?? [])];
     let index = 0;
 
+    document.documentElement.dataset.chapterWarmupTarget = nextSection?.id ?? "none";
+    if (sources.length === 0) {
+      document.documentElement.dataset.chapterWarmup = "idle";
+      return () => {
+        delete document.documentElement.dataset.chapterWarmup;
+        delete document.documentElement.dataset.chapterWarmupTarget;
+      };
+    }
     document.documentElement.dataset.chapterWarmup = "warming";
 
     const warmNext = async () => {
@@ -49,6 +47,7 @@ export function useChapterWarmup(enabled: boolean) {
       cancelled = true;
       window.clearTimeout(timer);
       delete document.documentElement.dataset.chapterWarmup;
+      delete document.documentElement.dataset.chapterWarmupTarget;
     };
-  }, [enabled]);
+  }, [activeSection, enabled]);
 }

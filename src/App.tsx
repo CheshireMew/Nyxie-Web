@@ -1,51 +1,69 @@
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { Fragment, useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { initialSiteState, siteReducer } from "./app/siteTypes";
 import type { ClipKey } from "./content/mediaCatalog";
-import type { SectionId } from "./content/siteContent";
+import { sectionRegistry } from "./app/sectionRegistry";
+import type { SectionId } from "./app/sectionRegistry";
+import { renderSection } from "./app/renderSection";
 import { useReducedMotion } from "./hooks/useReducedMotion";
 import { usePageState } from "./hooks/usePageState";
 import { useChapterWarmup } from "./hooks/useChapterWarmup";
 import { usePerformanceDirector } from "./hooks/usePerformanceDirector";
-import { navigateToChapter } from "./animation/chapterPerformance";
+import { useBackgroundMusic } from "./hooks/useBackgroundMusic";
+import { navigateToChapter, sectionIdFromHash } from "./navigation/chapterNavigation";
 import { AmbientCanvas } from "./components/AmbientCanvas";
 import { CustomCursor } from "./components/CustomCursor";
 import { BootScreen } from "./components/BootScreen";
 import { SiteHeader } from "./components/SiteHeader";
 import { DirectoryDialog } from "./components/DirectoryDialog";
 import { TalkPanel } from "./components/TalkPanel";
-import { HeroSection } from "./sections/HeroSection";
-import { GallerySection } from "./sections/GallerySection";
-import { CharacterSection } from "./sections/CharacterSection";
-import { PersonalitySection } from "./sections/PersonalitySection";
-import { WorksSection } from "./sections/WorksSection";
-import { LinksSection } from "./sections/LinksSection";
 
 const wait = (milliseconds: number) => new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
 
 export default function App() {
   const [site, dispatch] = useReducer(siteReducer, initialSiteState);
   const [ready, setReady] = useState(false);
+  const [galleryWarmupRequested, setGalleryWarmupRequested] = useState(false);
+  const [portalConsumed, setPortalConsumed] = useState(false);
+  const heroActionOperationRef = useRef(0);
   const reducedMotion = useReducedMotion();
-  const headerSentinelRef = usePageState(dispatch);
-  useChapterWarmup(ready);
+  useChapterWarmup(site.activeSection, ready);
+  const backgroundMusic = useBackgroundMusic();
 
   const openTalk = useCallback(() => dispatch({ type: "open-talk" }), []);
-  const rejectSound = useCallback(() => dispatch({ type: "set-sound", soundOn: false }), []);
+  const warmGallery = useCallback(() => setGalleryWarmupRequested(true), []);
+  const consumePortal = useCallback(() => setPortalConsumed(true), []);
   const director = usePerformanceDirector({
-    soundOn: site.soundOn,
     reducedMotion,
     onTalk: openTalk,
-    onSoundRejected: rejectSound,
   });
-  const { request: requestHeroClip, start: startDirector, suppressNextWelcome } = director;
+  const {
+    isInteractionLocked,
+    request: requestHeroClip,
+    start: startDirector,
+    suppressNextWelcome,
+  } = director;
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([wait(reducedMotion ? 120 : 350), startDirector()]).then(() => {
+    void startDirector();
+    void wait(reducedMotion ? 120 : 350).then(() => {
       if (!cancelled) setReady(true);
     });
     return () => { cancelled = true; };
   }, [reducedMotion, startDirector]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const navigateFromHistory = () => {
+      const section = sectionIdFromHash();
+      if (section) void navigateToChapter(section, "auto", "none");
+    };
+    navigateFromHistory();
+    window.addEventListener("popstate", navigateFromHistory);
+    return () => window.removeEventListener("popstate", navigateFromHistory);
+  }, [ready]);
+
+  usePageState(dispatch, ready);
 
   useEffect(() => {
     document.body.classList.toggle("is-booting", !ready);
@@ -65,59 +83,82 @@ export default function App() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const navigate = useCallback((id: SectionId) => {
+  const navigate = useCallback(async (id: SectionId) => {
+    if (isInteractionLocked()) return false;
+    heroActionOperationRef.current += 1;
     dispatch({ type: "close-overlays" });
-    navigateToChapter(id, reducedMotion ? "auto" : "smooth");
-  }, [reducedMotion]);
+    return navigateToChapter(id, reducedMotion ? "auto" : "smooth");
+  }, [isInteractionLocked, reducedMotion]);
 
-  const playAtHero = useCallback((key: ClipKey, after?: "talk") => {
+  const playAtHero = useCallback(async (key: ClipKey, after?: "talk") => {
+    if (isInteractionLocked()) return false;
+    const operation = heroActionOperationRef.current + 1;
+    heroActionOperationRef.current = operation;
     dispatch({ type: "close-overlays" });
     const alreadyHome = window.scrollY <= 4;
     if (!alreadyHome) {
       suppressNextWelcome();
-      navigateToChapter("home", reducedMotion ? "auto" : "smooth");
+      const navigated = await navigateToChapter("home", reducedMotion ? "auto" : "smooth");
+      if (!navigated || heroActionOperationRef.current !== operation) return false;
     }
-    window.setTimeout(() => {
-      void requestHeroClip(key, after ? { after } : undefined);
-    }, alreadyHome || reducedMotion ? 40 : 650);
-  }, [reducedMotion, requestHeroClip, suppressNextWelcome]);
+    if (isInteractionLocked()) return false;
+    return requestHeroClip(key, after ? { after } : undefined);
+  }, [isInteractionLocked, reducedMotion, requestHeroClip, suppressNextWelcome]);
 
   const openTalkWithTease = useCallback(() => {
+    if (isInteractionLocked()) return;
     openTalk();
     void requestHeroClip("tease");
-  }, [openTalk, requestHeroClip]);
+  }, [isInteractionLocked, openTalk, requestHeroClip]);
+
+  const openIndex = useCallback(() => {
+    if (!isInteractionLocked()) dispatch({ type: "open-index" });
+  }, [isInteractionLocked]);
 
   return (
     <>
       <BootScreen ready={ready} />
+      <audio
+        ref={backgroundMusic.audioRef}
+        className="background-music"
+        loop
+        preload="none"
+        aria-hidden="true"
+      />
       <AmbientCanvas reducedMotion={reducedMotion} />
       <div className="grain" aria-hidden="true" />
       <CustomCursor reducedMotion={reducedMotion} />
-      <span ref={headerSentinelRef} className="header-compact-sentinel" aria-hidden="true" />
 
       <SiteHeader
         activeSection={site.activeSection}
-        compact={site.headerCompact}
-        soundOn={site.soundOn}
+        bgmStatus={backgroundMusic.status}
+        bgmError={backgroundMusic.error}
+        interactionLocked={director.snapshot.interactionLocked}
+        indexOpen={site.indexOpen}
+        talkOpen={site.talkOpen}
         reducedMotion={reducedMotion}
         onNavigate={navigate}
-        onOpenIndex={() => dispatch({ type: "open-index" })}
+        onOpenIndex={openIndex}
         onOpenTalk={openTalkWithTease}
-        onToggleSound={() => dispatch({ type: "toggle-sound" })}
+        onToggleBgm={() => { void backgroundMusic.toggle(); }}
       />
 
       <main>
-        <HeroSection
-          director={director}
-          reducedMotion={reducedMotion}
-          overlaysOpen={site.indexOpen || site.talkOpen}
-          onNavigate={navigate}
-        />
-        <GallerySection reducedMotion={reducedMotion} />
-        <CharacterSection reducedMotion={reducedMotion} />
-        <PersonalitySection reducedMotion={reducedMotion} />
-        <LinksSection reducedMotion={reducedMotion} />
-        <WorksSection reducedMotion={reducedMotion} onBackHome={() => navigate("home")} />
+        {sectionRegistry.map((section) => (
+          <Fragment key={section.id}>
+            {renderSection(section, {
+              director,
+              reducedMotion,
+              overlaysOpen: site.indexOpen || site.talkOpen,
+              activeSection: site.activeSection,
+              galleryWarmupRequested,
+              portalConsumed,
+              onGalleryWarmup: warmGallery,
+              onPortalConsumed: consumePortal,
+              onNavigate: (id) => { void navigate(id); },
+            })}
+          </Fragment>
+        ))}
       </main>
 
       <DirectoryDialog
@@ -129,10 +170,8 @@ export default function App() {
         open={site.talkOpen}
         onClose={() => dispatch({ type: "close-talk" })}
         onNavigate={navigate}
-        onPlayAtHero={(key) => playAtHero(key)}
+        onPlayAtHero={(key) => { void playAtHero(key); }}
       />
-
-      <noscript>这个页面需要 JavaScript 才能展示夜希的动画与互动。</noscript>
     </>
   );
 }

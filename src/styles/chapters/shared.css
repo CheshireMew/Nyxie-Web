@@ -1,0 +1,110 @@
+.chapter {
+  position: relative;
+}
+
+/* Shared scroll-performance chapters */
+.gallery-chapter,
+.character-chapter,
+.personality-chapter,
+.works-chapter,
+.links-chapter {
+  position: relative;
+}
+
+.gallery-chapter,
+.character-chapter,
+.personality-chapter,
+.links-chapter,
+.works-chapter { min-height: 100svh; }
+
+.chapter--sequenced { height: calc(100svh + var(--chapter-runway, 0svh)); }
+
+.chapter--sequenced > .personality-stage,
+.chapter--sequenced > .links-stage,
+.chapter--sequenced > .works-stage {
+  position: sticky;
+  top: 0;
+}
+
+.gallery-stage,
+.character-stage,
+.personality-stage,
+.works-stage,
+.links-stage {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 680px;
+  overflow: hidden;
+  contain: layout paint style;
+  isolation: isolate;
+}
+
+.character-stage,
+.works-stage,
+.links-stage {
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 72% 42%, rgba(109,159,200,0.2), transparent 34%),
+    linear-gradient(138deg, #f5f9fc 0%, #e5eff6 52%, #dbe8f1 100%);
+}
+
+.gallery-grid-field,
+.chapter-grid-field,
+.personality-grid-field,
+.works-grid-field,
+.links-grid-field {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  opacity: 0.34;
+  background-image:
+    linear-gradient(rgba(17,21,28,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17,21,28,0.12) 1px, transparent 1px),
+    radial-gradient(rgba(17,21,28,0.2) 0.65px, transparent 0.8px);
+  background-size: 76px 76px, 76px 76px, 8px 8px;
+  mask-image: linear-gradient(90deg, #000, rgba(0,0,0,0.34) 72%, transparent);
+}
+
+.gallery-grid-field {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  opacity: 0.24;
+  background-image:
+    linear-gradient(rgba(17,21,28,0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17,21,28,0.1) 1px, transparent 1px),
+    radial-gradient(rgba(17,21,28,0.18) 0.65px, transparent 0.8px);
+  background-size: 76px 76px, 76px 76px, 8px 8px;
+  mask-image: radial-gradient(circle at 60% 48%, #000 8%, rgba(0,0,0,0.68) 58%, transparent 94%);
+}
+
+.personality-grid-field {
+  opacity: 0.13;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px);
+  background-size: 76px 76px;
+  mask-image: radial-gradient(circle at 68% 50%, #000, transparent 72%);
+}
+
+.chapter-hud {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  pointer-events: none;
+  color: rgba(17,21,28,0.55);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: var(--font-micro);
+  letter-spacing: 0.16em;
+}
+
+.chapter-hud.is-inverted { color: rgba(255,255,255,0.5); }
+.chapter-hud-heading { position: absolute; top: calc(var(--header-height) + 22px); left: clamp(24px, 4vw, 66px); display: flex; align-items: center; gap: 12px; }
+.chapter-hud-heading span { display: grid; place-items: center; width: 34px; height: 34px; color: var(--red); border: 1px solid currentColor; border-radius: 50%; }
+.chapter-hud-coordinate { position: absolute; top: 21%; left: 20px; writing-mode: vertical-rl; letter-spacing: 0.3em; }
+.chapter-progress-track { position: absolute; right: clamp(24px, 4vw, 66px); bottom: 22px; left: clamp(24px, 4vw, 66px); height: 1px; background: currentColor; opacity: 0.42; }
+.chapter-hud.has-status .chapter-progress-track { bottom: 50px; }
+.chapter-progress-fill { display: block; width: 100%; height: 2px; background: linear-gradient(90deg, var(--red), var(--gold)); transform: scaleX(0); transform-origin: left; }
+.chapter-hud-status { position: absolute; right: clamp(24px, 4vw, 66px); bottom: 18px; left: clamp(24px, 4vw, 66px); display: flex; gap: 8px; }
+.chapter-hud-status > span { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; border: 1px solid currentColor; border-radius: 999px; }

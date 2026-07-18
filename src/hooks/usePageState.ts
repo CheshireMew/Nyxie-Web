@@ -1,25 +1,32 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import type { Dispatch } from "react";
-import { sections } from "../content/siteContent";
+import { sectionRegistry } from "../app/sectionRegistry";
+import type { SectionId } from "../app/sectionRegistry";
 import type { SiteAction } from "../app/siteTypes";
+import { isChapterNavigationInProgress, subscribeToChapterSettled } from "../navigation/chapterNavigation";
 
-export function usePageState(dispatch: Dispatch<SiteAction>) {
-  const headerSentinelRef = useRef<HTMLSpanElement>(null);
-
+export function usePageState(dispatch: Dispatch<SiteAction>, enabled: boolean) {
   useEffect(() => {
-    const elements = sections
-      .map((section) => document.getElementById(section.id))
-      .filter((element): element is HTMLElement => Boolean(element));
-    const sentinel = headerSentinelRef.current;
-    if (!elements.length || !sentinel) return;
+    if (!enabled) return;
+    const elements = sectionRegistry.map((section) => {
+      const element = document.getElementById(section.id);
+      if (!element) throw new Error(`章节注册表与页面不一致：缺少 #${section.id}`);
+      return element;
+    });
 
     const updateActiveSection = () => {
+      if (isChapterNavigationInProgress()) return;
       const marker = window.innerHeight * 0.38;
       const active = elements.find((element) => {
         const bounds = element.getBoundingClientRect();
         return bounds.top <= marker && bounds.bottom > marker;
       });
-      if (active) dispatch({ type: "set-section", section: active.id as (typeof sections)[number]["id"] });
+      if (!active) return;
+      const section = active.id as SectionId;
+      dispatch({ type: "set-section", section });
+      if (!isChapterNavigationInProgress()) {
+        window.history.replaceState({ section }, "", `#${section}`);
+      }
     };
 
     const sectionObserver = new IntersectionObserver(updateActiveSection, {
@@ -27,22 +34,16 @@ export function usePageState(dispatch: Dispatch<SiteAction>) {
       threshold: 0,
     });
 
-    const headerObserver = new IntersectionObserver(([entry]) => {
-      dispatch({ type: "set-header-compact", compact: !entry.isIntersecting });
-    }, { threshold: 0 });
-
     elements.forEach((element) => sectionObserver.observe(element));
-    headerObserver.observe(sentinel);
     window.addEventListener("scrollend", updateActiveSection);
+    const unsubscribeSettled = subscribeToChapterSettled(updateActiveSection);
     window.addEventListener("resize", updateActiveSection);
     updateActiveSection();
     return () => {
       sectionObserver.disconnect();
-      headerObserver.disconnect();
       window.removeEventListener("scrollend", updateActiveSection);
+      unsubscribeSettled();
       window.removeEventListener("resize", updateActiveSection);
     };
-  }, [dispatch]);
-
-  return headerSentinelRef;
+  }, [dispatch, enabled]);
 }

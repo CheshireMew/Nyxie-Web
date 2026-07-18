@@ -1,0 +1,57 @@
+@media (prefers-reduced-motion: reduce) {
+  .chapter--sequenced { height: auto; }
+  .gallery-chapter,
+  .character-chapter,
+  .personality-chapter,
+  .works-chapter,
+  .links-chapter { min-height: auto; }
+  .gallery-stage,
+  .character-stage,
+  .personality-stage,
+  .works-stage,
+  .links-stage { position: relative; height: auto; min-height: 100svh; overflow: hidden; padding: calc(var(--header-height) + 90px) clamp(20px, 6vw, 80px) 110px; }
+  .chapter-hud-heading { top: calc(var(--header-height) + 20px); }
+  .chapter-progress-fill { transform: scaleX(1); }
+  .gallery-heading,
+  .gallery-carousel,
+  .character-stage-title,
+  .personality-copy,
+  .works-stage-title,
+  .links-intro,
+  .character-portrait,
+  .personality-media,
+  .works-character,
+  .links-character,
+  .work-showcase { position: relative; inset: auto; width: 100%; transform: none !important; opacity: 1 !important; visibility: visible !important; }
+  .gallery-heading,
+  .character-stage-title,
+  .personality-copy,
+  .works-stage-title,
+  .links-intro { margin-bottom: 40px; }
+  .gallery-orbit,
+  .gallery-form-watermark { display: none; }
+  .gallery-carousel { display: grid; grid-template-rows: 38px minmax(0, 1fr) auto; left: auto; width: min(700px, 100%); height: min(820px, 80vh); min-height: 620px; margin: 0 auto 80px; translate: none !important; }
+  .gallery-card-rail { position: relative; inset: auto; padding: 0; }
+  .gallery-media { position: relative; inset: auto; min-height: 0; }
+  .gallery-media > img { scale: 1.05; }
+  .gallery-card-copy { position: relative; inset: auto; width: 100%; min-height: 116px; padding: 16px 0 0; animation: none; }
+  .gallery-side-card,
+  .gallery-arrow { display: none; }
+  .gallery-pagination { position: relative; inset: auto; justify-content: center; margin: -54px auto 62px; translate: none; }
+  .character-portrait,
+  .personality-media,
+  .works-character,
+  .links-character { height: 68vh; min-height: 520px; }
+  .character-scenes { position: relative; inset: auto; display: grid; gap: 16px; width: 100%; height: auto; }
+  .character-scene { position: relative; inset: auto; min-height: 420px; transform: none !important; opacity: 1 !important; visibility: visible !important; }
+  .personality-beats { position: relative; inset: auto; width: 100%; margin: 24px 0; }
+  .personality-closeup { display: none; }
+  .work-showcase { height: auto; min-height: 680px; }
+  .links-portal { opacity: 0.65 !important; transform: none !important; }
+  .links-scroll-hint i::after { animation: none; transform: none; }
+  .links-drawer-backdrop { display: none; }
+  .links-drawer { position: relative; inset: auto; width: 100%; max-width: 820px; max-height: none; margin: 0 auto; overflow: visible; opacity: 1 !important; visibility: visible !important; translate: none; transform: none !important; }
+  .external-link { transform: none !important; opacity: 1 !important; visibility: visible !important; }
+  .works-page-back { position: absolute; bottom: 10px; left: 50%; translate: -50% 0; }
+  .back-home { opacity: 1 !important; visibility: visible !important; transform: none !important; }
+}

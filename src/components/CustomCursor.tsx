@@ -10,6 +10,7 @@ export function CustomCursor({ reducedMotion }: { reducedMotion: boolean }) {
     const ring = ringRef.current;
     if (!dot || !ring) return;
 
+    const maximumLag = 12;
     let targetX = -100;
     let targetY = -100;
     let currentX = -100;
@@ -20,6 +21,22 @@ export function CustomCursor({ reducedMotion }: { reducedMotion: boolean }) {
     let running = false;
     let initialized = false;
 
+    const placeRing = () => {
+      ring.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+    };
+
+    const limitLag = () => {
+      const offsetX = currentX - targetX;
+      const offsetY = currentY - targetY;
+      const distance = Math.hypot(offsetX, offsetY);
+      if (distance <= maximumLag) return;
+      const ratio = maximumLag / distance;
+      currentX = targetX + offsetX * ratio;
+      currentY = targetY + offsetY * ratio;
+      velocityX *= 0.25;
+      velocityY *= 0.25;
+    };
+
     const animateRing = () => {
       const spring = 0.16;
       const damping = 0.72;
@@ -27,7 +44,8 @@ export function CustomCursor({ reducedMotion }: { reducedMotion: boolean }) {
       velocityY = (velocityY + (targetY - currentY) * spring) * damping;
       currentX += velocityX;
       currentY += velocityY;
-      ring.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      limitLag();
+      placeRing();
 
       const settled =
         Math.abs(targetX - currentX) < 0.1 &&
@@ -37,7 +55,7 @@ export function CustomCursor({ reducedMotion }: { reducedMotion: boolean }) {
       if (settled) {
         currentX = targetX;
         currentY = targetY;
-        ring.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        placeRing();
         running = false;
         return;
       }
@@ -52,8 +70,10 @@ export function CustomCursor({ reducedMotion }: { reducedMotion: boolean }) {
         initialized = true;
         currentX = targetX;
         currentY = targetY;
-        ring.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      } else {
+        limitLag();
       }
+      placeRing();
       if (!running) {
         running = true;
         animationFrame = window.requestAnimationFrame(animateRing);

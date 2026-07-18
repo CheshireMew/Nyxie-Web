@@ -10,11 +10,18 @@ if errorlevel 1 (
   exit /b 1
 )
 
+node -e "const [major, minor] = process.versions.node.split('.').map(Number); process.exit((major === 22 && minor >= 12) || major >= 23 ? 0 : 1)"
+if errorlevel 1 (
+  echo [Nyxie] Node.js 22.12+ is required.
+  pause
+  exit /b 1
+)
+
 if not defined PORT set "PORT=4173"
 
 if not exist "node_modules\vite\bin\vite.js" (
   echo [Nyxie] Installing project dependencies...
-  call npm install
+  call npm ci
   if errorlevel 1 (
     echo [Nyxie] Dependency installation failed.
     pause
