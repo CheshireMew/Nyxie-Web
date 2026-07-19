@@ -6,6 +6,7 @@ import { normalizeSiteUrl } from "./lib/site_url.mjs";
 
 const sampling = await import(pathToFileURL(resolve("src/features/gallery/gallerySampling.ts")));
 const heroSequence = await import(pathToFileURL(resolve("src/features/hero/heroSequence.ts")));
+const creatorRows = await import(pathToFileURL(resolve("src/features/creator/creatorCardRows.ts")));
 
 const sourceItems = ["a", "b", "c", "d", "e"];
 const firstSample = sampling.selectSeededSample(sourceItems, "stable-seed", 3);
@@ -29,6 +30,11 @@ const ambientStep = heroSequence.chooseNextHeroClip("idleKey", "reactKey", () =>
 assert.equal(ambientStep.nextKey, "vanish", "ambient actions must not immediately repeat");
 assert.equal(ambientStep.lastAmbientAction, ambientStep.nextKey);
 
+assert.deepEqual(creatorRows.arrangeCreatorCards([1, 2, 3, 4]), [[1, 2], [3, 4]]);
+assert.deepEqual(creatorRows.arrangeCreatorCards([1, 2, 3, 4, 5]), [[1, 2, 3], [4, 5]]);
+assert.deepEqual(creatorRows.arrangeCreatorCards([1, 2, 3, 4, 5, 6]), [[1, 2, 3], [4, 5, 6]]);
+assert.deepEqual(creatorRows.arrangeCreatorCards([]), []);
+
 assert.deepEqual(
   collectManifestPaths({ a: "one", nested: { b: "two" }, list: ["three"] }),
   ["one", "two", "three"],
@@ -37,4 +43,4 @@ assert.equal(normalizeSiteUrl(undefined), null);
 assert.equal(normalizeSiteUrl(" https://example.com/nyxie?draft=1#top "), "https://example.com/nyxie/");
 assert.throws(() => normalizeSiteUrl("example.com/nyxie"));
 
-console.log("聚焦测试通过：Gallery 采样、Hero 序列、媒体清单和部署 URL 规则正常。");
+console.log("聚焦测试通过：Gallery 采样、Hero 序列、Creator 卡片分组、媒体清单和部署 URL 规则正常。");

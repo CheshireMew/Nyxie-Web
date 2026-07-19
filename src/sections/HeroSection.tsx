@@ -14,7 +14,6 @@ type Props = {
   reducedMotion: boolean;
   overlaysOpen: boolean;
   portalConsumed: boolean;
-  onGalleryWarmup: () => void;
   onPortalConsumed: () => void;
   onNavigate: (id: SectionId) => void;
 };
@@ -32,7 +31,6 @@ export function HeroSection({
   reducedMotion,
   overlaysOpen,
   portalConsumed,
-  onGalleryWarmup,
   onPortalConsumed,
   onNavigate,
 }: Props) {
@@ -79,13 +77,12 @@ export function HeroSection({
         return;
       }
       onPortalConsumed();
-      onGalleryWarmup();
       const completed = await waitUntilEnded("portal");
       portalRequestPendingRef.current = false;
       if (completed) onNavigate("gallery");
     })();
     return true;
-  }, [isInteractionLocked, onGalleryWarmup, onNavigate, onPortalConsumed, overlaysOpen, portalConsumed, reducedMotion, request, snapshot.started, waitUntilEnded]);
+  }, [isInteractionLocked, onNavigate, onPortalConsumed, overlaysOpen, portalConsumed, reducedMotion, request, snapshot.started, waitUntilEnded]);
 
   useEffect(() => {
     const scrollKeys = new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "]);
@@ -134,10 +131,9 @@ export function HeroSection({
     const started = await retry();
     if (!started || !isInteractionLocked()) return;
     onPortalConsumed();
-    onGalleryWarmup();
     const completed = await waitUntilEnded("portal");
     if (completed) onNavigate("gallery");
-  }, [isInteractionLocked, onGalleryWarmup, onNavigate, onPortalConsumed, retry, waitUntilEnded]);
+  }, [isInteractionLocked, onNavigate, onPortalConsumed, retry, waitUntilEnded]);
 
   const onHeroClick = (event: MouseEvent<HTMLElement>) => {
     const target = event.target instanceof Element ? event.target : null;
@@ -207,7 +203,7 @@ export function HeroSection({
           >
             <span>跳进兔子洞</span><b>↗</b>
           </a>
-          <button className="text-button" type="button" onClick={() => onNavigate("character")}>
+          <button className="text-button" type="button" onClick={() => onNavigate("gallery")}>
             读取角色档案 <span>↓</span>
           </button>
         </div>

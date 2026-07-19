@@ -143,24 +143,91 @@ const linksWarmup = await evaluate(`(() => {
 })()`);
 
 await screenshot("desktop-creator.png");
-const creatorInitial = await evaluate(`(() => ({
-  activeSection: document.querySelector('.main-nav .is-active')?.textContent?.trim() ?? null,
-  title: document.querySelector('#creator h2')?.textContent?.trim() ?? '',
-  introduction: document.querySelector('#creator .creator-copy > p')?.textContent?.trim() ?? '',
-  facts: [...document.querySelectorAll('#creator .creator-facts > div')].map((row) => ({
-    label: row.querySelector('dt')?.textContent?.trim() ?? '',
-    value: row.querySelector('dd')?.textContent?.trim() ?? '',
-  })),
-  hudIndex: document.querySelector('#creator .chapter-hud-heading span')?.textContent?.trim() ?? '',
-  cards: document.querySelectorAll('#creator .creator-card').length,
-  images: document.querySelectorAll('#creator .creator-card img').length,
-  imageSources: [...document.querySelectorAll('#creator img')].map((image) => image.currentSrc),
-  imagesDecoded: [...document.querySelectorAll('#creator img')].every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
-  status: document.querySelector('#creator .creator-copy-status')?.textContent?.trim() ?? '',
-  activeCard: document.querySelector('#creator .creator-card-deck')?.dataset.activeCard ?? null,
-  pressedCards: [...document.querySelectorAll('#creator .creator-card[aria-pressed="true"]')].map((card) => card.dataset.creatorCard),
-  labels: [...document.querySelectorAll('#creator .creator-card')].map((card) => card.getAttribute('aria-label')),
-}))()`);
+const creatorInitial = await evaluate(`(() => {
+  const cards = [...document.querySelectorAll('#creator .creator-card')];
+  const images = [...document.querySelectorAll('#creator .creator-card img')];
+  const rows = [...document.querySelectorAll('#creator .creator-card-row')];
+  const readout = document.querySelector('#creator .creator-deck-readout')?.getBoundingClientRect();
+  const copy = document.querySelector('#creator .creator-copy');
+  const status = document.querySelector('#creator .creator-copy-status')?.getBoundingClientRect();
+  const xLink = document.querySelector('#creator .creator-x-link');
+  const xLinkRect = xLink?.getBoundingClientRect();
+  const cardTops = cards.map((card) => card.getBoundingClientRect().top);
+  const imageGeometry = images.map((image) => {
+    return {
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      declaredWidth: Number(image.getAttribute('width')),
+      declaredHeight: Number(image.getAttribute('height')),
+      displayHeight: image.offsetHeight,
+      ratioDelta: Math.abs(image.offsetWidth / image.offsetHeight - image.naturalWidth / image.naturalHeight),
+      objectFit: getComputedStyle(image).objectFit,
+    };
+  });
+  return {
+    activeSection: document.querySelector('.main-nav .is-active')?.textContent?.trim() ?? null,
+    title: document.querySelector('#creator h2')?.textContent?.trim() ?? '',
+    introduction: document.querySelector('#creator .creator-copy > p')?.textContent?.trim() ?? '',
+    facts: [...document.querySelectorAll('#creator .creator-facts > div')].map((row) => ({
+      label: row.querySelector('dt')?.textContent?.trim() ?? '',
+      value: row.querySelector('dd')?.textContent?.trim() ?? '',
+    })),
+    hudIndex: document.querySelector('#creator .chapter-hud-heading span')?.textContent?.trim() ?? '',
+    cards: cards.length,
+    images: images.length,
+    imageSources: images.map((image) => image.currentSrc),
+    imagesDecoded: images.every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
+    imagesPreserveIntrinsicRatio: imageGeometry.every((image) => image.ratioDelta < 0.01 && image.objectFit === 'contain' && image.declaredWidth === image.naturalWidth && image.declaredHeight === image.naturalHeight),
+    equalImageHeights: Math.max(...imageGeometry.map((image) => image.displayHeight)) - Math.min(...imageGeometry.map((image) => image.displayHeight)) <= 1,
+    imageGeometry,
+    rowSizes: rows.map((row) => row.querySelectorAll('.creator-card').length),
+    rowGap: rows.length === 2 ? rows[1].offsetTop - rows[0].offsetTop - rows[0].offsetHeight : null,
+    readoutAboveCards: Boolean(readout && cardTops.length && readout.bottom < Math.min(...cardTops)),
+    obsoleteDeckHeadAbsent: !document.querySelector('#creator .creator-deck-head'),
+    copyTranslate: copy ? getComputedStyle(copy).translate : null,
+    status: document.querySelector('#creator .creator-copy-status')?.textContent?.trim() ?? '',
+    xLink: {
+      href: xLink?.href ?? '',
+      target: xLink?.target ?? '',
+      rel: xLink?.rel ?? '',
+      text: xLink?.textContent?.replace(/\\s+/g, ' ').trim() ?? '',
+      belowStatus: Boolean(xLinkRect && status && xLinkRect.top > status.bottom),
+      insideViewport: Boolean(xLinkRect && xLinkRect.left >= 0 && xLinkRect.right <= innerWidth && xLinkRect.top >= 0 && xLinkRect.bottom <= innerHeight),
+    },
+    activeCard: document.querySelector('#creator .creator-card-deck')?.dataset.activeCard ?? null,
+    pressedCards: [...document.querySelectorAll('#creator .creator-card[aria-pressed="true"]')].map((card) => card.dataset.creatorCard),
+    labels: cards.map((card) => card.getAttribute('aria-label')),
+  };
+})()`);
+
+const creatorXTargetIdsBefore = new Set((await send("Target.getTargets")).targetInfos.map((target) => target.targetId));
+const creatorXHit = await evaluate(`(() => {
+  const link = document.querySelector('#creator .creator-x-link');
+  const rect = link?.getBoundingClientRect();
+  if (!link || !rect) return null;
+  const x = Math.round(rect.left + rect.width / 2);
+  const y = Math.round(rect.top + rect.height / 2);
+  return {
+    x,
+    y,
+    targetIsLink: document.elementFromPoint(x, y)?.closest('a') === link,
+  };
+})()`);
+if (creatorXHit) {
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: creatorXHit.x, y: creatorXHit.y });
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: creatorXHit.x, y: creatorXHit.y, button: "left", clickCount: 1 });
+  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: creatorXHit.x, y: creatorXHit.y, button: "left", clickCount: 1 });
+}
+await delay(600);
+const creatorXTargetsAfter = (await send("Target.getTargets")).targetInfos;
+const creatorXTarget = creatorXTargetsAfter.find((target) => target.type === "page" && !creatorXTargetIdsBefore.has(target.targetId));
+const creatorXLink = {
+  ...creatorXHit,
+  newPageTargets: creatorXTargetsAfter.filter((target) => target.type === "page" && !creatorXTargetIdsBefore.has(target.targetId)).length,
+  targetUrl: creatorXTarget?.url ?? '',
+};
+if (creatorXTarget) await send("Target.closeTarget", { targetId: creatorXTarget.targetId });
+await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 120, y: 420 });
 
 const creatorPointerBefore = await evaluate(`[...document.querySelectorAll('#creator .creator-card')].map((card) => getComputedStyle(card).transform)`);
 const creatorDeckPoint = await evaluate(`(() => {
@@ -300,6 +367,7 @@ const linksShowcaseNonLink = {
   currentUrl: await evaluate("location.href"),
 };
 
+const linksDrawerStartedAt = Date.now();
 await scrollChapterTo('#links', 1, 0);
 await waitFor("Number(document.querySelector('#links')?.dataset.forwardProgress ?? 0) >= 0.999");
 await waitFor("Number(getComputedStyle(document.querySelector('.links-drawer')).opacity) > 0.1");
@@ -316,10 +384,14 @@ const linksDrawerOpening = await evaluate(`(() => {
   };
 })()`);
 await waitFor("document.querySelector('#links')?.dataset.drawerState === 'settled'");
+const linksDrawerSettleMs = Date.now() - linksDrawerStartedAt;
 await screenshot("desktop-links-open.png");
 const linksEnd = await evaluate(`(() => {
   const drawer = document.querySelector('.links-drawer');
   const drawerRect = drawer?.getBoundingClientRect();
+  const drawerStyle = drawer ? getComputedStyle(drawer) : null;
+  const closeButton = document.querySelector('.links-drawer-close');
+  const closeRect = closeButton?.getBoundingClientRect();
   const button = document.querySelector('.links-page-back');
   const buttonRect = button?.getBoundingClientRect();
   const progressRect = document.querySelector('#links .chapter-progress-track')?.getBoundingClientRect();
@@ -331,6 +403,12 @@ const linksEnd = await evaluate(`(() => {
     onlineStatus: document.querySelector('.links-drawer-status')?.textContent?.trim() ?? '',
     drawerVisible: Boolean(drawerRect && Number(getComputedStyle(drawer).opacity) > 0.9 && drawerRect.top < innerHeight && drawerRect.bottom > 0),
     drawerCenterDelta: drawerRect ? { x: Math.round(Math.abs(drawerRect.left + drawerRect.width / 2 - document.documentElement.clientWidth / 2)), y: Math.round(Math.abs(drawerRect.top + drawerRect.height / 2 - innerHeight / 2)) } : null,
+    drawerColor: drawerStyle?.color ?? '',
+    drawerBackground: drawerStyle?.backgroundColor ?? '',
+    drawerBackgroundImage: drawerStyle?.backgroundImage ?? '',
+    drawerRadius: drawerStyle?.borderRadius ?? '',
+    closeLabel: closeButton?.getAttribute('aria-label') ?? '',
+    closeInUpperRight: Boolean(drawerRect && closeRect && Math.abs(closeRect.right - drawerRect.right) <= 2 && closeRect.top <= drawerRect.top + 48),
     backVisible: Boolean(buttonRect && Number(getComputedStyle(button).opacity) > 0.75 && buttonRect.top < innerHeight && buttonRect.bottom > 0),
     backBelowProgress: Boolean(buttonRect && progressRect && buttonRect.top > progressRect.bottom),
     backCenterDelta: buttonRect ? Math.round(Math.abs(buttonRect.left + buttonRect.width / 2 - document.documentElement.clientWidth / 2)) : null,
@@ -339,6 +417,35 @@ const linksEnd = await evaluate(`(() => {
     pageEndsWithLinks: links ? Math.abs(document.body.scrollHeight - (links.offsetTop + links.offsetHeight)) <= 1 : false,
   };
 })()`);
+
+const finalLink = await evaluate(`(() => {
+  const link = document.querySelectorAll('#links a.external-link--drawer[href]')[2];
+  const rect = link?.getBoundingClientRect();
+  return {
+    x: rect ? Math.round(rect.left + rect.width / 2) : null,
+    y: rect ? Math.round(rect.top + rect.height / 2) : null,
+    href: link?.href ?? '',
+    target: link?.target ?? '',
+    rel: link?.rel ?? '',
+  };
+})()`);
+const linkTargetInfosBefore = (await send("Target.getTargets")).targetInfos;
+const linkTargetIdsBefore = new Set(linkTargetInfosBefore.map((target) => target.targetId));
+if (finalLink.x !== null && finalLink.y !== null) {
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: finalLink.x, y: finalLink.y });
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: finalLink.x, y: finalLink.y, button: "left", clickCount: 1 });
+  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: finalLink.x, y: finalLink.y, button: "left", clickCount: 1 });
+}
+await delay(600);
+const linkTargetInfosAfter = (await send("Target.getTargets")).targetInfos;
+const openedLinkTarget = linkTargetInfosAfter.find((target) => target.type === "page" && !linkTargetIdsBefore.has(target.targetId));
+const linksExternalNavigation = {
+  ...finalLink,
+  newPageTargets: linkTargetInfosAfter.filter((target) => target.type === "page" && !linkTargetIdsBefore.has(target.targetId)).length,
+  targetUrl: openedLinkTarget?.url ?? '',
+};
+if (openedLinkTarget) await send("Target.closeTarget", { targetId: openedLinkTarget.targetId });
+await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 120, y: 420 });
 
 const linksBackdropHit = await evaluate(`(() => {
   const work = document.querySelector('#links .work-showcase')?.getBoundingClientRect();
@@ -393,6 +500,20 @@ const linksFinalAfterReverse = await evaluate(`(() => {
 })()`);
 const linksReverseNativeDelta = await evaluate(`Math.round(scrollY) - ${linksReverseBefore}`);
 
+await evaluate("document.querySelector('.links-drawer-close')?.click()");
+await waitFor("document.querySelector('#links')?.dataset.drawerState === 'closed' && document.querySelector('.links-drawer') === null");
+const linksDrawerClosed = await evaluate(`(() => {
+  const back = document.querySelector('.links-page-back');
+  const backRect = back?.getBoundingClientRect();
+  return {
+    drawerAbsent: document.querySelector('.links-drawer') === null,
+    backdropAbsent: document.querySelector('.links-drawer-backdrop') === null,
+    backVisible: Boolean(backRect && Number(getComputedStyle(back).opacity) > 0.75 && backRect.top < innerHeight && backRect.bottom > 0),
+    backFocused: document.activeElement === back,
+    showcaseOpacity: Number(getComputedStyle(document.querySelector('.work-showcase')).opacity),
+  };
+})()`);
+
 await evaluate("document.querySelector('.links-page-back')?.click()");
 await waitFor("window.scrollY <= 4 && document.querySelector('.main-nav .is-active')?.textContent === 'HOME'");
 const backHome = await evaluate(`({ scrollY: Math.round(scrollY), activeNav: document.querySelector('.main-nav .is-active')?.textContent ?? null })`);
@@ -437,6 +558,7 @@ const talkA11yClosed = await evaluate(`({
     character,
     creatorWarmup,
     creatorInitial,
+    creatorXLink,
     creator,
     linksWarmup,
     nativeBoundaryDown,
@@ -447,12 +569,15 @@ const talkA11yClosed = await evaluate(`({
     links,
     linksShowcaseNonLink,
     linksDrawerOpening,
+    linksDrawerSettleMs,
     linksEnd,
+    linksExternalNavigation,
     linksBackdropProtection,
     completedChapterProgress,
     linksFinalBeforeReverse,
     linksFinalAfterReverse,
     linksReverseNativeDelta,
+    linksDrawerClosed,
     backHome,
     portalOneShot,
     talkOpen,

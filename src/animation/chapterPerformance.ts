@@ -104,7 +104,7 @@ export function driveChapterPerformance({
 
   if (!sequence || runwayVh <= 0) return;
 
-  trigger.style.setProperty("--chapter-runway", `${runwayVh}svh`);
+  trigger.style.setProperty("--chapter-runway", `${runwayVh}dvh`);
   sequence.progress(0).pause();
   if (progressFill) gsap.set(progressFill, { scaleX: 0 });
   if (trackChapterProgress) trigger.dataset.forwardProgress = "0";

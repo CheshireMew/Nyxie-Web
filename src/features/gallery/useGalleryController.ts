@@ -3,6 +3,10 @@ import type { KeyboardEvent, PointerEvent, RefObject } from "react";
 import { galleryItems } from "../../content/siteContent";
 import { sampledFormCount, selectSeededSample, wrapIndex } from "./gallerySampling";
 
+const galleryWheelSwitchThreshold = 96;
+const galleryWheelGestureIdleMs = 180;
+const galleryStageTopTolerance = 8;
+
 function createGallerySession() {
   const requestedSeed = new URLSearchParams(window.location.search).get("gallerySeed");
   const values = new Uint32Array(2);
@@ -15,7 +19,9 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
   const [session] = useState(createGallerySession);
   const initialActiveIndex = galleryItems.findIndex((item) => item.id === session.forms[0].id);
   const pointerStartX = useRef<number | null>(null);
-  const wheelGestureRef = useRef(false);
+  const wheelGestureActiveRef = useRef(false);
+  const wheelGestureHandledRef = useRef(false);
+  const wheelDeltaRef = useRef(0);
   const wheelGestureTimerRef = useRef<number | null>(null);
   const activeIndexRef = useRef(initialActiveIndex);
   const lastSamplePositionRef = useRef(0);
@@ -51,6 +57,18 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
     const section = sectionRef.current;
     if (!section) return;
 
+    const finishWheelGesture = () => {
+      wheelGestureActiveRef.current = false;
+      wheelGestureHandledRef.current = false;
+      wheelDeltaRef.current = 0;
+      wheelGestureTimerRef.current = null;
+    };
+
+    const keepWheelGestureActive = () => {
+      if (wheelGestureTimerRef.current !== null) window.clearTimeout(wheelGestureTimerRef.current);
+      wheelGestureTimerRef.current = window.setTimeout(finishWheelGesture, galleryWheelGestureIdleMs);
+    };
+
     const onWheel = (event: WheelEvent) => {
       const bounds = section.getBoundingClientRect();
       const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -59,10 +77,18 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
           ? window.innerHeight
           : 1;
       const deltaY = event.deltaY * unit;
-      if (Math.abs(deltaY) < 6 || deltaY < 0) return;
-      if (viewedSamplePositionsRef.current.size >= session.forms.length) return;
+      if (deltaY <= 0) return;
 
-      const approachingStage = bounds.top > 2 && bounds.top < window.innerHeight * 0.2 && deltaY >= bounds.top;
+      if (viewedSamplePositionsRef.current.size >= session.forms.length) {
+        if (!wheelGestureActiveRef.current) return;
+        event.preventDefault();
+        keepWheelGestureActive();
+        return;
+      }
+
+      const approachingStage = bounds.top > galleryStageTopTolerance
+        && bounds.top < window.innerHeight * 0.2
+        && deltaY >= bounds.top;
       if (approachingStage) {
         event.preventDefault();
         const root = document.documentElement;
@@ -70,18 +96,27 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
         root.style.scrollBehavior = "auto";
         window.scrollTo(0, bounds.top + window.scrollY);
         root.style.scrollBehavior = previousBehavior;
+        wheelGestureActiveRef.current = true;
+        wheelGestureHandledRef.current = true;
+        wheelDeltaRef.current = 0;
+        keepWheelGestureActive();
         return;
       }
-      if (Math.abs(bounds.top) > 2) return;
+      if (Math.abs(bounds.top) > galleryStageTopTolerance) return;
 
       event.preventDefault();
-      if (wheelGestureTimerRef.current !== null) window.clearTimeout(wheelGestureTimerRef.current);
-      wheelGestureTimerRef.current = window.setTimeout(() => {
-        wheelGestureRef.current = false;
-        wheelGestureTimerRef.current = null;
-      }, 55);
-      if (wheelGestureRef.current) return;
-      wheelGestureRef.current = true;
+      if (!wheelGestureActiveRef.current) {
+        wheelGestureActiveRef.current = true;
+        wheelGestureHandledRef.current = false;
+        wheelDeltaRef.current = 0;
+      }
+      keepWheelGestureActive();
+      if (wheelGestureHandledRef.current) return;
+
+      wheelDeltaRef.current += deltaY;
+      if (wheelDeltaRef.current < galleryWheelSwitchThreshold) return;
+      wheelGestureHandledRef.current = true;
+      wheelDeltaRef.current = 0;
 
       let nextPosition = wrapIndex(lastSamplePositionRef.current + 1, session.forms.length);
       while (viewedSamplePositionsRef.current.has(nextPosition)) {
@@ -94,6 +129,7 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
     return () => {
       section.removeEventListener("wheel", onWheel);
       if (wheelGestureTimerRef.current !== null) window.clearTimeout(wheelGestureTimerRef.current);
+      finishWheelGesture();
     };
   }, [sectionRef, selectSamplePosition, session.forms.length]);
 

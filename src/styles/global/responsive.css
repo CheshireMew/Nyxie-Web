@@ -78,6 +78,28 @@
   .talk-body { padding-top: 32px; padding-bottom: 32px; }
 }
 
+@media (min-width: 761px) and (max-height: 780px) {
+  .vertical-mantra { top: 90px; bottom: 64px; }
+  .hero-copy { min-height: 100dvh; padding-top: calc(var(--header-height) + 18px); padding-bottom: 42px; }
+  .hero-title { margin-top: 12px; }
+  .title-cn { font-size: clamp(58px, 6.8vw, 104px); }
+  .title-en { font-size: clamp(56px, 6.6vw, 100px); }
+  .title-cn::after { right: -24px; bottom: 5px; width: 14px; height: 14px; border-width: 4px; }
+  .hero-role { margin-top: 14px; }
+  .hero-intro { margin-top: 12px; line-height: 1.55; }
+  .hero-cta { gap: 22px; margin-top: 18px; }
+  .primary-button { min-width: 184px; padding: 12px 16px 12px 19px; }
+  .system-status { margin-top: 16px; }
+  .system-status > span { padding: 4px 7px; }
+  .hero-controls { right: clamp(20px, 3vw, 48px); bottom: 24px; gap: 10px 16px; }
+  .control-stack { grid-template-columns: repeat(2, minmax(126px, 1fr)); gap: 4px; }
+  .control-stack button { min-width: 126px; min-height: 34px; padding: 5px 8px; }
+  .cheshire-orb { width: 90px; height: 90px; }
+  .orb-eye { top: 20px; }
+  .orb-label { margin-top: 23px; }
+  .scroll-cue { bottom: 16px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .boot-line span { animation: none; transform: translateX(70%); }

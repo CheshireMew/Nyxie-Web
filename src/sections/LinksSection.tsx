@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { characterMedia } from "../content/mediaCatalog";
 import { featuredWorks } from "../content/siteContent";
 import { ChapterHud } from "../components/ChapterHud";
@@ -15,8 +15,10 @@ type Props = {
 };
 
 export function LinksSection({ definition, reducedMotion, active, warmupRequested, onBackHome }: Props) {
+  const [drawerDismissed, setDrawerDismissed] = useState(false);
   const drawerRevealedRef = useRef(false);
   const revealDrawerRef = useRef<() => void>(() => undefined);
+  const dismissDrawerRef = useRef<() => void>(() => setDrawerDismissed(true));
   const { sectionRef, progressRef, mediaActivated } = useChapterPerformance({
     active,
     warmupRequested,
@@ -28,11 +30,11 @@ export function LinksSection({ definition, reducedMotion, active, warmupRequeste
     const sequence = gsap.timeline({ paused: true });
 
     entrance
-      .fromTo(".links-stage-title", { yPercent: 35, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.7, ease: "power3.out" })
-      .fromTo(".work-showcase", { yPercent: 42, scale: 0.72, rotate: -7, autoAlpha: 0 }, { yPercent: 0, scale: 1, rotate: -1.4, autoAlpha: 1, duration: 1.15, ease: "power3.out" }, 0.2)
-      .fromTo(".links-character", { xPercent: 28, yPercent: 8, scale: 0.88, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 1, duration: 1.05, ease: "power3.out" }, 0.35)
-      .fromTo(".work-showcase-copy > *", { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, stagger: 0.08, duration: 0.55, ease: "power3.out" }, 1.05)
-      .fromTo(".work-showcase-mobile", { xPercent: 45, yPercent: 30, rotate: 9, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, rotate: 2, autoAlpha: 1, duration: 0.8, ease: "power3.out" }, 1.25);
+      .fromTo(".links-stage-title", { yPercent: 35, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.56, ease: "power3.out" })
+      .fromTo(".work-showcase", { yPercent: 42, scale: 0.72, rotate: -7, autoAlpha: 0 }, { yPercent: 0, scale: 1, rotate: -1.4, autoAlpha: 1, duration: 0.92, ease: "power3.out" }, 0.14)
+      .fromTo(".links-character", { xPercent: 28, yPercent: 8, scale: 0.88, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.84, ease: "power3.out" }, 0.26)
+      .fromTo(".work-showcase-copy > *", { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, stagger: 0.06, duration: 0.44, ease: "power3.out" }, 0.8)
+      .fromTo(".work-showcase-mobile", { xPercent: 45, yPercent: 30, rotate: 9, autoAlpha: 0 }, { xPercent: 0, yPercent: 0, rotate: 2, autoAlpha: 1, duration: 0.64, ease: "power3.out" }, 0.95);
 
     gsap.set(".links-drawer", { yPercent: 112, scale: 0.96, autoAlpha: 0 });
     gsap.set(".links-drawer-backdrop", { autoAlpha: 0 });
@@ -40,22 +42,26 @@ export function LinksSection({ definition, reducedMotion, active, warmupRequeste
     gsap.set(".links-page-back", { y: 16, autoAlpha: 0 });
 
     sequence
-      .to(".links-stage-title", { yPercent: -42, scale: 0.8, autoAlpha: 0.18, duration: 0.7 })
-      .to(".work-showcase", { rotate: 0, xPercent: -8, scale: 1.06, duration: 0.9, ease: "power2.inOut" }, "<")
-      .to(".links-character", { xPercent: 8, scale: 1.1, duration: 0.9, ease: "power2.inOut" }, "<")
-      .to(".work-showcase-screen img", { scale: 1.045, yPercent: -3, duration: 0.9, ease: "power2.inOut" })
-      .to(".links-character", { xPercent: 14, yPercent: -2, scale: 1.14, duration: 0.9, ease: "power2.inOut" }, "<");
+      .to(".links-stage-title", { yPercent: -42, scale: 0.8, autoAlpha: 0.18, duration: 0.56 })
+      .to(".work-showcase", { rotate: 0, xPercent: -8, scale: 1.06, duration: 0.72, ease: "power2.inOut" }, "<")
+      .to(".links-character", { xPercent: 8, scale: 1.1, duration: 0.72, ease: "power2.inOut" }, "<")
+      .to(".work-showcase-screen img", { scale: 1.045, yPercent: -3, duration: 0.72, ease: "power2.inOut" })
+      .to(".links-character", { xPercent: 14, yPercent: -2, scale: 1.14, duration: 0.72, ease: "power2.inOut" }, "<");
 
     const drawerTimeline = gsap.timeline({ paused: true })
-      .to(".work-showcase", { xPercent: -7, scale: 0.97, autoAlpha: 0.2, duration: 0.48, ease: "power2.inOut" }, 0)
-      .to(".links-character", { xPercent: 10, scale: 1.08, autoAlpha: 0.26, duration: 0.48, ease: "power2.inOut" }, 0)
-      .to(".links-stage-title", { autoAlpha: 0.08, duration: 0.4 }, 0)
-      .to(".links-drawer-backdrop", { autoAlpha: 1, duration: 0.4 }, 0.03)
-      .to(".links-drawer", { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.62, ease: "power4.out" }, 0.1)
-      .to(gates, { y: 0, autoAlpha: 1, duration: 0.34, stagger: 0.07, ease: "power3.out" }, 0.38)
-      .to(".links-page-back", { y: 0, autoAlpha: 1, duration: 0.3, ease: "power3.out" }, 0.55);
+      .to(".work-showcase", { xPercent: -7, scale: 0.97, autoAlpha: 0.2, duration: 0.36, ease: "power2.inOut" }, 0)
+      .to(".links-character", { xPercent: 10, scale: 1.08, autoAlpha: 0.26, duration: 0.36, ease: "power2.inOut" }, 0)
+      .to(".links-stage-title", { autoAlpha: 0.08, duration: 0.3 }, 0)
+      .to(".links-drawer-backdrop", { autoAlpha: 1, duration: 0.3 }, 0.02)
+      .to(".links-drawer", { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.46, ease: "power4.out" }, 0.06)
+      .to(gates, { y: 0, autoAlpha: 1, duration: 0.26, stagger: 0.045, ease: "power3.out" }, 0.25);
     drawerTimeline.eventCallback("onComplete", () => {
       section.dataset.drawerState = "settled";
+    });
+    drawerTimeline.eventCallback("onReverseComplete", () => {
+      section.dataset.drawerState = "closed";
+      setDrawerDismissed(true);
+      requestAnimationFrame(() => section.querySelector<HTMLButtonElement>(".links-page-back")?.focus());
     });
 
     revealDrawerRef.current = () => {
@@ -64,14 +70,23 @@ export function LinksSection({ definition, reducedMotion, active, warmupRequeste
       section.dataset.drawerRevealed = "true";
       section.dataset.drawerState = "opening";
       drawerTimeline.play();
+      gsap.to(".links-page-back", { y: 0, autoAlpha: 1, duration: 0.24, delay: 0.34, ease: "power3.out" });
+    };
+    dismissDrawerRef.current = () => {
+      if (!drawerRevealedRef.current || section.dataset.drawerState === "closing") return;
+      section.dataset.drawerState = "closing";
+      drawerTimeline.reverse();
     };
 
     return {
       entrance,
       sequence,
-      runwayVh: 42,
+      runwayVh: 34,
       onSettled: () => revealDrawerRef.current(),
-      cleanup: () => { revealDrawerRef.current = () => undefined; },
+      cleanup: () => {
+        revealDrawerRef.current = () => undefined;
+        dismissDrawerRef.current = () => setDrawerDismissed(true);
+      },
     };
     },
   });
@@ -120,7 +135,13 @@ export function LinksSection({ definition, reducedMotion, active, warmupRequeste
         ))}
 
         <div className="links-stage-caption" aria-hidden="true"><span>CREATIVE COMPANION</span><b>NYXIE</b></div>
-        <ExternalLinksDrawer />
+        <ExternalLinksDrawer
+          dismissed={drawerDismissed}
+          onClose={() => {
+            if (reducedMotion) setDrawerDismissed(true);
+            else dismissDrawerRef.current();
+          }}
+        />
         <button className="back-home links-page-back" type="button" onClick={onBackHome}>BACK TO NYXIE ↑</button>
       </div>
     </section>

@@ -25,34 +25,6 @@ await evaluate("document.querySelector('.video-retry')?.click()");
 await waitFor("document.querySelector('.hero-video.is-visible')?.dataset.clip === 'portal' && document.querySelector('.hero-video.is-visible')?.currentTime > 0.25");
 await send("Network.setCacheDisabled", { cacheDisabled: false });
 const portalStartedAt = await evaluate("document.querySelector('.hero-video.is-visible')?.currentTime ?? 0");
-await waitFor(`(() => {
-  const portal = document.querySelector('.hero-video.is-visible');
-  const gallery = document.querySelector('#gallery');
-  const video = gallery?.querySelector('.gallery-form-video');
-  const resources = performance.getEntriesByType('resource').filter((entry) => entry.name.includes('/assets/gallery/'));
-  return portal && !portal.ended
-    && gallery?.dataset.galleryMedia === 'warming'
-    && video?.currentSrc
-    && video.readyState >= 2
-    && resources.some((entry) => entry.name === video.currentSrc);
-})()`, 5000);
-const galleryPortalWarmup = await evaluate(`(() => {
-  const portal = document.querySelector('.hero-video.is-visible');
-  const gallery = document.querySelector('#gallery');
-  const video = gallery?.querySelector('.gallery-form-video');
-  const resources = performance.getEntriesByType('resource').filter((entry) => entry.name.includes('/assets/gallery/'));
-  return {
-    portalTime: portal?.currentTime ?? 0,
-    portalEnded: portal?.ended ?? true,
-    galleryMedia: gallery?.dataset.galleryMedia ?? null,
-    source: video?.currentSrc ?? '',
-    preload: video?.preload ?? null,
-    readyState: video?.readyState ?? 0,
-    paused: video?.paused ?? false,
-    posterRequests: resources.filter((entry) => entry.name.endsWith('-poster.webp')).length,
-    videoRequested: resources.some((entry) => entry.name === video?.currentSrc),
-  };
-})()`);
 await evaluate(`(() => {
   document.querySelector('#home')?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
   document.querySelector('.control-stack button:first-child')?.click();
@@ -435,11 +407,52 @@ const galleryKeyboardNavigation = await evaluate(`(() => {
   };
 })()`);
 
-const galleryWheelStartedAt = Date.now();
-await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120 });
+await evaluate("document.querySelectorAll('.gallery-pagination button')[0]?.click()");
+await waitFor("document.querySelector('.gallery-pagination button[aria-current=\"true\"]') === document.querySelectorAll('.gallery-pagination button')[0]");
+await waitFor(`(() => {
+  const video = document.querySelector('.gallery-form-video.is-active');
+  return video?.currentSrc.endsWith('/${galleryStart.sequence[0]}.webm')
+    && video.readyState >= 2
+    && video.currentTime > 0.03
+    && !video.paused;
+})()`);
+const galleryScrollBeforeThreshold = await evaluate("Math.round(scrollY)");
+await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 40 });
+await delay(60);
+await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 40 });
+await delay(60);
+const galleryWheelThreshold = await evaluate(`({
+  activeSamplePosition: [...document.querySelectorAll('.gallery-pagination button')].findIndex((button) => button.getAttribute('aria-current') === 'true'),
+  nativeDelta: Math.round(scrollY) - ${galleryScrollBeforeThreshold},
+})`);
+await evaluate(`(() => {
+  const expected = document.querySelectorAll('.gallery-pagination button')[1];
+  window.__galleryWheelSwitchLatencyMs = null;
+  const startedAt = performance.now();
+  const observer = new MutationObserver(() => {
+    if (expected?.getAttribute('aria-current') !== 'true') return;
+    window.__galleryWheelSwitchLatencyMs = performance.now() - startedAt;
+    observer.disconnect();
+  });
+  observer.observe(document.querySelector('.gallery-pagination'), {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['aria-current'],
+  });
+})()`);
+await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 16 });
+for (let eventIndex = 0; eventIndex < 3; eventIndex += 1) {
+  await delay(80);
+  await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120 });
+}
 await waitFor("document.querySelector('.gallery-pagination button[aria-current=\"true\"]') === document.querySelectorAll('.gallery-pagination button')[1]");
-const galleryWheelSwitchLatencyMs = Date.now() - galleryWheelStartedAt;
-await delay(110);
+const galleryWheelSwitchLatencyMs = await evaluate("window.__galleryWheelSwitchLatencyMs ?? 9999");
+await delay(30);
+const galleryWheelBurst = await evaluate(`({
+  activeSamplePosition: [...document.querySelectorAll('.gallery-pagination button')].findIndex((button) => button.getAttribute('aria-current') === 'true'),
+  nativeDelta: Math.round(scrollY) - ${galleryScrollBeforeThreshold},
+  pageTop: Math.round(document.querySelector('#gallery')?.getBoundingClientRect().top ?? -9999),
+})`);
 await waitFor(`(() => {
   const video = document.querySelector('.gallery-form-video.is-active');
   return video?.currentSrc.endsWith('/${galleryStart.sequence[1]}.webm')
@@ -455,8 +468,20 @@ const galleryNext = await evaluate(`(() => {
 
 const galleryPlayback = [];
 galleryPlayback.push(galleryNext);
-await wheelAt(720, 500, 120);
+await delay(220);
+const galleryScrollBeforeFinalBurst = await evaluate("Math.round(scrollY)");
+await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120 });
+for (let eventIndex = 0; eventIndex < 3; eventIndex += 1) {
+  await delay(80);
+  await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120 });
+}
 await waitFor("document.querySelector('.gallery-pagination button[aria-current=\"true\"]') === document.querySelectorAll('.gallery-pagination button')[2]");
+await delay(30);
+const galleryFinalWheelBurst = await evaluate(`({
+  activeSamplePosition: [...document.querySelectorAll('.gallery-pagination button')].findIndex((button) => button.getAttribute('aria-current') === 'true'),
+  nativeDelta: Math.round(scrollY) - ${galleryScrollBeforeFinalBurst},
+  pageTop: Math.round(document.querySelector('#gallery')?.getBoundingClientRect().top ?? -9999),
+})`);
 await waitFor(`(() => {
   const video = document.querySelector('.gallery-form-video.is-active');
   return video?.currentSrc.endsWith('/${galleryStart.sequence[2]}.webm')
@@ -468,6 +493,7 @@ galleryPlayback.push(await evaluate(`(() => {
   const video = document.querySelector('.gallery-form-video.is-active');
   return { source: video?.currentSrc ?? '', readyState: video?.readyState ?? 0, videoWidth: video?.videoWidth ?? 0, currentTime: video?.currentTime ?? 0, paused: video?.paused ?? true };
 })()`));
+await delay(220);
 const galleryScrollBeforeExit = await evaluate("Math.round(scrollY)");
 await wheelAt(720, 500, 120);
 const galleryWheelExit = await evaluate(`(() => {
@@ -506,7 +532,6 @@ const galleryReversePlayback = await evaluate(`(() => {
   return {
     report: {
       portalFailure,
-      galleryPortalWarmup,
       portalLock,
       portalScroll,
       characterWarmup,
@@ -527,6 +552,9 @@ const galleryReversePlayback = await evaluate(`(() => {
       galleryKeyboardNavigation,
       galleryNext,
       galleryPlayback,
+      galleryWheelThreshold,
+      galleryWheelBurst,
+      galleryFinalWheelBurst,
       galleryWheelSwitchLatencyMs,
       galleryWheelExit,
       galleryWheelReturn,

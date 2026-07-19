@@ -2,7 +2,11 @@ import { creatorMedia, galleryIds, getGalleryMedia, workMedia } from "./mediaCat
 import type { GalleryId } from "./mediaCatalog";
 
 export const siteLinks = {
+  github: "https://github.com/CheshireMew",
   blog: "https://blog.blacknico.com/",
+  x: "https://x.com/0xCheshire",
+  binanceInvite: "https://binance.com/join?ref=SRXT5KUM",
+  okxInvite: "https://okx.com/join/A999998",
 } as const;
 
 export type CreatorProfile = {
@@ -13,6 +17,11 @@ export type CreatorProfile = {
     label: string;
     value: string;
   }>;
+  xProfile: {
+    label: string;
+    handle: string;
+    href: string;
+  };
 };
 
 export type CreatorCard = {
@@ -22,6 +31,8 @@ export type CreatorCard = {
   meta: string;
   src: string;
   alt: string;
+  width: number;
+  height: number;
 };
 
 export const creatorProfile: CreatorProfile = {
@@ -32,6 +43,11 @@ export const creatorProfile: CreatorProfile = {
     { label: "身份", value: "内容创作者 / AI 非典型爱好者 / 无业宅民" },
     { label: "常驻空间", value: "X / Codex / 二次元 / 博客" },
   ],
+  xProfile: {
+    label: "X / FOLLOW",
+    handle: "@0xCheshire",
+    href: siteLinks.x,
+  },
 };
 
 export const creatorCards: CreatorCard[] = [
@@ -42,6 +58,8 @@ export const creatorCards: CreatorCard[] = [
     meta: "VISUAL ARCHIVE / 01",
     src: creatorMedia.sunny,
     alt: "夜希眨眼比出手势，上方写有日文太阳字样的明亮头像插画",
+    width: 1254,
+    height: 1254,
   },
   {
     id: "creator-winter",
@@ -50,6 +68,8 @@ export const creatorCards: CreatorCard[] = [
     meta: "VISUAL ARCHIVE / 02",
     src: creatorMedia.winter,
     alt: "雪夜古镇中，夜希披红色斗篷手持白梅",
+    width: 1448,
+    height: 1086,
   },
   {
     id: "creator-chibi",
@@ -58,6 +78,8 @@ export const creatorCards: CreatorCard[] = [
     meta: "VISUAL ARCHIVE / 03",
     src: creatorMedia.chibi,
     alt: "夜希穿黑色斗篷裙、手指脸颊的 Q 版全身插画",
+    width: 1254,
+    height: 1254,
   },
   {
     id: "creator-moonlit",
@@ -66,6 +88,8 @@ export const creatorCards: CreatorCard[] = [
     meta: "VISUAL ARCHIVE / 04",
     src: creatorMedia.moonlit,
     alt: "满月剧场中，夜希手持面具起舞的黑金礼服插画",
+    width: 984,
+    height: 940,
   },
 ];
 
@@ -171,12 +195,30 @@ export const externalLinks = [
     index: "01",
     label: "GitHub",
     description: "代码、项目与持续更新",
-    href: "https://github.com/CheshireMew",
+    href: siteLinks.github,
   },
   {
     index: "02",
     label: "Blog",
     description: "文章、笔记与持续更新",
     href: siteLinks.blog,
+  },
+  {
+    index: "03",
+    label: "X / @0xCheshire",
+    description: "关注我的最新动态与公开分享",
+    href: siteLinks.x,
+  },
+  {
+    index: "04",
+    label: "Binance",
+    description: "通过我的邀请链接注册币安",
+    href: siteLinks.binanceInvite,
+  },
+  {
+    index: "05",
+    label: "OKX",
+    description: "通过我的邀请链接注册 OKX",
+    href: siteLinks.okxInvite,
   },
 ];

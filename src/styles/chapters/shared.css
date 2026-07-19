@@ -13,9 +13,9 @@
 .gallery-chapter,
 .character-chapter,
 .creator-chapter,
-.links-chapter { min-height: 100svh; }
+.links-chapter { min-height: 100dvh; }
 
-.chapter--sequenced { height: calc(100svh + var(--chapter-runway, 0svh)); }
+.chapter--sequenced { height: calc(100dvh + var(--chapter-runway, 0dvh)); }
 
 .chapter--sequenced > .links-stage {
   position: sticky;
@@ -28,8 +28,8 @@
 .links-stage {
   position: relative;
   width: 100%;
-  height: 100svh;
-  min-height: 680px;
+  height: 100dvh;
+  min-height: 0;
   overflow: hidden;
   contain: layout paint style;
   isolation: isolate;

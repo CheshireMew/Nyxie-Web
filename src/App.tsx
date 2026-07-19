@@ -22,7 +22,6 @@ const wait = (milliseconds: number) => new Promise<void>((resolve) => window.set
 export default function App() {
   const [site, dispatch] = useReducer(siteReducer, initialSiteState);
   const [ready, setReady] = useState(false);
-  const [galleryWarmupRequested, setGalleryWarmupRequested] = useState(false);
   const [portalConsumed, setPortalConsumed] = useState(false);
   const heroActionOperationRef = useRef(0);
   const reducedMotion = useReducedMotion();
@@ -30,7 +29,6 @@ export default function App() {
   const backgroundMusic = useBackgroundMusic();
 
   const openTalk = useCallback(() => dispatch({ type: "open-talk" }), []);
-  const warmGallery = useCallback(() => setGalleryWarmupRequested(true), []);
   const consumePortal = useCallback(() => setPortalConsumed(true), []);
   const director = usePerformanceDirector({
     reducedMotion,
@@ -150,9 +148,8 @@ export default function App() {
               reducedMotion,
               overlaysOpen: site.indexOpen || site.talkOpen,
               activeSection: site.activeSection,
-              galleryWarmupRequested,
+              mediaWarmupEnabled: ready,
               portalConsumed,
-              onGalleryWarmup: warmGallery,
               onPortalConsumed: consumePortal,
               onNavigate: (id) => { void navigate(id); },
             })}

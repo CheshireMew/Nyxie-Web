@@ -12,9 +12,8 @@ type SectionRuntime = {
   reducedMotion: boolean;
   overlaysOpen: boolean;
   activeSection: SectionId;
-  galleryWarmupRequested: boolean;
+  mediaWarmupEnabled: boolean;
   portalConsumed: boolean;
-  onGalleryWarmup: () => void;
   onPortalConsumed: () => void;
   onNavigate: (id: SectionId) => void;
 };
@@ -24,7 +23,8 @@ function assertNever(value: never): never {
 }
 
 export function renderSection(definition: SectionDefinition, runtime: SectionRuntime) {
-  const sequentialWarmupRequested = nextSectionAfter(runtime.activeSection)?.id === definition.id;
+  const sequentialWarmupRequested = runtime.mediaWarmupEnabled
+    && nextSectionAfter(runtime.activeSection)?.id === definition.id;
 
   switch (definition.id) {
     case "home":
@@ -35,7 +35,6 @@ export function renderSection(definition: SectionDefinition, runtime: SectionRun
           reducedMotion={runtime.reducedMotion}
           overlaysOpen={runtime.overlaysOpen}
           portalConsumed={runtime.portalConsumed}
-          onGalleryWarmup={runtime.onGalleryWarmup}
           onPortalConsumed={runtime.onPortalConsumed}
           onNavigate={runtime.onNavigate}
         />
@@ -46,7 +45,7 @@ export function renderSection(definition: SectionDefinition, runtime: SectionRun
           definition={definition}
           reducedMotion={runtime.reducedMotion}
           active={runtime.activeSection === definition.id}
-          warmupRequested={runtime.galleryWarmupRequested}
+          warmupRequested={sequentialWarmupRequested}
         />
       );
     case "character":

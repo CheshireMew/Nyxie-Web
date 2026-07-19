@@ -4,6 +4,7 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Runtime deployment media in /public/assets/ and repository Skills in /skills/ are intentionally tracked.
 # Local source, archived legacy code, and browser acceptance artifacts.
 /夜希-动画/
 /又Vibe coding 了一个作品集网页 - 小红书.mp4

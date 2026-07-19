@@ -1,6 +1,6 @@
 .hero {
   position: relative;
-  min-height: 100svh;
+  min-height: 100dvh;
   overflow: hidden;
   background: #eaf1f7;
 }
@@ -105,7 +105,7 @@
   flex-direction: column;
   justify-content: center;
   width: min(50vw, 720px);
-  min-height: 100svh;
+  min-height: 100dvh;
   padding: calc(var(--header-height) + 44px) 0 88px clamp(72px, 8vw, 150px);
 }
 

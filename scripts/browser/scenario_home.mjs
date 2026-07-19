@@ -15,7 +15,10 @@ await send("Network.setBlockedURLs", { urls: ["*src/main.tsx*", "*assets/*.js*"]
 const fallbackUrl = `${siteUrl}/?fallback=${Date.now()}`;
 await send("Page.navigate", { url: fallbackUrl });
 await waitFor(`location.href === ${JSON.stringify(fallbackUrl)} && document.readyState === 'complete'`);
-await delay(500);
+await waitFor(`(() => {
+  const fallback = document.querySelector('.static-fallback');
+  return fallback && getComputedStyle(fallback).display !== 'none';
+})()`, 12000);
 const staticFallback = await evaluate(`(() => {
   const fallback = document.querySelector('.static-fallback');
   return {
@@ -49,6 +52,18 @@ const bootPaintObserver = await send("Page.addScriptToEvaluateOnNewDocument", {
   })();`,
 });
 const bootState = await navigate(true);
+await waitFor(`(() => {
+  const gallery = document.querySelector('#gallery');
+  const video = gallery?.querySelector('.gallery-form-video');
+  const resources = performance.getEntriesByType('resource').filter((entry) => entry.name.includes('/assets/gallery/'));
+  return gallery?.dataset.galleryMedia === 'warming'
+    && video?.currentSrc
+    && video.preload === 'auto'
+    && video.readyState >= 2
+    && video.paused
+    && resources.filter((entry) => entry.name.endsWith('-poster.webp')).length >= 3
+    && resources.some((entry) => entry.name === video.currentSrc);
+})()`, 20000);
 const bootPaint = await evaluate(`(() => {
   const samples = window.__nyxieBootPaintAudit ?? [];
   return {
@@ -66,6 +81,8 @@ const homeResourceBudget = await evaluate(`(() => {
     idleMainDownloads: completed.filter((entry) => entry.name.endsWith('/assets/media/idle-main.mp4')).length,
     idleKeyDownloads: completed.filter((entry) => entry.name.endsWith('/assets/media/idle-key.mp4')).length,
     galleryRequests: resources.filter((entry) => entry.name.includes('/assets/gallery/')).length,
+    galleryVideoRequests: resources.filter((entry) => entry.name.includes('/assets/gallery/') && entry.name.endsWith('.webm')).length,
+    galleryPosterRequests: resources.filter((entry) => entry.name.includes('/assets/gallery/') && entry.name.endsWith('-poster.webp')).length,
     characterRequests: resources.filter((entry) => entry.name.includes('/assets/character/')).length,
     creatorRequests: resources.filter((entry) => entry.name.includes('/assets/creator/')).length,
     worksRequests: resources.filter((entry) => entry.name.includes('/assets/works/')).length,
@@ -74,6 +91,11 @@ const homeResourceBudget = await evaluate(`(() => {
     creatorImageBytes: completed.filter((entry) => entry.name.includes('/assets/creator/')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
     worksImageBytes: completed.filter((entry) => entry.name.includes('/assets/works/')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
     bgmBytes: completed.filter((entry) => entry.name.endsWith('/assets/audio/nyxie-bgm.m4a')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
+    galleryMedia: document.querySelector('#gallery')?.dataset.galleryMedia ?? null,
+    galleryVideoSource: document.querySelector('#gallery .gallery-form-video')?.currentSrc ?? '',
+    galleryVideoPreload: document.querySelector('#gallery .gallery-form-video')?.preload ?? null,
+    galleryVideoReadyState: document.querySelector('#gallery .gallery-form-video')?.readyState ?? 0,
+    galleryVideoPaused: document.querySelector('#gallery .gallery-form-video')?.paused ?? false,
   };
 })()`);
 await evaluate("document.querySelector('#character')?.scrollIntoView({ behavior: 'instant', block: 'start' })");
@@ -283,6 +305,42 @@ const blogCta = await evaluate(`(() => {
   return { tagName: link?.tagName ?? null, text: link?.textContent?.trim() ?? '', href: link?.href ?? null, target: link?.target ?? null };
 })()`);
 
+const archiveBeforeClick = await evaluate(`(() => {
+  const video = document.querySelector('#gallery .gallery-form-video');
+  return {
+    source: video?.currentSrc ?? '',
+    readyState: video?.readyState ?? 0,
+    paused: video?.paused ?? false,
+    portalRequests: performance.getEntriesByType('resource').filter((entry) => entry.name.endsWith('/assets/media/portal.mp4')).length,
+  };
+})()`);
+await evaluate("document.querySelector('#home .text-button')?.click()");
+await waitFor(`(() => {
+  const gallery = document.querySelector('#gallery');
+  const video = gallery?.querySelector('.gallery-form-video.is-active');
+  return location.hash === '#gallery'
+    && document.querySelector('.main-nav .is-active')?.textContent?.trim() === 'GALLERY'
+    && Math.abs(gallery?.getBoundingClientRect().top ?? -9999) <= 4
+    && video?.currentSrc === ${JSON.stringify(archiveBeforeClick.source)};
+})()`);
+await waitFor("document.querySelector('#gallery .gallery-form-video.is-active')?.currentTime > 0.1");
+const heroArchiveCta = await evaluate(`({
+  label: document.querySelector('#home .text-button')?.textContent?.trim() ?? '',
+  hash: location.hash,
+  activeSection: document.querySelector('.main-nav .is-active')?.textContent?.trim() ?? '',
+  galleryTop: Math.round(document.querySelector('#gallery')?.getBoundingClientRect().top ?? -9999),
+  preloadedSource: ${JSON.stringify(archiveBeforeClick.source)},
+  preloadedReadyState: ${archiveBeforeClick.readyState},
+  preloadedPaused: ${archiveBeforeClick.paused},
+  activeSource: document.querySelector('#gallery .gallery-form-video.is-active')?.currentSrc ?? '',
+  activeCurrentTime: document.querySelector('#gallery .gallery-form-video.is-active')?.currentTime ?? 0,
+  activePaused: document.querySelector('#gallery .gallery-form-video.is-active')?.paused ?? true,
+  portalRequestDelta: performance.getEntriesByType('resource').filter((entry) => entry.name.endsWith('/assets/media/portal.mp4')).length - ${archiveBeforeClick.portalRequests},
+  portalActive: document.querySelector('.hero-video.is-visible')?.dataset.clip === 'portal',
+})`);
+await evaluate("document.querySelector('.site-header .brand')?.click()");
+await waitFor("location.hash === '#home' && window.scrollY <= 4 && document.querySelector('.main-nav .is-active')?.textContent?.trim() === 'HOME'");
+
 
   return {
     staticFallback,
@@ -303,5 +361,6 @@ const blogCta = await evaluate(`(() => {
     desktopHome,
     homeHeaderBoundary,
     blogCta,
+    heroArchiveCta,
   };
 }
