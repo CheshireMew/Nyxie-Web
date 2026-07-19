@@ -1,9 +1,73 @@
-import { galleryIds, getGalleryMedia, workMedia } from "./mediaCatalog";
+import { creatorMedia, galleryIds, getGalleryMedia, workMedia } from "./mediaCatalog";
 import type { GalleryId } from "./mediaCatalog";
 
 export const siteLinks = {
   blog: "https://blog.blacknico.com/",
 } as const;
+
+export type CreatorProfile = {
+  eyebrow: string;
+  title: string;
+  introduction: string;
+  facts: ReadonlyArray<{
+    label: string;
+    value: string;
+  }>;
+};
+
+export type CreatorCard = {
+  id: string;
+  index: string;
+  label: string;
+  meta: string;
+  src: string;
+  alt: string;
+};
+
+export const creatorProfile: CreatorProfile = {
+  eyebrow: "CHESHIRE / CREATOR PROFILE",
+  title: "你好，我是柴郡。",
+  introduction: "夜希（Nyxie）将作为我的官方看板娘、IP 角色形象一直活跃。",
+  facts: [
+    { label: "身份", value: "内容创作者 / AI 非典型爱好者 / 无业宅民" },
+    { label: "常驻空间", value: "X / Codex / 二次元 / 博客" },
+  ],
+};
+
+export const creatorCards: CreatorCard[] = [
+  {
+    id: "creator-sunny",
+    index: "01",
+    label: "SUNNY NYXIE",
+    meta: "VISUAL ARCHIVE / 01",
+    src: creatorMedia.sunny,
+    alt: "夜希眨眼比出手势，上方写有日文太阳字样的明亮头像插画",
+  },
+  {
+    id: "creator-winter",
+    index: "02",
+    label: "WINTER NYXIE",
+    meta: "VISUAL ARCHIVE / 02",
+    src: creatorMedia.winter,
+    alt: "雪夜古镇中，夜希披红色斗篷手持白梅",
+  },
+  {
+    id: "creator-chibi",
+    index: "03",
+    label: "CHIBI NYXIE",
+    meta: "VISUAL ARCHIVE / 03",
+    src: creatorMedia.chibi,
+    alt: "夜希穿黑色斗篷裙、手指脸颊的 Q 版全身插画",
+  },
+  {
+    id: "creator-moonlit",
+    index: "04",
+    label: "MOONLIT NYXIE",
+    meta: "VISUAL ARCHIVE / 04",
+    src: creatorMedia.moonlit,
+    alt: "满月剧场中，夜希手持面具起舞的黑金礼服插画",
+  },
+];
 
 export type GalleryItem = {
   id: GalleryId;

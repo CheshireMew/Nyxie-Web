@@ -7,6 +7,7 @@
 - `HOME`：首屏角色主视觉、动作视频、随机播放、背景音乐和对话入口。
 - `GALLERY`：从八种形态中稳定抽取三种作为本次滚轮序列，同时允许箭头和键盘浏览全部八种；只挂载当前视频和正在淡出的上一段视频。
 - `CHARACTER`：全身形象与脸部、服装、背面、不对称袜鞋四组设计细节。
+- `CREATOR`：创作者资料与四张可交互的夜希视觉卡片。
 - `LINKS`：项目展示、GitHub 与博客目录，以及返回首页入口。
 
 有效章节会同步到 URL hash，例如 `#character`。同一次页面会话里的浏览器前进和后退会恢复对应章节；重新加载或重新打开网站始终从 `HOME` 开始。
@@ -35,7 +36,7 @@ Nyxie-Web/
 │  │  ├─ useChapterPerformance.ts # 章节动画生命周期脚手架
 │  │  ├─ useChapterWarmup.ts      # 只预热下一章
 │  │  └─ usePageState.ts          # 可见章节状态同步
-│  ├─ sections/                   # 四个章节
+│  ├─ sections/                   # 五个章节
 │  └─ styles/                     # 全局、组件、章节和响应式职责文件
 ├─ scripts/
 │  ├─ validate_assets.mjs         # 校验媒体清单与实际文件

@@ -5,12 +5,14 @@
 /* Shared scroll-performance chapters */
 .gallery-chapter,
 .character-chapter,
+.creator-chapter,
 .links-chapter {
   position: relative;
 }
 
 .gallery-chapter,
 .character-chapter,
+.creator-chapter,
 .links-chapter { min-height: 100svh; }
 
 .chapter--sequenced { height: calc(100svh + var(--chapter-runway, 0svh)); }
@@ -22,6 +24,7 @@
 
 .gallery-stage,
 .character-stage,
+.creator-stage,
 .links-stage {
   position: relative;
   width: 100%;
@@ -33,6 +36,7 @@
 }
 
 .character-stage,
+.creator-stage,
 .links-stage {
   color: var(--ink);
   background:

@@ -52,6 +52,39 @@ const mobileCharacter = await evaluate(`(() => {
 })()`);
 await screenshot("mobile-character.png");
 
+await scrollChapterTo('#creator', 0);
+await waitFor(`(() => {
+  const images = [...document.querySelectorAll('#creator .creator-card img')];
+  return images.length === 4 && images.every((image) => image.complete && image.naturalWidth > 0);
+})()`);
+await screenshot("mobile-creator.png");
+const mobileCreator = await evaluate(`(() => {
+  const rail = document.querySelector('#creator .creator-card-deck');
+  const firstCard = rail?.querySelector('.creator-card')?.getBoundingClientRect();
+  return {
+    bodyWidth: document.body.scrollWidth,
+    viewportWidth: innerWidth,
+    cards: document.querySelectorAll('#creator .creator-card').length,
+    images: document.querySelectorAll('#creator .creator-card img').length,
+    imagesDecoded: [...document.querySelectorAll('#creator .creator-card img')].every((image) => image.complete && image.naturalWidth > 0),
+    railOverflowX: getComputedStyle(rail).overflowX,
+    railSnapType: getComputedStyle(rail).scrollSnapType,
+    railScrollable: (rail?.scrollWidth ?? 0) > (rail?.clientWidth ?? 0),
+    firstCardVisible: Boolean(firstCard && firstCard.left < innerWidth && firstCard.right > 0),
+  };
+})()`);
+await evaluate("document.querySelector('#creator .creator-card-deck')?.scrollTo({left: 9999, behavior: 'instant'})");
+await delay(160);
+mobileCreator.scrolled = await evaluate(`(() => {
+  const rail = document.querySelector('#creator .creator-card-deck');
+  const card = rail?.querySelector('.creator-card:last-child')?.getBoundingClientRect();
+  const bounds = rail?.getBoundingClientRect();
+  return {
+    scrollLeft: rail?.scrollLeft ?? 0,
+    lastCardVisible: Boolean(card && bounds && card.left < bounds.right && card.right > bounds.left),
+  };
+})()`);
+
 await scrollChapterTo('#links', 1, 0);
 await waitFor("Number(document.querySelector('#links')?.dataset.forwardProgress ?? 0) >= 0.999");
 await waitFor("document.querySelector('#links')?.dataset.drawerState === 'settled'");
@@ -86,6 +119,26 @@ const reducedGallery = await evaluate(`({
   posterLoaded: document.querySelector('#gallery .gallery-media > img')?.complete ?? false,
   cards: document.querySelectorAll('#gallery .gallery-pagination button').length,
 })`);
+
+await evaluate("document.querySelector('#creator')?.scrollIntoView({behavior:'instant', block:'start'})");
+await waitFor(`(() => {
+  const images = [...document.querySelectorAll('#creator .creator-card img')];
+  return images.length === 4 && images.every((image) => image.complete && image.naturalWidth > 0);
+})()`);
+await delay(160);
+await screenshot("reduced-motion-creator.png");
+const reducedCreator = await evaluate(`(() => {
+  const cards = [...document.querySelectorAll('#creator .creator-card')];
+  const deck = document.querySelector('#creator .creator-card-deck');
+  return {
+    cards: cards.length,
+    images: document.querySelectorAll('#creator .creator-card img').length,
+    imagesDecoded: [...document.querySelectorAll('#creator .creator-card img')].every((image) => image.complete && image.naturalWidth > 0),
+    deckDisplay: getComputedStyle(deck).display,
+    transformsStatic: cards.every((card) => getComputedStyle(card).transform === 'none'),
+    cursorHidden: getComputedStyle(document.querySelector('.cursor-ring')).display === 'none',
+  };
+})()`);
 
 await evaluate("document.querySelector('.links-drawer')?.scrollIntoView({behavior:'instant', block:'center'})");
 await delay(500);
@@ -137,8 +190,10 @@ const wideGallery = await evaluate(`(() => {
     mobileHome,
     mobileGallery,
     mobileCharacter,
+    mobileCreator,
     mobileLinks,
     reducedGallery,
+    reducedCreator,
     reducedLinks,
     wideGallery,
   };

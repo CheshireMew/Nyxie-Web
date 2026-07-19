@@ -17,6 +17,12 @@
     "loopPoster": "assets/character/character-loop-poster.webp",
     "linksCharacter": "assets/character/links-character.webp"
   },
+  "creator": {
+    "sunny": "assets/creator/sunny.webp",
+    "winter": "assets/creator/winter.webp",
+    "chibi": "assets/creator/chibi.webp",
+    "moonlit": "assets/creator/moonlit.webp"
+  },
   "works": {
     "nyxieDesktop": "assets/works/nyxie-desktop.png",
     "nyxieMobile": "assets/works/nyxie-mobile.png"

@@ -24,22 +24,22 @@ const characterBeforeStage = await evaluate(`(() => {
 await scrollChapterTo('#character', 0);
 await waitFor("document.querySelector('#character .character-film')?.readyState >= 2");
 await waitFor("(document.querySelector('#character .character-film')?.currentTime ?? 0) > 0.05");
-await waitFor(`[
-  document.querySelector('#links .links-character'),
-  document.querySelector('#links .work-showcase-screen img'),
-  document.querySelector('#links .work-showcase-mobile img'),
-].every((image) => image?.complete && image.naturalWidth > 0)`);
-const linksWarmup = await evaluate(`(() => {
-  const section = document.querySelector('#links');
-  const images = [...section.querySelectorAll('.links-character, .work-showcase-screen img, .work-showcase-mobile img')];
+await waitFor(`(() => {
+  const images = [...document.querySelectorAll('#creator .creator-card img')];
+  return images.length === 4 && images.every((image) => image.complete && image.naturalWidth > 0);
+})()`);
+const creatorWarmup = await evaluate(`(() => {
+  const section = document.querySelector('#creator');
+  const images = [...section.querySelectorAll('.creator-card img')];
   return {
-    activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
-    mediaState: section?.dataset.linksMedia ?? null,
+    activeSection: document.querySelector('.main-nav .is-active')?.textContent?.trim() ?? null,
+    mediaState: section?.dataset.creatorMedia ?? null,
     sectionTop: Math.round(section?.getBoundingClientRect().top ?? -9999),
     viewportHeight: innerHeight,
+    imageCount: images.length,
     sourcesAttached: images.every((image) => Boolean(image.getAttribute('src'))),
     imagesDecoded: images.every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
-    imageCount: images.length,
+    sources: images.map((image) => image.currentSrc),
   };
 })()`);
 await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 470, y: 410 });
@@ -98,7 +98,7 @@ const character = await evaluate(`(() => {
     stageTop: Math.round(stage?.getBoundingClientRect().top ?? -9999),
     stageHeight: Math.round(stage?.getBoundingClientRect().height ?? 0),
     stageWidth: Math.round(stage?.getBoundingClientRect().width ?? 0),
-    nextChapterTop: Math.round(document.querySelector('#links')?.getBoundingClientRect().top ?? -9999),
+    nextChapterTop: Math.round(document.querySelector('#creator')?.getBoundingClientRect().top ?? -9999),
   };
 })()`);
 character.internalWheelDelta = characterScrollAfter - characterScrollBefore;
@@ -109,15 +109,116 @@ await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, del
 await delay(260);
 const nativeBoundaryDown = await evaluate(`(() => {
   const character = document.querySelector('#character');
-  const links = document.querySelector('#links');
+  const creator = document.querySelector('#creator');
   const padding = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
   const video = character?.querySelector('.character-film');
   return {
     activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
     nativeDelta: Math.round(scrollY) - ${nativeBoundaryDownBefore},
-    pageTop: Math.round(links?.getBoundingClientRect().top ?? -9999),
+    pageTop: Math.round(creator?.getBoundingClientRect().top ?? -9999),
     padding: Math.round(padding),
     characterVideoPaused: video?.paused ?? true,
+  };
+})()`);
+
+await scrollChapterTo('#creator', 0);
+await waitFor("document.querySelector('.main-nav .is-active')?.textContent === 'CREATOR'");
+await waitFor(`[
+  document.querySelector('#links .links-character'),
+  document.querySelector('#links .work-showcase-screen img'),
+  document.querySelector('#links .work-showcase-mobile img'),
+].every((image) => image?.complete && image.naturalWidth > 0)`);
+const linksWarmup = await evaluate(`(() => {
+  const section = document.querySelector('#links');
+  const images = [...section.querySelectorAll('.links-character, .work-showcase-screen img, .work-showcase-mobile img')];
+  return {
+    activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
+    mediaState: section?.dataset.linksMedia ?? null,
+    sectionTop: Math.round(section?.getBoundingClientRect().top ?? -9999),
+    viewportHeight: innerHeight,
+    sourcesAttached: images.every((image) => Boolean(image.getAttribute('src'))),
+    imagesDecoded: images.every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
+    imageCount: images.length,
+  };
+})()`);
+
+await screenshot("desktop-creator.png");
+const creatorInitial = await evaluate(`(() => ({
+  activeSection: document.querySelector('.main-nav .is-active')?.textContent?.trim() ?? null,
+  title: document.querySelector('#creator h2')?.textContent?.trim() ?? '',
+  introduction: document.querySelector('#creator .creator-copy > p')?.textContent?.trim() ?? '',
+  facts: [...document.querySelectorAll('#creator .creator-facts > div')].map((row) => ({
+    label: row.querySelector('dt')?.textContent?.trim() ?? '',
+    value: row.querySelector('dd')?.textContent?.trim() ?? '',
+  })),
+  hudIndex: document.querySelector('#creator .chapter-hud-heading span')?.textContent?.trim() ?? '',
+  cards: document.querySelectorAll('#creator .creator-card').length,
+  images: document.querySelectorAll('#creator .creator-card img').length,
+  imageSources: [...document.querySelectorAll('#creator img')].map((image) => image.currentSrc),
+  imagesDecoded: [...document.querySelectorAll('#creator img')].every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
+  status: document.querySelector('#creator .creator-copy-status')?.textContent?.trim() ?? '',
+  activeCard: document.querySelector('#creator .creator-card-deck')?.dataset.activeCard ?? null,
+  pressedCards: [...document.querySelectorAll('#creator .creator-card[aria-pressed="true"]')].map((card) => card.dataset.creatorCard),
+  labels: [...document.querySelectorAll('#creator .creator-card')].map((card) => card.getAttribute('aria-label')),
+}))()`);
+
+const creatorPointerBefore = await evaluate(`[...document.querySelectorAll('#creator .creator-card')].map((card) => getComputedStyle(card).transform)`);
+const creatorDeckPoint = await evaluate(`(() => {
+  const rect = document.querySelector('#creator .creator-card-deck')?.getBoundingClientRect();
+  return rect ? { x: Math.round(rect.right - 18), y: Math.round(rect.top + rect.height * 0.36) } : null;
+})()`);
+if (creatorDeckPoint) await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: creatorDeckPoint.x, y: creatorDeckPoint.y });
+await delay(120);
+const creatorPointerAfter = await evaluate(`[...document.querySelectorAll('#creator .creator-card')].map((card) => getComputedStyle(card).transform)`);
+
+const creatorThirdCardPoint = await evaluate(`(() => {
+  const rect = document.querySelectorAll('#creator .creator-card')[2]?.getBoundingClientRect();
+  return rect ? { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) } : null;
+})()`);
+if (creatorThirdCardPoint) {
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: creatorThirdCardPoint.x, y: creatorThirdCardPoint.y });
+  await delay(100);
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: creatorThirdCardPoint.x, y: creatorThirdCardPoint.y, button: "left", clickCount: 1 });
+  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: creatorThirdCardPoint.x, y: creatorThirdCardPoint.y, button: "left", clickCount: 1 });
+}
+await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 120, y: 420 });
+await delay(120);
+const creatorClickSelection = await evaluate(`({
+  activeCard: document.querySelector('#creator .creator-card-deck')?.dataset.activeCard ?? null,
+  pressedCard: document.querySelector('#creator .creator-card[aria-pressed="true"]')?.dataset.creatorCard ?? null,
+})`);
+
+await evaluate("document.querySelectorAll('#creator .creator-card')[3]?.focus()");
+await send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13 });
+await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13 });
+await delay(120);
+const creator = await evaluate(`(() => {
+  const stage = document.querySelector('#creator .creator-stage')?.getBoundingClientRect();
+  const deck = document.querySelector('#creator .creator-card-deck');
+  return {
+    bodyWidth: document.body.scrollWidth,
+    viewportWidth: innerWidth,
+    stageInsideViewport: Boolean(stage && stage.top <= 0 && stage.bottom >= innerHeight - 1),
+    activeCard: deck?.dataset.activeCard ?? null,
+    pressedCard: document.querySelector('#creator .creator-card[aria-pressed="true"]')?.dataset.creatorCard ?? null,
+    focusedCard: document.activeElement?.getAttribute('data-creator-card') ?? null,
+    readout: document.querySelector('#creator .creator-deck-readout strong')?.textContent?.trim() ?? '',
+    parallaxChanged: ${JSON.stringify(creatorPointerBefore)}.some((value, index) => value !== ${JSON.stringify(creatorPointerAfter)}[index]),
+  };
+})()`);
+creator.clickSelection = creatorClickSelection;
+
+await scrollChapterTo('#creator', 0.99);
+const creatorBoundaryDownBefore = await evaluate("Math.round(scrollY)");
+await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120 });
+await delay(260);
+const creatorBoundaryDown = await evaluate(`(() => {
+  const links = document.querySelector('#links');
+  const padding = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  return {
+    nativeDelta: Math.round(scrollY) - ${creatorBoundaryDownBefore},
+    pageTop: Math.round(links?.getBoundingClientRect().top ?? -9999),
+    padding: Math.round(padding),
   };
 })()`);
 
@@ -134,11 +235,11 @@ const nativeBoundaryUpBefore = await evaluate("Math.round(scrollY)");
 await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: -120 });
 await delay(260);
 const nativeBoundaryUp = await evaluate(`(() => {
-  const character = document.querySelector('#character');
+  const creator = document.querySelector('#creator');
   return {
     activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
     nativeDelta: Math.round(scrollY) - ${nativeBoundaryUpBefore},
-    pageBottom: Math.round(character?.getBoundingClientRect().bottom ?? -9999),
+    pageBottom: Math.round(creator?.getBoundingClientRect().bottom ?? -9999),
     viewportBottom: innerHeight,
   };
 })()`);
@@ -334,8 +435,12 @@ const talkA11yClosed = await evaluate(`({
   return {
     characterBeforeStage,
     character,
+    creatorWarmup,
+    creatorInitial,
+    creator,
     linksWarmup,
     nativeBoundaryDown,
+    creatorBoundaryDown,
     nativeBoundaryUp,
     characterFinalBeforeReverse,
     characterFinalAfterReverse,

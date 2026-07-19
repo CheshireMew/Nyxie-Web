@@ -204,6 +204,11 @@ const indexA11yOpen = await evaluate(`({
   dialogId: document.querySelector('.index-dialog')?.id ?? null,
 })`);
 await screenshot("desktop-directory.png");
+const directoryChapters = await evaluate(`[...document.querySelectorAll('.chapter-grid button')].map((button) => ({
+  index: button.querySelector('span')?.textContent?.trim() ?? '',
+  en: button.querySelector('strong')?.textContent?.trim() ?? '',
+  zh: button.querySelector('small')?.textContent?.trim() ?? '',
+}))`);
 await send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
 await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
 await waitFor("document.querySelector('.index-dialog')?.open === false && document.activeElement === document.querySelector('.main-nav button:last-child')");
@@ -509,6 +514,7 @@ const galleryReversePlayback = await evaluate(`(() => {
       heroFailure,
       heroAction,
       indexOpen,
+      directoryChapters,
       indexA11yOpen,
       indexA11yClosed,
       galleryStart,

@@ -2,9 +2,11 @@
   .chapter--sequenced { height: auto; }
   .gallery-chapter,
   .character-chapter,
+  .creator-chapter,
   .links-chapter { min-height: auto; }
   .gallery-stage,
   .character-stage,
+  .creator-stage,
   .links-stage { position: relative; height: auto; min-height: 100svh; overflow: hidden; padding: calc(var(--header-height) + 90px) clamp(20px, 6vw, 80px) 110px; }
   .chapter-hud-heading { top: calc(var(--header-height) + 20px); }
   .chapter-progress-fill { transform: scaleX(1); }
@@ -27,6 +29,11 @@
   .gallery-pagination { position: relative; inset: auto; justify-content: center; margin: -54px auto 62px; translate: none; }
   .links-character { height: 68vh; min-height: 520px; }
   .character-stage { height: 100svh; min-height: 680px; padding: 0; }
+  .creator-layout { position: relative; inset: auto; }
+  .creator-card-deck { position: relative; inset: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; min-height: 530px; margin-top: 34px; }
+  .creator-card { position: relative; inset: auto; width: auto; height: auto; min-height: 250px; opacity: 1 !important; visibility: visible !important; filter: none !important; transform: none !important; }
+  .creator-card-surface { opacity: 1 !important; visibility: visible !important; transform: none !important; }
+  .creator-deck-readout { position: relative; margin-top: 14px; }
   .character-film { transform: none !important; opacity: 1 !important; visibility: visible !important; }
   .work-showcase { height: auto; min-height: 680px; }
   .links-drawer-backdrop { display: none; }

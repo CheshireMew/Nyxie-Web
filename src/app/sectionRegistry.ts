@@ -1,5 +1,5 @@
 import { characterMedia } from "../content/mediaCatalog";
-import { featuredWorks } from "../content/siteContent";
+import { creatorCards, featuredWorks } from "../content/siteContent";
 
 export const sectionRegistry = [
   { id: "home", index: "00", en: "HOME", zh: "首页", hudLabel: null, hudInverted: false, showHudStatus: false, warmup: [] },
@@ -15,8 +15,18 @@ export const sectionRegistry = [
     warmup: [characterMedia.loopPoster],
   },
   {
-    id: "links",
+    id: "creator",
     index: "03",
+    en: "CREATOR",
+    zh: "关于我",
+    hudLabel: "CREATOR / ABOUT ME",
+    hudInverted: false,
+    showHudStatus: false,
+    warmup: creatorCards.map((card) => card.src),
+  },
+  {
+    id: "links",
+    index: "04",
     en: "LINKS",
     zh: "内容与入口",
     hudLabel: "CONTENT / LINKS",

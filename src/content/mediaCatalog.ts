@@ -88,6 +88,13 @@ export const characterMedia = {
   linksCharacter: assetUrl(mediaManifest.character.linksCharacter),
 };
 
+export const creatorMedia = {
+  sunny: assetUrl(mediaManifest.creator.sunny),
+  winter: assetUrl(mediaManifest.creator.winter),
+  chibi: assetUrl(mediaManifest.creator.chibi),
+  moonlit: assetUrl(mediaManifest.creator.moonlit),
+};
+
 export const workMedia = {
   nyxieDesktop: assetUrl(mediaManifest.works.nyxieDesktop),
   nyxieMobile: assetUrl(mediaManifest.works.nyxieMobile),

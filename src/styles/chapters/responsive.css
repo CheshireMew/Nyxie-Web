@@ -9,6 +9,8 @@
   .character-inspector { grid-template-columns: minmax(210px, 1.08fr) minmax(170px, 0.92fr); gap: 18px; width: 49vw; padding: 22px; }
   .character-interface h2 { font-size: clamp(44px, 5vw, 60px); }
   .character-inspector-copy { padding-left: 16px; }
+  .creator-layout { grid-template-columns: minmax(310px, 0.82fr) minmax(480px, 1.18fr); gap: 36px; left: 5vw; right: 4vw; }
+  .creator-copy h2 { font-size: clamp(52px, 5.4vw, 72px); }
   .work-showcase { left: 5vw; width: 73vw; }
   .links-character { right: -7vw; width: 45vw; }
   .links-drawer { width: min(720px, calc(100vw - 48px)); }
@@ -17,9 +19,11 @@
 @media (max-width: 760px) {
   .gallery-chapter,
   .character-chapter,
+  .creator-chapter,
   .links-chapter { min-height: 100svh; }
   .gallery-stage,
   .character-stage,
+  .creator-stage,
   .links-stage { min-height: 620px; }
   .chapter-hud-heading { top: calc(var(--header-height) + 18px); left: 16px; }
   .chapter-hud-heading span { width: 30px; height: 30px; }
@@ -97,6 +101,22 @@
   .character-lens { position: absolute; top: auto; right: auto; bottom: 19vh; left: 18px; box-shadow: 0 0 0 5px rgba(245,250,253,0.72), 0 0 0 6px rgba(17,21,28,0.2), 0 18px 44px rgba(41,70,94,0.26); transform: scale(0.94); }
   .character-stage.is-lens-active .character-lens { transform: scale(1); }
   .character-lens-scale { right: 18px; bottom: 15px; }
+
+  .creator-stage { height: auto; min-height: 100svh; overflow: hidden; }
+  .creator-layout { position: relative; inset: auto; display: block; padding: calc(var(--header-height) + 90px) 20px 82px; }
+  .creator-copy { max-width: none; }
+  .creator-copy h2 { margin: 15px 0 16px; font-size: clamp(44px, 13vw, 62px); }
+  .creator-copy > p { font-size: var(--font-body); line-height: 1.7; }
+  .creator-facts { grid-template-columns: 1fr; margin-top: 26px; }
+  .creator-facts > div { grid-template-columns: 76px 1fr; gap: 12px; min-height: 54px; }
+  .creator-copy-status { margin-top: 18px; }
+  .creator-deck-shell { margin-top: 42px; }
+  .creator-deck-head { position: relative; }
+  .creator-card-deck { position: relative; inset: auto; display: flex; gap: 14px; width: calc(100vw - 20px); height: 390px; margin-top: 16px; padding: 8px 20vw 18px 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; scroll-padding-inline: 0; scroll-snap-type: x mandatory; scrollbar-width: thin; touch-action: pan-x pan-y; }
+  .creator-card { position: relative; inset: auto; flex: 0 0 min(76vw, 330px); width: auto; height: 350px; scroll-snap-align: start; transform: none; }
+  .creator-card.is-current { transform: translateY(-6px) scale(1.01); }
+  .creator-deck-readout { position: relative; grid-template-columns: auto 1fr; margin-top: 14px; }
+  .creator-deck-readout small { display: none; }
 
   .links-stage-title { top: 17vh; left: 20px; width: calc(100% - 40px); }
   .links-stage-title h2 { font-size: clamp(38px, 11vw, 52px); line-height: 1.05; }

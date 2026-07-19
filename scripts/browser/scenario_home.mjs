@@ -67,9 +67,11 @@ const homeResourceBudget = await evaluate(`(() => {
     idleKeyDownloads: completed.filter((entry) => entry.name.endsWith('/assets/media/idle-key.mp4')).length,
     galleryRequests: resources.filter((entry) => entry.name.includes('/assets/gallery/')).length,
     characterRequests: resources.filter((entry) => entry.name.includes('/assets/character/')).length,
+    creatorRequests: resources.filter((entry) => entry.name.includes('/assets/creator/')).length,
     worksRequests: resources.filter((entry) => entry.name.includes('/assets/works/')).length,
     bgmRequests: resources.filter((entry) => entry.name.endsWith('/assets/audio/nyxie-bgm.m4a')).length,
     galleryVideoBytes: completed.filter((entry) => entry.name.includes('/assets/gallery/') && entry.name.endsWith('.webm')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
+    creatorImageBytes: completed.filter((entry) => entry.name.includes('/assets/creator/')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
     worksImageBytes: completed.filter((entry) => entry.name.includes('/assets/works/')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
     bgmBytes: completed.filter((entry) => entry.name.endsWith('/assets/audio/nyxie-bgm.m4a')).reduce((sum, entry) => sum + entry.decodedBodySize, 0),
   };
@@ -91,17 +93,17 @@ const reloadEntry = await evaluate(`({
   activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
 })`);
 await screenshot("desktop-reload-home.png");
-await evaluate("document.querySelectorAll('.main-nav button')[2]?.click()");
-await waitFor("location.hash === '#character' && document.querySelector('.main-nav .is-active')?.textContent === 'CHARACTER' && Math.abs(document.querySelector('#character')?.getBoundingClientRect().top ?? -9999) <= 8");
+await evaluate("document.querySelectorAll('.main-nav button')[3]?.click()");
+await waitFor("location.hash === '#creator' && document.querySelector('.main-nav .is-active')?.textContent === 'CREATOR' && Math.abs(document.querySelector('#creator')?.getBoundingClientRect().top ?? -9999) <= 8");
 await evaluate("document.querySelector('.main-nav button:first-child')?.click()");
 await waitFor("scrollY <= 4 && document.querySelector('.main-nav .is-active')?.textContent === 'HOME'");
 await delay(450);
 await evaluate("history.back()");
-await waitFor("location.hash === '#character' && document.querySelector('.main-nav .is-active')?.textContent === 'CHARACTER' && Math.abs(document.querySelector('#character')?.getBoundingClientRect().top ?? -9999) <= 8");
+await waitFor("location.hash === '#creator' && document.querySelector('.main-nav .is-active')?.textContent === 'CREATOR' && Math.abs(document.querySelector('#creator')?.getBoundingClientRect().top ?? -9999) <= 8");
 const historyBack = await evaluate(`({
   hash: location.hash,
   activeSection: document.querySelector('.main-nav .is-active')?.textContent?.trim() ?? null,
-  characterTop: Math.round(document.querySelector('#character')?.getBoundingClientRect().top ?? -9999),
+  creatorTop: Math.round(document.querySelector('#creator')?.getBoundingClientRect().top ?? -9999),
 })`);
 await evaluate("history.forward()");
 await waitFor("location.hash === '#home' && document.querySelector('.main-nav .is-active')?.textContent === 'HOME' && scrollY <= 4");
@@ -251,6 +253,7 @@ const desktopHome = await evaluate(`(() => {
     videoPlaybackRate: video?.playbackRate ?? null,
     videoMuted: video?.muted ?? null,
     allVideosMuted: [...document.querySelectorAll('video')].every((item) => item.muted),
+    navLabels: [...document.querySelectorAll('.main-nav button')].map((item) => item.textContent?.trim()),
     currentNavLabels: [...document.querySelectorAll('.main-nav [aria-current="page"]')].map((item) => item.textContent?.trim()),
     headerHeight: document.querySelector('.site-header')?.getBoundingClientRect().height ?? null,
     pageScrollbarWidth: getComputedStyle(document.documentElement).scrollbarWidth,

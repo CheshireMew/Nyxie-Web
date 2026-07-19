@@ -1,5 +1,6 @@
 import type { PerformanceDirector } from "../features/hero/types";
 import { CharacterSection } from "../sections/CharacterSection";
+import { CreatorSection } from "../sections/CreatorSection";
 import { GallerySection } from "../sections/GallerySection";
 import { HeroSection } from "../sections/HeroSection";
 import { LinksSection } from "../sections/LinksSection";
@@ -51,6 +52,15 @@ export function renderSection(definition: SectionDefinition, runtime: SectionRun
     case "character":
       return (
         <CharacterSection
+          definition={definition}
+          reducedMotion={runtime.reducedMotion}
+          active={runtime.activeSection === definition.id}
+          warmupRequested={sequentialWarmupRequested}
+        />
+      );
+    case "creator":
+      return (
+        <CreatorSection
           definition={definition}
           reducedMotion={runtime.reducedMotion}
           active={runtime.activeSection === definition.id}
