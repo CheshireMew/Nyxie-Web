@@ -5,6 +5,7 @@
 /* Shared scroll-performance chapters */
 .gallery-chapter,
 .character-chapter,
+.gaze-chapter,
 .creator-chapter,
 .links-chapter {
   position: relative;
@@ -12,6 +13,7 @@
 
 .gallery-chapter,
 .character-chapter,
+.gaze-chapter,
 .creator-chapter,
 .links-chapter { min-height: 100dvh; }
 
@@ -24,6 +26,7 @@
 
 .gallery-stage,
 .character-stage,
+.gaze-stage,
 .creator-stage,
 .links-stage {
   position: relative;
@@ -36,6 +39,7 @@
 }
 
 .character-stage,
+.gaze-stage,
 .creator-stage,
 .links-stage {
   color: var(--ink);

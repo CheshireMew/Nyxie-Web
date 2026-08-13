@@ -1,4 +1,4 @@
-import { characterMedia } from "../content/mediaCatalog";
+import { characterMedia, gazeMedia } from "../content/mediaCatalog";
 import { creatorCards, featuredWorks } from "../content/siteContent";
 
 export const sectionRegistry = [
@@ -15,8 +15,18 @@ export const sectionRegistry = [
     warmup: [characterMedia.loopPoster],
   },
   {
-    id: "creator",
+    id: "gaze",
     index: "03",
+    en: "GAZE",
+    zh: "凝视",
+    hudLabel: "GAZE / POINTER LINK",
+    hudInverted: false,
+    showHudStatus: false,
+    warmup: [gazeMedia.poster],
+  },
+  {
+    id: "creator",
+    index: "04",
     en: "CREATOR",
     zh: "关于我",
     hudLabel: "CREATOR / ABOUT ME",
@@ -26,7 +36,7 @@ export const sectionRegistry = [
   },
   {
     id: "links",
-    index: "04",
+    index: "05",
     en: "LINKS",
     zh: "内容与入口",
     hudLabel: "CONTENT / LINKS",

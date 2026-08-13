@@ -34,6 +34,7 @@ export function GallerySection({ definition, reducedMotion, active: sectionActiv
   const controller = useGalleryController(sectionRef);
   const media = useGalleryMedia({
     activeIndex: controller.activeIndex,
+    sampledIndices: controller.sampledFormIndices,
     selectionDirection: controller.selectionDirection,
     reducedMotion,
     sectionActive,
@@ -59,6 +60,7 @@ export function GallerySection({ definition, reducedMotion, active: sectionActiv
       style={style}
       data-gallery-sequence={controller.sampledForms.map((item) => item.id).join(",")}
       data-gallery-seed={controller.sessionSeed}
+      data-gallery-active-index={controller.activeIndex}
       data-gallery-media={sectionActive ? "active" : warmupRequested ? "warming" : "idle"}
       tabIndex={0}
       onKeyDown={controller.onKeyDown}

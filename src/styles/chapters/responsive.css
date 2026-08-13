@@ -21,10 +21,12 @@
 @media (max-width: 760px) {
   .gallery-chapter,
   .character-chapter,
+  .gaze-chapter,
   .creator-chapter,
   .links-chapter { min-height: 100dvh; }
   .gallery-stage,
   .character-stage,
+  .gaze-stage,
   .creator-stage,
   .links-stage { min-height: 620px; }
   .chapter-hud-heading { top: calc(var(--header-height) + 18px); left: 16px; }

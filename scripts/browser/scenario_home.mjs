@@ -54,15 +54,13 @@ const bootPaintObserver = await send("Page.addScriptToEvaluateOnNewDocument", {
 const bootState = await navigate(true);
 await waitFor(`(() => {
   const gallery = document.querySelector('#gallery');
-  const video = gallery?.querySelector('.gallery-form-video');
+  const videos = [...(gallery?.querySelectorAll('.gallery-form-video') ?? [])];
   const resources = performance.getEntriesByType('resource').filter((entry) => entry.name.includes('/assets/gallery/'));
   return gallery?.dataset.galleryMedia === 'warming'
-    && video?.currentSrc
-    && video.preload === 'auto'
-    && video.readyState >= 2
-    && video.paused
+    && videos.length === 3
+    && videos.every((video) => video.currentSrc && video.preload === 'auto' && video.readyState >= 2 && video.paused)
     && resources.filter((entry) => entry.name.endsWith('-poster.webp')).length >= 3
-    && resources.some((entry) => entry.name === video.currentSrc);
+    && videos.every((video) => resources.some((entry) => entry.name === video.currentSrc));
 })()`, 20000);
 const bootPaint = await evaluate(`(() => {
   const samples = window.__nyxieBootPaintAudit ?? [];
@@ -78,8 +76,6 @@ const homeResourceBudget = await evaluate(`(() => {
   const resources = performance.getEntriesByType('resource');
   const completed = resources.filter((entry) => entry.decodedBodySize > 100000);
   return {
-    idleMainDownloads: completed.filter((entry) => entry.name.endsWith('/assets/media/idle-main.mp4')).length,
-    idleKeyDownloads: completed.filter((entry) => entry.name.endsWith('/assets/media/idle-key.mp4')).length,
     galleryRequests: resources.filter((entry) => entry.name.includes('/assets/gallery/')).length,
     galleryVideoRequests: resources.filter((entry) => entry.name.includes('/assets/gallery/') && entry.name.endsWith('.webm')).length,
     galleryPosterRequests: resources.filter((entry) => entry.name.includes('/assets/gallery/') && entry.name.endsWith('-poster.webp')).length,
@@ -96,6 +92,7 @@ const homeResourceBudget = await evaluate(`(() => {
     galleryVideoPreload: document.querySelector('#gallery .gallery-form-video')?.preload ?? null,
     galleryVideoReadyState: document.querySelector('#gallery .gallery-form-video')?.readyState ?? 0,
     galleryVideoPaused: document.querySelector('#gallery .gallery-form-video')?.paused ?? false,
+    galleryPreloadedVideos: [...(document.querySelectorAll('#gallery .gallery-form-video') ?? [])].filter((video) => video.readyState >= 2 && video.preload === 'auto').length,
   };
 })()`);
 await evaluate("document.querySelector('#character')?.scrollIntoView({ behavior: 'instant', block: 'start' })");
@@ -115,7 +112,7 @@ const reloadEntry = await evaluate(`({
   activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
 })`);
 await screenshot("desktop-reload-home.png");
-await evaluate("document.querySelectorAll('.main-nav button')[3]?.click()");
+await evaluate("document.querySelectorAll('.main-nav button')[4]?.click()");
 await waitFor("location.hash === '#creator' && document.querySelector('.main-nav .is-active')?.textContent === 'CREATOR' && Math.abs(document.querySelector('#creator')?.getBoundingClientRect().top ?? -9999) <= 8");
 await evaluate("document.querySelector('.main-nav button:first-child')?.click()");
 await waitFor("scrollY <= 4 && document.querySelector('.main-nav .is-active')?.textContent === 'HOME'");

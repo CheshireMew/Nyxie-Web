@@ -17,11 +17,17 @@
     "loopPoster": "assets/character/character-loop-poster.webp",
     "linksCharacter": "assets/character/links-character.webp"
   },
+  "gaze": {
+    "video": "assets/gaze/gaze-scrub-original.webm",
+    "poster": "assets/gaze/gaze-poster.webp"
+  },
   "creator": {
     "sunny": "assets/creator/sunny.webp",
+    "cosplay": "assets/creator/cosplay.webp",
     "winter": "assets/creator/winter.webp",
     "chibi": "assets/creator/chibi.webp",
-    "moonlit": "assets/creator/moonlit.webp"
+    "moonlit": "assets/creator/moonlit.webp",
+    "emblem": "assets/creator/emblem.webp"
   },
   "works": {
     "nyxieDesktop": "assets/works/nyxie-desktop.png",

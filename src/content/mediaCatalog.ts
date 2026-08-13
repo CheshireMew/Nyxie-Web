@@ -88,11 +88,18 @@ export const characterMedia = {
   linksCharacter: assetUrl(mediaManifest.character.linksCharacter),
 };
 
+export const gazeMedia = {
+  video: assetUrl(mediaManifest.gaze.video),
+  poster: assetUrl(mediaManifest.gaze.poster),
+};
+
 export const creatorMedia = {
   sunny: assetUrl(mediaManifest.creator.sunny),
+  cosplay: assetUrl(mediaManifest.creator.cosplay),
   winter: assetUrl(mediaManifest.creator.winter),
   chibi: assetUrl(mediaManifest.creator.chibi),
   moonlit: assetUrl(mediaManifest.creator.moonlit),
+  emblem: assetUrl(mediaManifest.creator.emblem),
 };
 
 export const workMedia = {

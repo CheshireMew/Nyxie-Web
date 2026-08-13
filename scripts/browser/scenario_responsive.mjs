@@ -55,7 +55,7 @@ await screenshot("mobile-character.png");
 await scrollChapterTo('#creator', 0);
 await waitFor(`(() => {
   const images = [...document.querySelectorAll('#creator .creator-card img')];
-  return images.length === 4 && images.every((image) => image.complete && image.naturalWidth > 0);
+  return images.length === 6 && images.every((image) => image.complete && image.naturalWidth > 0);
 })()`);
 await screenshot("mobile-creator.png");
 const mobileCreator = await evaluate(`(() => {
@@ -136,7 +136,7 @@ const reducedGallery = await evaluate(`({
 await evaluate("document.querySelector('#creator')?.scrollIntoView({behavior:'instant', block:'start'})");
 await waitFor(`(() => {
   const images = [...document.querySelectorAll('#creator .creator-card img')];
-  return images.length === 4 && images.every((image) => image.complete && image.naturalWidth > 0);
+  return images.length === 6 && images.every((image) => image.complete && image.naturalWidth > 0);
 })()`);
 await delay(160);
 await screenshot("reduced-motion-creator.png");
@@ -157,6 +157,7 @@ const reducedCreator = await evaluate(`(() => {
         && getComputedStyle(image).objectFit === 'contain';
     }),
     deckDisplay: getComputedStyle(deck).display,
+    autoCard: deck?.dataset.autoCard ?? null,
     transformsStatic: cards.every((card) => getComputedStyle(card).transform === 'none'),
     xHref: xLink?.href ?? '',
     xLinkInsideViewport: Boolean(xLinkRect && xLinkRect.left >= 0 && xLinkRect.right <= innerWidth && xLinkRect.top >= 0 && xLinkRect.bottom <= innerHeight),
@@ -213,7 +214,7 @@ const wideGallery = await evaluate(`(() => {
 await evaluate("document.querySelector('#creator')?.scrollIntoView({behavior:'instant', block:'start'})");
 await waitFor(`(() => {
   const images = [...document.querySelectorAll('#creator .creator-card img')];
-  return images.length === 4 && images.every((image) => image.complete && image.naturalWidth > 0);
+  return images.length === 6 && images.every((image) => image.complete && image.naturalWidth > 0);
 })()`);
 await delay(160);
 await screenshot("wide-creator.png");
@@ -225,18 +226,25 @@ const wideCreator = await evaluate(`(() => {
   const images = [...document.querySelectorAll('#creator .creator-card img')];
   const shellRect = shell?.getBoundingClientRect();
   const readoutRect = readout?.getBoundingClientRect();
-  const cardRects = cards.map((card) => card.getBoundingClientRect());
+  const rows = [...document.querySelectorAll('#creator .creator-card-row')];
+  const rowRects = rows.map((row) => [...row.querySelectorAll('.creator-card')].map((card) => card.getBoundingClientRect()));
+  const cardRects = rowRects.flat();
   const horizontalGap = (a, b) => Math.max(0, b.left - a.right, a.left - b.right);
   const verticalOverlap = (top, bottom) => Math.max(0, Math.min(top.bottom, bottom.bottom) - Math.max(top.top, bottom.top));
+  const horizontalGaps = rowRects.flatMap((row) => row.slice(1).map((rect, index) => horizontalGap(row[index], rect)));
+  const verticalOverlaps = rowRects.slice(1).flatMap((row, rowIndex) => {
+    const previousRow = rowRects[rowIndex];
+    return previousRow.flatMap((previous) => row.map((current) => verticalOverlap(previous, current)));
+  });
   return {
     bodyWidth: document.body.scrollWidth,
     viewportWidth: innerWidth,
     shellWidth: Math.round(shellRect?.width ?? 9999),
-    topHorizontalGap: Math.round(horizontalGap(cardRects[0], cardRects[1])),
-    bottomHorizontalGap: Math.round(horizontalGap(cardRects[2], cardRects[3])),
-    maxVerticalOverlap: Math.round(Math.max(verticalOverlap(cardRects[0], cardRects[2]), verticalOverlap(cardRects[1], cardRects[3]))),
+    minHorizontalGap: Math.round(Math.min(...horizontalGaps)),
+    maxHorizontalGap: Math.round(Math.max(...horizontalGaps)),
+    maxVerticalOverlap: Math.round(Math.max(0, ...verticalOverlaps)),
     imageHeightSpread: Math.round(Math.max(...images.map((image) => image.offsetHeight)) - Math.min(...images.map((image) => image.offsetHeight))),
-    rowSizes: [...document.querySelectorAll('#creator .creator-card-row')].map((row) => row.querySelectorAll('.creator-card').length),
+    rowSizes: rowRects.map((row) => row.length),
     readoutAboveCards: Boolean(readoutRect && readoutRect.bottom < Math.min(...cardRects.map((card) => card.top))),
     obsoleteDeckHeadAbsent: !document.querySelector('#creator .creator-deck-head'),
     cards: cards.length,
@@ -320,7 +328,7 @@ const compactCharacter = await evaluate(`(() => {
 await evaluate("document.querySelector('#creator')?.scrollIntoView({behavior:'instant', block:'start'})");
 await waitFor(`(() => {
   const images = [...document.querySelectorAll('#creator .creator-card img')];
-  return images.length === 4 && images.every((image) => image.complete && image.naturalWidth > 0);
+  return images.length === 6 && images.every((image) => image.complete && image.naturalWidth > 0);
 })()`);
 await delay(300);
 await screenshot("compact-creator.png");

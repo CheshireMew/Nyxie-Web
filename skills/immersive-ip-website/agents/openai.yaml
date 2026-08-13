@@ -1,0 +1,4 @@
+interface:
+  display_name: "Immersive IP Website"
+  short_description: "规划、制作、改造并验收以角色媒体为核心的沉浸式网站"
+  default_prompt: "使用 $immersive-ip-website，为这个原创角色规划并实现一套以角色媒体为核心的沉浸式网站。"

@@ -7,6 +7,7 @@ import { normalizeSiteUrl } from "./lib/site_url.mjs";
 const sampling = await import(pathToFileURL(resolve("src/features/gallery/gallerySampling.ts")));
 const heroSequence = await import(pathToFileURL(resolve("src/features/hero/heroSequence.ts")));
 const creatorRows = await import(pathToFileURL(resolve("src/features/creator/creatorCardRows.ts")));
+const gazeTimeline = await import(pathToFileURL(resolve("src/features/gaze/gazeTimeline.ts")));
 
 const sourceItems = ["a", "b", "c", "d", "e"];
 const firstSample = sampling.selectSeededSample(sourceItems, "stable-seed", 3);
@@ -34,6 +35,25 @@ assert.deepEqual(creatorRows.arrangeCreatorCards([1, 2, 3, 4]), [[1, 2], [3, 4]]
 assert.deepEqual(creatorRows.arrangeCreatorCards([1, 2, 3, 4, 5]), [[1, 2, 3], [4, 5]]);
 assert.deepEqual(creatorRows.arrangeCreatorCards([1, 2, 3, 4, 5, 6]), [[1, 2, 3], [4, 5, 6]]);
 assert.deepEqual(creatorRows.arrangeCreatorCards([]), []);
+
+assert.equal(gazeTimeline.gazeDirectionAtPosition(-1), "LEFT");
+assert.equal(gazeTimeline.gazeDirectionAtPosition(0), "FRONT");
+assert.equal(gazeTimeline.gazeDirectionAtPosition(1), "RIGHT");
+assert.equal(gazeTimeline.gazePositionFromHorizontalOffset(-0.78), -1);
+assert.equal(gazeTimeline.gazePositionFromHorizontalOffset(0), 0);
+assert.equal(gazeTimeline.gazePositionFromHorizontalOffset(0.78), 1);
+assert.equal(gazeTimeline.gazePositionFromHorizontalOffset(3), 1);
+assert.deepEqual(gazeTimeline.gazeEyeAnchorInCover(1920, 1080), { x: 960, y: 588.6 });
+const ultraWideEyeAnchor = gazeTimeline.gazeEyeAnchorInCover(2048, 1000);
+assert.ok(Math.abs(ultraWideEyeAnchor.x - 1024) < 0.0001);
+assert.ok(Math.abs(ultraWideEyeAnchor.y - 551.84) < 0.0001);
+assert.equal(gazeTimeline.gazeTimeAtPosition(-1), 8.25);
+assert.equal(gazeTimeline.gazeTimeAtPosition(0), 10.5);
+assert.equal(gazeTimeline.gazeTimeAtPosition(1), 12.25);
+assert.equal(gazeTimeline.gazeTimeAtPosition(-0.5), 9.375);
+assert.equal(gazeTimeline.gazeTimeAtPosition(0.5), 11.375);
+assert.equal(gazeTimeline.clampGazeTime(3), 8.25);
+assert.equal(gazeTimeline.clampGazeTime(15), 12.25);
 
 assert.deepEqual(
   collectManifestPaths({ a: "one", nested: { b: "two" }, list: ["three"] }),

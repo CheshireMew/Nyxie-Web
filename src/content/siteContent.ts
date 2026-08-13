@@ -91,6 +91,26 @@ export const creatorCards: CreatorCard[] = [
     width: 984,
     height: 940,
   },
+  {
+    id: "creator-emblem",
+    index: "05",
+    label: "EMBLEM NYXIE",
+    meta: "VISUAL ARCHIVE / 05",
+    src: creatorMedia.emblem,
+    alt: "金色月牙圆环中，黑发红瞳猫耳夜希的 Q 版头像插画",
+    width: 1254,
+    height: 1254,
+  },
+  {
+    id: "creator-cosplay",
+    index: "06",
+    label: "COSPLAY NYXIE",
+    meta: "VISUAL ARCHIVE / 06",
+    src: creatorMedia.cosplay,
+    alt: "黑金房间中，黑猫耳长发造型的夜希真人风格肖像",
+    width: 984,
+    height: 864,
+  },
 ];
 
 export type GalleryItem = {

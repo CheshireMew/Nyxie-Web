@@ -15,7 +15,7 @@ for (const assetPath of manifestPaths) {
 }
 
 const declared = new Set(manifestPaths);
-const runtimeDirectories = new Set(["audio", "character", "gallery", "media", "works"]);
+const runtimeDirectories = new Set(["audio", "character", "gallery", "gaze", "media", "works"]);
 const builtAssetFiles = await collectFiles(resolve(distDirectory, "assets"));
 const undeclaredRuntimeFiles = builtAssetFiles
   .map((absolutePath) => relative(distDirectory, absolutePath).replaceAll("\\", "/"))

@@ -41,11 +41,11 @@ export function GalleryCarousel({ controller, media, mediaActivated, reducedMoti
                 ref={(node) => media.bindVideo(position, node)}
                 className={`gallery-form-video${position === media.visibleVideoIndex ? " is-active" : ""}`}
                 data-gallery-index={position}
-                src={sectionActive || (warmupRequested && position === activeIndex) ? item.video : undefined}
+                src={sectionActive || (warmupRequested && media.sampledVideoIndices.has(position)) ? item.video : undefined}
                 poster={mediaRequested ? item.poster : undefined}
                 muted={galleryVideoPlayback.muted}
                 playsInline
-                preload={(sectionActive || warmupRequested) && position === activeIndex ? "auto" : "none"}
+                preload={sectionActive || (warmupRequested && media.sampledVideoIndices.has(position)) ? "auto" : "none"}
                 aria-hidden={position !== media.visibleVideoIndex}
                 aria-label={position === media.visibleVideoIndex ? `${item.title}六秒角色动作` : undefined}
                 onEnded={position === activeIndex && position === media.visibleVideoIndex ? controller.showNext : undefined}

@@ -44,7 +44,7 @@ export function ExternalLinksDrawer({ dismissed, onClose }: Props) {
       <div className="links-drawer-positioner">
         <aside className="links-drawer" aria-label="夜希的外部链接">
           <div className="links-drawer-rail">
-            <span>04 / EXIT DIRECTORY</span>
+            <span>05 / EXIT DIRECTORY</span>
             <span className="links-drawer-status"><i aria-hidden="true" />{availableLinkCount} CHANNELS ONLINE</span>
             <button className="links-drawer-close" type="button" onClick={onClose} aria-label="关闭链接卡片">×</button>
           </div>

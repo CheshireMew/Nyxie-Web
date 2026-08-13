@@ -2,10 +2,12 @@
   .chapter--sequenced { height: auto; }
   .gallery-chapter,
   .character-chapter,
+  .gaze-chapter,
   .creator-chapter,
   .links-chapter { min-height: auto; }
   .gallery-stage,
   .character-stage,
+  .gaze-stage,
   .creator-stage,
   .links-stage { position: relative; height: auto; min-height: 100dvh; overflow: hidden; padding: calc(var(--header-height) + 90px) clamp(20px, 6vw, 80px) 110px; }
   .chapter-hud-heading { top: calc(var(--header-height) + 20px); }

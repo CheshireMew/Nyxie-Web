@@ -28,7 +28,7 @@ export function CreatorSection({ definition, reducedMotion, active, warmupReques
       return { entrance };
     },
   });
-  const deck = useCreatorCardDeck({ cardCount: creatorCards.length, reducedMotion });
+  const deck = useCreatorCardDeck({ cardCount: creatorCards.length, reducedMotion, active });
   const visibleCard = creatorCards[deck.visibleIndex] ?? creatorCards[0];
   const cardRows = arrangeCreatorCards(creatorCards.map((card, index) => ({ card, index })));
 
@@ -84,6 +84,7 @@ export function CreatorSection({ definition, reducedMotion, active, warmupReques
               ref={deck.deckRef}
               className="creator-card-deck"
               data-active-card={visibleCard.index}
+              data-auto-card={deck.autoIndex === null ? "" : creatorCards[deck.autoIndex]?.index}
               data-card-count={creatorCards.length}
               {...deck.pointerHandlers}
             >

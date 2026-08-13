@@ -1,3 +1,5 @@
+const galleryWheelSwitchCooldownDelayMs = 220;
+
 export async function runHeroGalleryScenario(browser) {
   const { failedResources } = browser;
   const send = browser.send.bind(browser);
@@ -196,7 +198,10 @@ await waitFor(`(() => {
   const section = document.querySelector('#gallery');
   const sequence = section?.dataset.gallerySequence?.split(',').filter(Boolean) ?? [];
   const videos = [...(section?.querySelectorAll('.gallery-form-video') ?? [])];
-  return videos.length >= 1 && videos.length <= 2 && sequence.length === 3 && videos.some((video) => video.classList.contains('is-active') && video.readyState >= 2);
+  return videos.length === 3
+    && sequence.length === 3
+    && sequence.every((id) => videos.some((video) => video.currentSrc.endsWith('/' + id + '.webm') && video.readyState >= 2))
+    && videos.some((video) => video.classList.contains('is-active') && video.readyState >= 2);
 })()`);
 await waitFor("document.querySelector('.gallery-form-video.is-active')?.currentTime > 0.1");
 await screenshot("desktop-gallery.png");
@@ -300,6 +305,21 @@ await waitFor(`(() => {
   return Boolean(video && getComputedStyle(video).visibility === 'visible' && Number(getComputedStyle(video).opacity) > 0.9);
 })()`);
 
+const galleryFailureSetup = await evaluate(`(() => {
+  const section = document.querySelector('#gallery');
+  const sequence = section?.dataset.gallerySequence?.split(',').filter(Boolean) ?? [];
+  const videos = [...(section?.querySelectorAll('.gallery-form-video') ?? [])];
+  const sampleIndices = sequence.map((id) => Number(videos.find((video) => video.currentSrc.endsWith('/' + id + '.webm'))?.dataset.galleryIndex ?? -1));
+  const sampleIndexSet = new Set(sampleIndices);
+  const predecessorPosition = sampleIndices.findIndex((index) => index >= 0 && !sampleIndexSet.has((index + 1) % 8));
+  const button = document.querySelectorAll('.gallery-pagination button')[predecessorPosition];
+  button?.click();
+  return {
+    predecessorIndex: sampleIndices[predecessorPosition] ?? -1,
+    targetIndex: sampleIndices[predecessorPosition] >= 0 ? (sampleIndices[predecessorPosition] + 1) % 8 : -1,
+  };
+})()`);
+await waitFor(`document.querySelector('.gallery-form-video.is-active')?.dataset.galleryIndex === ${JSON.stringify(String(galleryFailureSetup.predecessorIndex))}`);
 const expectedGalleryFailureStart = failedResources.length;
 await send("Network.setCacheDisabled", { cacheDisabled: true });
 await send("Network.setBlockedURLs", { urls: ["*assets/gallery/*.webm*"] });
@@ -307,15 +327,17 @@ const galleryFailurePreviousSource = await evaluate("document.querySelector('.ga
 await evaluate("document.querySelector('.gallery-arrow--next')?.click()");
 await waitFor("document.querySelector('.gallery-video-retry') !== null && document.querySelector('.gallery-playing')?.textContent?.trim() === 'STILL FRAME'");
 const galleryFailure = await evaluate(`(() => {
+  const section = document.querySelector('#gallery');
   const videos = [...document.querySelectorAll('.gallery-form-video')];
   const displayed = document.querySelector('.gallery-form-video.is-active');
-  const target = videos.find((video) => video !== displayed);
+  const targetIndex = Number(section?.dataset.galleryActiveIndex ?? -1);
+  const target = videos.find((video) => Number(video.dataset.galleryIndex) === targetIndex);
   const targetStyle = target ? getComputedStyle(target) : null;
   const visible = videos.filter((video) => (
     getComputedStyle(video).visibility === 'visible' && Number(getComputedStyle(video).opacity) > 0.01
   ));
   return {
-    targetIndex: Number(target?.dataset.galleryIndex ?? -1),
+    targetIndex,
     targetSource: target?.currentSrc ?? '',
     targetPoster: target?.poster ?? '',
     displayedSource: displayed?.currentSrc ?? '',
@@ -440,10 +462,11 @@ await evaluate(`(() => {
     attributeFilter: ['aria-current'],
   });
 })()`);
-await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 16 });
+const firstBurstStartedAt = Date.now() / 1000;
+await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 16, timestamp: firstBurstStartedAt });
 for (let eventIndex = 0; eventIndex < 3; eventIndex += 1) {
-  await delay(80);
-  await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120 });
+  await delay(50);
+  await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120, timestamp: firstBurstStartedAt + (eventIndex + 1) * 0.05 });
 }
 await waitFor("document.querySelector('.gallery-pagination button[aria-current=\"true\"]') === document.querySelectorAll('.gallery-pagination button')[1]");
 const galleryWheelSwitchLatencyMs = await evaluate("window.__galleryWheelSwitchLatencyMs ?? 9999");
@@ -468,12 +491,13 @@ const galleryNext = await evaluate(`(() => {
 
 const galleryPlayback = [];
 galleryPlayback.push(galleryNext);
-await delay(220);
+await delay(galleryWheelSwitchCooldownDelayMs);
 const galleryScrollBeforeFinalBurst = await evaluate("Math.round(scrollY)");
-await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120 });
+const finalBurstStartedAt = Date.now() / 1000;
+await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120, timestamp: finalBurstStartedAt });
 for (let eventIndex = 0; eventIndex < 3; eventIndex += 1) {
-  await delay(80);
-  await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120 });
+  await delay(50);
+  await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, deltaX: 0, deltaY: 120, timestamp: finalBurstStartedAt + (eventIndex + 1) * 0.05 });
 }
 await waitFor("document.querySelector('.gallery-pagination button[aria-current=\"true\"]') === document.querySelectorAll('.gallery-pagination button')[2]");
 await delay(30);
@@ -493,7 +517,7 @@ galleryPlayback.push(await evaluate(`(() => {
   const video = document.querySelector('.gallery-form-video.is-active');
   return { source: video?.currentSrc ?? '', readyState: video?.readyState ?? 0, videoWidth: video?.videoWidth ?? 0, currentTime: video?.currentTime ?? 0, paused: video?.paused ?? true };
 })()`));
-await delay(220);
+await delay(galleryWheelSwitchCooldownDelayMs);
 const galleryScrollBeforeExit = await evaluate("Math.round(scrollY)");
 await wheelAt(720, 500, 120);
 const galleryWheelExit = await evaluate(`(() => {

@@ -1,20 +1,90 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FocusEventHandler, PointerEventHandler } from "react";
 
 const CARD_DEPTHS = [0.42, 0.68, 0.88, 1] as const;
+const ROTATION_START_DELAY_MS = 2200;
+const ROTATION_STEP_MS = 1600;
+const ROTATION_RESUME_DELAY_MS = 2600;
+
+function hasKeyboardFocusInside(deck: HTMLElement | null) {
+  return document.activeElement instanceof HTMLElement
+    && Boolean(deck?.contains(document.activeElement))
+    && document.activeElement.matches(":focus-visible");
+}
 
 type Options = {
   cardCount: number;
   reducedMotion: boolean;
+  active: boolean;
 };
 
-export function useCreatorCardDeck({ cardCount, reducedMotion }: Options) {
+export function useCreatorCardDeck({ cardCount, reducedMotion, active }: Options) {
+  const supportsHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   const deckRef = useRef<HTMLDivElement>(null);
   const pointerFrameRef = useRef<number | null>(null);
   const pointerPositionRef = useRef({ x: 0, y: 0 });
+  const rotationDelayRef = useRef<number | null>(null);
+  const rotationIntervalRef = useRef<number | null>(null);
+  const rotationEligibleRef = useRef(false);
+  const lockedIndexRef = useRef(0);
+  const previewIndexRef = useRef<number | null>(null);
+  const autoIndexRef = useRef<number | null>(null);
+  const cardCountRef = useRef(cardCount);
   const [lockedIndex, setLockedIndex] = useState(0);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const visibleIndex = previewIndex ?? lockedIndex;
+  const [autoIndex, setAutoIndex] = useState<number | null>(null);
+  const visibleIndex = previewIndex ?? autoIndex ?? lockedIndex;
+
+  rotationEligibleRef.current = active && !reducedMotion && supportsHover && cardCount > 1;
+  lockedIndexRef.current = lockedIndex;
+  previewIndexRef.current = previewIndex;
+  autoIndexRef.current = autoIndex;
+  cardCountRef.current = cardCount;
+
+  const clearRotationTimers = useCallback(() => {
+    if (rotationDelayRef.current !== null) window.clearTimeout(rotationDelayRef.current);
+    if (rotationIntervalRef.current !== null) window.clearInterval(rotationIntervalRef.current);
+    rotationDelayRef.current = null;
+    rotationIntervalRef.current = null;
+  }, []);
+
+  const startRotationAfter = useCallback((delay: number) => {
+    clearRotationTimers();
+    if (!rotationEligibleRef.current) return;
+
+    rotationDelayRef.current = window.setTimeout(() => {
+      rotationDelayRef.current = null;
+      if (!rotationEligibleRef.current || previewIndexRef.current !== null || hasKeyboardFocusInside(deckRef.current)) return;
+
+      const firstAutoIndex = (lockedIndexRef.current + 1) % cardCountRef.current;
+      autoIndexRef.current = firstAutoIndex;
+      setAutoIndex(firstAutoIndex);
+      rotationIntervalRef.current = window.setInterval(() => {
+        if (!rotationEligibleRef.current || previewIndexRef.current !== null) return;
+        setAutoIndex((current) => {
+          const nextIndex = ((current ?? lockedIndexRef.current) + 1) % cardCountRef.current;
+          autoIndexRef.current = nextIndex;
+          return nextIndex;
+        });
+      }, ROTATION_STEP_MS);
+    }, delay);
+  }, [clearRotationTimers]);
+
+  const pauseRotation = useCallback(() => {
+    clearRotationTimers();
+    if (autoIndexRef.current !== null) {
+      autoIndexRef.current = null;
+      setAutoIndex(null);
+    }
+  }, [clearRotationTimers]);
+
+  const resumeRotationAfterIdle = useCallback(() => {
+    if (autoIndexRef.current !== null) {
+      autoIndexRef.current = null;
+      setAutoIndex(null);
+    }
+    startRotationAfter(ROTATION_RESUME_DELAY_MS);
+  }, [startRotationAfter]);
 
   const renderParallax = () => {
     pointerFrameRef.current = null;
@@ -37,9 +107,31 @@ export function useCreatorCardDeck({ cardCount, reducedMotion }: Options) {
     scheduleParallax();
   };
 
+  useEffect(() => {
+    if (!rotationEligibleRef.current) {
+      pauseRotation();
+      return;
+    }
+
+    startRotationAfter(ROTATION_START_DELAY_MS);
+    const registerActivity = () => resumeRotationAfterIdle();
+    window.addEventListener("pointermove", registerActivity, { passive: true });
+    window.addEventListener("pointerdown", registerActivity, { passive: true });
+    window.addEventListener("keydown", registerActivity);
+    window.addEventListener("touchstart", registerActivity, { passive: true });
+    return () => {
+      clearRotationTimers();
+      window.removeEventListener("pointermove", registerActivity);
+      window.removeEventListener("pointerdown", registerActivity);
+      window.removeEventListener("keydown", registerActivity);
+      window.removeEventListener("touchstart", registerActivity);
+    };
+  }, [active, cardCount, clearRotationTimers, pauseRotation, reducedMotion, resumeRotationAfterIdle, startRotationAfter, supportsHover]);
+
   useEffect(() => () => {
+    clearRotationTimers();
     if (pointerFrameRef.current !== null) window.cancelAnimationFrame(pointerFrameRef.current);
-  }, []);
+  }, [clearRotationTimers]);
 
   useEffect(() => {
     if (reducedMotion) resetParallax();
@@ -56,16 +148,27 @@ export function useCreatorCardDeck({ cardCount, reducedMotion }: Options) {
   };
 
   const onPointerLeave: PointerEventHandler<HTMLDivElement> = () => {
+    if (hasKeyboardFocusInside(deckRef.current)) {
+      resetParallax();
+      return;
+    }
     setPreviewIndex(null);
     resetParallax();
+    resumeRotationAfterIdle();
   };
 
-  const preview = (index: number) => setPreviewIndex(index);
+  const preview = (index: number) => {
+    pauseRotation();
+    setPreviewIndex(index);
+  };
   const clearPreview: FocusEventHandler<HTMLButtonElement> = (event) => {
-    if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) setPreviewIndex(null);
+    if (deckRef.current?.contains(event.relatedTarget as Node | null)) return;
+    setPreviewIndex(null);
+    resumeRotationAfterIdle();
   };
   const select = (index: number) => {
     if (index >= 0 && index < cardCount) {
+      pauseRotation();
       setLockedIndex(index);
       setPreviewIndex(index);
     }
@@ -73,6 +176,7 @@ export function useCreatorCardDeck({ cardCount, reducedMotion }: Options) {
 
   return {
     deckRef,
+    autoIndex,
     lockedIndex,
     visibleIndex,
     preview,

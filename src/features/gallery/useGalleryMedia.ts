@@ -12,12 +12,13 @@ function prepareGalleryVideo(video: HTMLVideoElement) {
 
 type Options = {
   activeIndex: number;
+  sampledIndices: readonly number[];
   selectionDirection: -1 | 1;
   reducedMotion: boolean;
   sectionActive: boolean;
 };
 
-export function useGalleryMedia({ activeIndex, selectionDirection, reducedMotion, sectionActive }: Options) {
+export function useGalleryMedia({ activeIndex, sampledIndices, selectionDirection, reducedMotion, sectionActive }: Options) {
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const currentIndexRef = useRef(activeIndex);
   const [visibleVideoIndex, setVisibleVideoIndex] = useState(activeIndex);
@@ -27,7 +28,8 @@ export function useGalleryMedia({ activeIndex, selectionDirection, reducedMotion
   currentIndexRef.current = activeIndex;
   visibleVideoIndexRef.current = visibleVideoIndex;
 
-  const renderedVideoIndices = new Set([activeIndex, visibleVideoIndex]);
+  const sampledVideoIndices = new Set(sampledIndices);
+  const renderedVideoIndices = new Set([...sampledIndices, activeIndex, visibleVideoIndex]);
 
   const activeItem = galleryItems[activeIndex];
   const activeVideoFailed = failedVideoIds.has(activeItem.id);
@@ -80,6 +82,7 @@ export function useGalleryMedia({ activeIndex, selectionDirection, reducedMotion
 
   return {
     renderedVideoIndices,
+    sampledVideoIndices,
     visibleVideoIndex,
     failedVideoIds,
     videoRetryTokens,

@@ -24,22 +24,20 @@ const characterBeforeStage = await evaluate(`(() => {
 await scrollChapterTo('#character', 0);
 await waitFor("document.querySelector('#character .character-film')?.readyState >= 2");
 await waitFor("(document.querySelector('#character .character-film')?.currentTime ?? 0) > 0.05");
-await waitFor(`(() => {
-  const images = [...document.querySelectorAll('#creator .creator-card img')];
-  return images.length === 4 && images.every((image) => image.complete && image.naturalWidth > 0);
-})()`);
-const creatorWarmup = await evaluate(`(() => {
-  const section = document.querySelector('#creator');
-  const images = [...section.querySelectorAll('.creator-card img')];
+await waitFor("document.querySelector('#gaze .gaze-video')?.readyState >= 2");
+const gazeWarmup = await evaluate(`(() => {
+  const section = document.querySelector('#gaze');
+  const video = section?.querySelector('.gaze-video');
   return {
     activeSection: document.querySelector('.main-nav .is-active')?.textContent?.trim() ?? null,
-    mediaState: section?.dataset.creatorMedia ?? null,
+    mediaState: section?.dataset.gazeMedia ?? null,
     sectionTop: Math.round(section?.getBoundingClientRect().top ?? -9999),
     viewportHeight: innerHeight,
-    imageCount: images.length,
-    sourcesAttached: images.every((image) => Boolean(image.getAttribute('src'))),
-    imagesDecoded: images.every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
-    sources: images.map((image) => image.currentSrc),
+    source: video?.currentSrc ?? '',
+    poster: video?.poster ?? '',
+    preload: video?.preload ?? '',
+    readyState: video?.readyState ?? 0,
+    paused: video?.paused ?? false,
   };
 })()`);
 await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 470, y: 410 });
@@ -98,7 +96,7 @@ const character = await evaluate(`(() => {
     stageTop: Math.round(stage?.getBoundingClientRect().top ?? -9999),
     stageHeight: Math.round(stage?.getBoundingClientRect().height ?? 0),
     stageWidth: Math.round(stage?.getBoundingClientRect().width ?? 0),
-    nextChapterTop: Math.round(document.querySelector('#creator')?.getBoundingClientRect().top ?? -9999),
+    nextChapterTop: Math.round(document.querySelector('#gaze')?.getBoundingClientRect().top ?? -9999),
   };
 })()`);
 character.internalWheelDelta = characterScrollAfter - characterScrollBefore;
@@ -109,15 +107,64 @@ await send("Input.dispatchMouseEvent", { type: "mouseWheel", x: 720, y: 500, del
 await delay(260);
 const nativeBoundaryDown = await evaluate(`(() => {
   const character = document.querySelector('#character');
-  const creator = document.querySelector('#creator');
+  const gaze = document.querySelector('#gaze');
   const padding = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
   const video = character?.querySelector('.character-film');
   return {
     activeSection: document.querySelector('.main-nav .is-active')?.textContent ?? null,
     nativeDelta: Math.round(scrollY) - ${nativeBoundaryDownBefore},
-    pageTop: Math.round(creator?.getBoundingClientRect().top ?? -9999),
+    pageTop: Math.round(gaze?.getBoundingClientRect().top ?? -9999),
     padding: Math.round(padding),
     characterVideoPaused: video?.paused ?? true,
+  };
+})()`);
+
+await scrollChapterTo('#gaze', 0);
+await waitFor("document.querySelector('.main-nav .is-active')?.textContent === 'GAZE' && document.querySelector('#gaze .gaze-video')?.readyState >= 2");
+await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 1280, y: 430 });
+await waitFor("document.querySelector('#gaze .gaze-stage')?.dataset.gazeDirection === 'RIGHT'");
+await delay(2800);
+const gazeRightTime = await evaluate("document.querySelector('#gaze .gaze-video')?.currentTime ?? -1");
+await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 140, y: 430 });
+await waitFor("document.querySelector('#gaze .gaze-stage')?.dataset.gazeDirection === 'LEFT'");
+// Crossing from one side to the other follows one continuous recorded passage
+// with no loop seam, so allow the full original turn to settle.
+await delay(3200);
+const gazeLeftTime = await evaluate("document.querySelector('#gaze .gaze-video')?.currentTime ?? -1");
+await screenshot("desktop-gaze.png");
+const gaze = await evaluate(`(() => {
+  const stage = document.querySelector('#gaze .gaze-stage');
+  const video = document.querySelector('#gaze .gaze-video');
+  return {
+    bodyWidth: document.body.scrollWidth,
+    viewportWidth: innerWidth,
+    stageHeight: Math.round(stage?.getBoundingClientRect().height ?? 0),
+    source: video?.currentSrc ?? '',
+    duration: video?.duration ?? 0,
+    paused: video?.paused ?? false,
+    readyState: video?.readyState ?? 0,
+    direction: stage?.dataset.gazeDirection ?? '',
+    rightTime: ${gazeRightTime},
+    leftTime: ${gazeLeftTime},
+  };
+})()`);
+
+await waitFor(`(() => {
+  const images = [...document.querySelectorAll('#creator .creator-card img')];
+  return images.length === 6 && images.every((image) => image.complete && image.naturalWidth > 0);
+})()`);
+const creatorWarmup = await evaluate(`(() => {
+  const section = document.querySelector('#creator');
+  const images = [...section.querySelectorAll('.creator-card img')];
+  return {
+    activeSection: document.querySelector('.main-nav .is-active')?.textContent?.trim() ?? null,
+    mediaState: section?.dataset.creatorMedia ?? null,
+    sectionTop: Math.round(section?.getBoundingClientRect().top ?? -9999),
+    viewportHeight: innerHeight,
+    imageCount: images.length,
+    sourcesAttached: images.every((image) => Boolean(image.getAttribute('src'))),
+    imagesDecoded: images.every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
+    sources: images.map((image) => image.currentSrc),
   };
 })()`);
 
@@ -195,10 +242,67 @@ const creatorInitial = await evaluate(`(() => {
       insideViewport: Boolean(xLinkRect && xLinkRect.left >= 0 && xLinkRect.right <= innerWidth && xLinkRect.top >= 0 && xLinkRect.bottom <= innerHeight),
     },
     activeCard: document.querySelector('#creator .creator-card-deck')?.dataset.activeCard ?? null,
+    autoCard: document.querySelector('#creator .creator-card-deck')?.dataset.autoCard ?? null,
     pressedCards: [...document.querySelectorAll('#creator .creator-card[aria-pressed="true"]')].map((card) => card.dataset.creatorCard),
     labels: cards.map((card) => card.getAttribute('aria-label')),
+    cardNames: cards.map((card) => card.querySelector('.creator-card-caption strong')?.textContent?.trim() ?? ''),
   };
 })()`);
+
+await waitFor("Boolean(document.querySelector('#creator .creator-card-deck')?.dataset.autoCard)");
+const creatorAutoFirst = await evaluate(`(() => {
+  const deck = document.querySelector('#creator .creator-card-deck');
+  return {
+    autoCard: deck?.dataset.autoCard ?? null,
+    activeCard: deck?.dataset.activeCard ?? null,
+    readout: document.querySelector('#creator .creator-deck-readout strong')?.textContent?.trim() ?? '',
+    pressedCard: document.querySelector('#creator .creator-card[aria-pressed="true"]')?.dataset.creatorCard ?? null,
+  };
+})()`);
+await waitFor(`(() => {
+  const autoCard = document.querySelector('#creator .creator-card-deck')?.dataset.autoCard;
+  return Boolean(autoCard) && autoCard !== ${JSON.stringify(creatorAutoFirst.autoCard)};
+})()`);
+const creatorAutoSecond = await evaluate(`(() => {
+  const deck = document.querySelector('#creator .creator-card-deck');
+  return {
+    autoCard: deck?.dataset.autoCard ?? null,
+    activeCard: deck?.dataset.activeCard ?? null,
+    readout: document.querySelector('#creator .creator-deck-readout strong')?.textContent?.trim() ?? '',
+    pressedCard: document.querySelector('#creator .creator-card[aria-pressed="true"]')?.dataset.creatorCard ?? null,
+  };
+})()`);
+
+const creatorAutoHoverPoint = await evaluate(`(() => {
+  const rect = document.querySelectorAll('#creator .creator-card')[2]?.getBoundingClientRect();
+  return rect ? { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) } : null;
+})()`);
+if (creatorAutoHoverPoint) await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: creatorAutoHoverPoint.x, y: creatorAutoHoverPoint.y });
+await delay(180);
+const creatorAutoPaused = await evaluate(`(() => {
+  const deck = document.querySelector('#creator .creator-card-deck');
+  return {
+    autoCard: deck?.dataset.autoCard ?? null,
+    activeCard: deck?.dataset.activeCard ?? null,
+    pressedCard: document.querySelector('#creator .creator-card[aria-pressed="true"]')?.dataset.creatorCard ?? null,
+  };
+})()`);
+await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 120, y: 420 });
+await waitFor("Boolean(document.querySelector('#creator .creator-card-deck')?.dataset.autoCard)");
+const creatorAutoResumed = await evaluate(`(() => {
+  const deck = document.querySelector('#creator .creator-card-deck');
+  return {
+    autoCard: deck?.dataset.autoCard ?? null,
+    activeCard: deck?.dataset.activeCard ?? null,
+    pressedCard: document.querySelector('#creator .creator-card[aria-pressed="true"]')?.dataset.creatorCard ?? null,
+  };
+})()`);
+const creatorAutoRotation = {
+  first: creatorAutoFirst,
+  second: creatorAutoSecond,
+  paused: creatorAutoPaused,
+  resumed: creatorAutoResumed,
+};
 
 const creatorXTargetIdsBefore = new Set((await send("Target.getTargets")).targetInfos.map((target) => target.targetId));
 const creatorXHit = await evaluate(`(() => {
@@ -556,8 +660,11 @@ const talkA11yClosed = await evaluate(`({
   return {
     characterBeforeStage,
     character,
+    gazeWarmup,
+    gaze,
     creatorWarmup,
     creatorInitial,
+    creatorAutoRotation,
     creatorXLink,
     creator,
     linksWarmup,

@@ -4,7 +4,7 @@ import { galleryItems } from "../../content/siteContent";
 import { sampledFormCount, selectSeededSample, wrapIndex } from "./gallerySampling";
 
 const galleryWheelSwitchThreshold = 96;
-const galleryWheelGestureIdleMs = 180;
+const galleryWheelSwitchCooldownMs = 180;
 const galleryStageTopTolerance = 8;
 
 function createGallerySession() {
@@ -12,17 +12,17 @@ function createGallerySession() {
   const values = new Uint32Array(2);
   if (!requestedSeed) window.crypto.getRandomValues(values);
   const seed = requestedSeed ?? `${values[0]}-${values[1]}`;
-  return { seed, forms: selectSeededSample(galleryItems, seed, sampledFormCount) };
+  const forms = selectSeededSample(galleryItems, seed, sampledFormCount);
+  const formIndices = forms.map((form) => galleryItems.findIndex((item) => item.id === form.id));
+  return { seed, forms, formIndices };
 }
 
 export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) {
   const [session] = useState(createGallerySession);
   const initialActiveIndex = galleryItems.findIndex((item) => item.id === session.forms[0].id);
   const pointerStartX = useRef<number | null>(null);
-  const wheelGestureActiveRef = useRef(false);
-  const wheelGestureHandledRef = useRef(false);
   const wheelDeltaRef = useRef(0);
-  const wheelGestureTimerRef = useRef<number | null>(null);
+  const wheelLockedUntilRef = useRef(0);
   const activeIndexRef = useRef(initialActiveIndex);
   const lastSamplePositionRef = useRef(0);
   const viewedSamplePositionsRef = useRef(new Set([0]));
@@ -57,16 +57,9 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
     const section = sectionRef.current;
     if (!section) return;
 
-    const finishWheelGesture = () => {
-      wheelGestureActiveRef.current = false;
-      wheelGestureHandledRef.current = false;
+    const resetWheelState = () => {
       wheelDeltaRef.current = 0;
-      wheelGestureTimerRef.current = null;
-    };
-
-    const keepWheelGestureActive = () => {
-      if (wheelGestureTimerRef.current !== null) window.clearTimeout(wheelGestureTimerRef.current);
-      wheelGestureTimerRef.current = window.setTimeout(finishWheelGesture, galleryWheelGestureIdleMs);
+      wheelLockedUntilRef.current = 0;
     };
 
     const onWheel = (event: WheelEvent) => {
@@ -78,11 +71,10 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
           : 1;
       const deltaY = event.deltaY * unit;
       if (deltaY <= 0) return;
+      const now = performance.now();
 
       if (viewedSamplePositionsRef.current.size >= session.forms.length) {
-        if (!wheelGestureActiveRef.current) return;
-        event.preventDefault();
-        keepWheelGestureActive();
+        if (now < wheelLockedUntilRef.current) event.preventDefault();
         return;
       }
 
@@ -96,27 +88,19 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
         root.style.scrollBehavior = "auto";
         window.scrollTo(0, bounds.top + window.scrollY);
         root.style.scrollBehavior = previousBehavior;
-        wheelGestureActiveRef.current = true;
-        wheelGestureHandledRef.current = true;
         wheelDeltaRef.current = 0;
-        keepWheelGestureActive();
+        wheelLockedUntilRef.current = now + galleryWheelSwitchCooldownMs;
         return;
       }
       if (Math.abs(bounds.top) > galleryStageTopTolerance) return;
 
       event.preventDefault();
-      if (!wheelGestureActiveRef.current) {
-        wheelGestureActiveRef.current = true;
-        wheelGestureHandledRef.current = false;
-        wheelDeltaRef.current = 0;
-      }
-      keepWheelGestureActive();
-      if (wheelGestureHandledRef.current) return;
+      if (now < wheelLockedUntilRef.current) return;
 
       wheelDeltaRef.current += deltaY;
       if (wheelDeltaRef.current < galleryWheelSwitchThreshold) return;
-      wheelGestureHandledRef.current = true;
       wheelDeltaRef.current = 0;
+      wheelLockedUntilRef.current = now + galleryWheelSwitchCooldownMs;
 
       let nextPosition = wrapIndex(lastSamplePositionRef.current + 1, session.forms.length);
       while (viewedSamplePositionsRef.current.has(nextPosition)) {
@@ -128,8 +112,7 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
     section.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       section.removeEventListener("wheel", onWheel);
-      if (wheelGestureTimerRef.current !== null) window.clearTimeout(wheelGestureTimerRef.current);
-      finishWheelGesture();
+      resetWheelState();
     };
   }, [sectionRef, selectSamplePosition, session.forms.length]);
 
@@ -139,6 +122,7 @@ export function useGalleryController(sectionRef: RefObject<HTMLElement | null>) 
   return {
     sessionSeed: session.seed,
     sampledForms: session.forms,
+    sampledFormIndices: session.formIndices,
     active,
     activeIndex: selection.activeIndex,
     selectionDirection: selection.direction,
