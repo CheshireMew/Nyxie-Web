@@ -80,11 +80,11 @@ export default function App() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const navigate = useCallback(async (id: SectionId) => {
+  const navigate = useCallback(async (id: SectionId, requestedBehavior?: ScrollBehavior) => {
     if (isInteractionLocked()) return false;
     heroActionOperationRef.current += 1;
     dispatch({ type: "close-overlays" });
-    return navigateToChapter(id, reducedMotion ? "auto" : "smooth");
+    return navigateToChapter(id, requestedBehavior ?? (reducedMotion ? "auto" : "smooth"));
   }, [isInteractionLocked, reducedMotion]);
 
   const playAtHero = useCallback(async (key: ClipKey, after?: "talk") => {
@@ -151,7 +151,7 @@ export default function App() {
               mediaWarmupEnabled: ready,
               portalConsumed,
               onPortalConsumed: consumePortal,
-              onNavigate: (id) => { void navigate(id); },
+              onNavigate: (id, behavior) => { void navigate(id, behavior); },
             })}
           </Fragment>
         ))}

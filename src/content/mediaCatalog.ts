@@ -8,6 +8,7 @@ export type ClipDefinition = {
   label: string;
   counter: string;
   playbackRate: number;
+  startTime?: number;
   switchLead: number;
   kind: "idle" | "action";
 };
@@ -66,7 +67,8 @@ export const heroMedia = {
       src: assetUrl(mediaManifest.hero.clips.portal),
       label: "OPENING WRONG DOOR",
       counter: "ACTION / 03",
-      playbackRate: 2,
+      playbackRate: 3,
+      startTime: 0.55,
       switchLead: 0.5,
       kind: "action",
     },

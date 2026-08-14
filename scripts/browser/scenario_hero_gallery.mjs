@@ -10,6 +10,13 @@ export async function runHeroGalleryScenario(browser) {
   const wheelAt = browser.wheelAt.bind(browser);
 
 const expectedPortalFailureStart = failedResources.length;
+await evaluate(`(() => {
+  const standby = [...document.querySelectorAll('.hero-video')].find((video) => !video.classList.contains('is-visible'));
+  standby?.pause();
+  standby?.removeAttribute('src');
+  standby?.removeAttribute('data-clip');
+  standby?.load();
+})()`);
 await send("Network.setCacheDisabled", { cacheDisabled: true });
 await send("Network.setBlockedURLs", { urls: ["*portal.mp4*"] });
 await evaluate("window.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, cancelable: true }))");

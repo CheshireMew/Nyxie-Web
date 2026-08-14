@@ -1,9 +1,9 @@
+import { useEffect } from "react";
+
 export function BootScreen({ ready }: { ready: boolean }) {
-  return (
-    <div className={`boot-screen${ready ? " is-done" : ""}`} aria-hidden={ready}>
-      <div className="boot-mark">NX</div>
-      <div className="boot-line"><span /></div>
-      <p>OPENING THE WRONG DOOR</p>
-    </div>
-  );
+  useEffect(() => {
+    document.getElementById("nyxie-boot")?.classList.toggle("is-done", ready);
+  }, [ready]);
+
+  return null;
 }

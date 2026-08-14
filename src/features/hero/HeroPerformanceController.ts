@@ -63,6 +63,8 @@ export class HeroPerformanceController {
       this.phase = "error";
       this.error = "角色视频加载失败，点击重试";
       this.emit();
+    } else {
+      void this.deck.preload("portal");
     }
     return started;
   }

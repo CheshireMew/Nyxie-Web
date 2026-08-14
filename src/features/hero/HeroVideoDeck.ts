@@ -1,5 +1,5 @@
 import { heroMedia } from "../../content/mediaCatalog";
-import type { ClipKey } from "../../content/mediaCatalog";
+import type { ClipDefinition, ClipKey } from "../../content/mediaCatalog";
 
 const TRANSITION = {
   defocus: 180,
@@ -57,10 +57,10 @@ export class HeroVideoDeck {
     const ready = await this.loadPlayer(next, key);
     if (!ready || this.disposed) return false;
 
-    const playbackRate = heroMedia.clips[key].playbackRate;
+    const clip = heroMedia.clips[key];
     const playing = previous && !initial
-      ? await this.transitionPlayers(previous, next, playbackRate)
-      : await this.startPlayer(next, playbackRate);
+      ? await this.transitionPlayers(previous, next, clip)
+      : await this.startPlayer(next, clip);
     if (!playing || this.disposed) {
       next.pause();
       return false;
@@ -133,11 +133,12 @@ export class HeroVideoDeck {
   private async loadPlayer(player: HTMLVideoElement, key: ClipKey) {
     if (player.dataset.clip === key && player.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return true;
 
+    const clip: ClipDefinition = heroMedia.clips[key];
     const loadId = (this.loadIds.get(player) ?? 0) + 1;
     this.loadIds.set(player, loadId);
     player.pause();
-    player.defaultPlaybackRate = heroMedia.clips[key].playbackRate;
-    player.playbackRate = heroMedia.clips[key].playbackRate;
+    player.defaultPlaybackRate = clip.playbackRate;
+    player.playbackRate = clip.playbackRate;
     player.defaultMuted = true;
     player.muted = true;
     player.dataset.clip = key;
@@ -153,7 +154,7 @@ export class HeroVideoDeck {
         player.removeEventListener("loadeddata", onReady);
         player.removeEventListener("error", onError);
         const currentLoad = this.loadIds.get(player) === loadId && player.dataset.clip === key;
-        if (result && currentLoad) player.currentTime = 0;
+        if (result && currentLoad) player.currentTime = clip.startTime ?? 0;
         resolve(result && currentLoad && !this.disposed);
       };
 
@@ -162,9 +163,9 @@ export class HeroVideoDeck {
     });
   }
 
-  private async startPlayer(player: HTMLVideoElement, playbackRate: number) {
-    player.currentTime = 0;
-    player.playbackRate = playbackRate;
+  private async startPlayer(player: HTMLVideoElement, clip: ClipDefinition) {
+    player.currentTime = clip.startTime ?? 0;
+    player.playbackRate = clip.playbackRate;
     player.defaultMuted = true;
     player.muted = true;
     try {
@@ -175,7 +176,7 @@ export class HeroVideoDeck {
     }
   }
 
-  private async transitionPlayers(previous: HTMLVideoElement, next: HTMLVideoElement, playbackRate: number) {
+  private async transitionPlayers(previous: HTMLVideoElement, next: HTMLVideoElement, clip: ClipDefinition) {
     const defocus = this.trackAnimation(this.stage.animate(
       [
         { filter: "blur(0px) brightness(1)" },
@@ -191,7 +192,7 @@ export class HeroVideoDeck {
 
     previous.pause();
     previous.classList.remove("is-visible");
-    const playing = await this.startPlayer(next, playbackRate);
+    const playing = await this.startPlayer(next, clip);
     if (!playing) {
       previous.classList.add("is-visible");
       void previous.play().catch(() => undefined);

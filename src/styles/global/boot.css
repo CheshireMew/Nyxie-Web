@@ -17,10 +17,11 @@
 }
 
 .boot-mark {
+  display: block;
+  width: clamp(172px, 24vw, 300px);
+  height: auto;
   margin: auto;
-  font-size: clamp(58px, 8vw, 110px);
-  font-weight: 900;
-  letter-spacing: -0.12em;
+  color: var(--ink);
 }
 
 .boot-line {

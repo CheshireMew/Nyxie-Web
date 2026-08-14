@@ -15,7 +15,7 @@ type Props = {
   overlaysOpen: boolean;
   portalConsumed: boolean;
   onPortalConsumed: () => void;
-  onNavigate: (id: SectionId) => void;
+  onNavigate: (id: SectionId, behavior?: ScrollBehavior) => void;
 };
 
 const actions: Array<{ key: ClipKey; index: string; zh: string; en: string }> = [
@@ -79,7 +79,7 @@ export function HeroSection({
       onPortalConsumed();
       const completed = await waitUntilEnded("portal");
       portalRequestPendingRef.current = false;
-      if (completed) onNavigate("gallery");
+      if (completed) onNavigate("gallery", "auto");
     })();
     return true;
   }, [isInteractionLocked, onNavigate, onPortalConsumed, overlaysOpen, portalConsumed, reducedMotion, request, snapshot.started, waitUntilEnded]);
@@ -132,7 +132,7 @@ export function HeroSection({
     if (!started || !isInteractionLocked()) return;
     onPortalConsumed();
     const completed = await waitUntilEnded("portal");
-    if (completed) onNavigate("gallery");
+    if (completed) onNavigate("gallery", "auto");
   }, [isInteractionLocked, onNavigate, onPortalConsumed, retry, waitUntilEnded]);
 
   const onHeroClick = (event: MouseEvent<HTMLElement>) => {

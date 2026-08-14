@@ -35,15 +35,17 @@ await send("Network.setCacheDisabled", { cacheDisabled: false });
 const bootPaintObserver = await send("Page.addScriptToEvaluateOnNewDocument", {
   source: `(() => {
     window.__nyxieBootPaintAudit = [];
+    let firstBoot = null;
     let frames = 0;
     const sample = () => {
-      const staticBoot = document.querySelector('.static-boot-screen');
+      const boot = document.querySelector('#nyxie-boot');
       const fallback = document.querySelector('.static-fallback');
-      const reactBoot = document.querySelector('.boot-screen:not(.static-boot-screen)');
+      if (boot && !firstBoot) firstBoot = boot;
       window.__nyxieBootPaintAudit.push({
-        staticBootVisible: Boolean(staticBoot && getComputedStyle(staticBoot).display !== 'none'),
+        bootVisible: Boolean(boot && getComputedStyle(boot).visibility !== 'hidden' && getComputedStyle(boot).display !== 'none'),
+        bootNodeStable: !boot || boot === firstBoot,
+        bootCount: document.querySelectorAll('.boot-screen').length,
         fallbackVisible: Boolean(fallback && getComputedStyle(fallback).display !== 'none'),
-        reactBootVisible: Boolean(reactBoot && getComputedStyle(reactBoot).visibility !== 'hidden'),
       });
       frames += 1;
       if (frames < 180) requestAnimationFrame(sample);
@@ -65,8 +67,9 @@ await waitFor(`(() => {
 const bootPaint = await evaluate(`(() => {
   const samples = window.__nyxieBootPaintAudit ?? [];
   return {
-    sawStaticBoot: samples.some((sample) => sample.staticBootVisible),
-    sawReactBoot: samples.some((sample) => sample.reactBootVisible),
+    sawBoot: samples.some((sample) => sample.bootVisible),
+    bootNodeStayedStable: samples.filter((sample) => sample.bootCount > 0).every((sample) => sample.bootNodeStable),
+    maximumBootCount: Math.max(0, ...samples.map((sample) => sample.bootCount)),
     sawFallback: samples.some((sample) => sample.fallbackVisible),
   };
 })()`);

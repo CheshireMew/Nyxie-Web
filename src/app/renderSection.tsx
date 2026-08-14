@@ -16,7 +16,7 @@ type SectionRuntime = {
   mediaWarmupEnabled: boolean;
   portalConsumed: boolean;
   onPortalConsumed: () => void;
-  onNavigate: (id: SectionId) => void;
+  onNavigate: (id: SectionId, behavior?: ScrollBehavior) => void;
 };
 
 function assertNever(value: never): never {
